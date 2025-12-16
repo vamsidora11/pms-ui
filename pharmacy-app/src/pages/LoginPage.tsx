@@ -1,22 +1,35 @@
- import React, { useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";   // ✅ Added
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
-import LoginImage from "../assets/Login.png"; 
+import LoginImage from "../assets/Login.png";
 
 export default function LoginPage() {
+  const navigate = useNavigate();   // ✅ Added
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Basic check (replace with real authentication later)
+    if (email && password) {
+      navigate("/pharmacist/dashboard");   // ✅ Redirect after login
+    } else {
+      alert("Please enter valid credentials");
+    }
+  };
+
   return (
     <div className="flex w-screen h-screen">
-      
+
       {/* LEFT SECTION */}
       <div className="w-[50%] bg-gray-200 border-r-2 border-blue-500 flex justify-center items-center">
         
-        
         {/* CARD */}
-        <div className="bg-white shadow-lg rounded-xl p-10 w-[65%]">
-          <h1 className="text-3xl font-semiimportbold text-center mb-8">Login</h1>
+        <form onSubmit={handleLogin} className="bg-white shadow-lg rounded-xl p-10 w-[65%]">
+          <h1 className="text-3xl font-semibold text-center mb-8">Login</h1>
 
           <div className="space-y-6">
             <Input
@@ -35,18 +48,20 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
 
-            <Button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+            <Button
+              type="submit"  // ✅ Form submission triggers navigation
+              className="w-full justify-center mt-4"
+            >
               Sign In
             </Button>
           </div>
-        </div>
-
+        </form>
       </div>
 
       {/* RIGHT SECTION WITH IMAGE */}
       <div className="w-[50%] bg-white flex justify-center items-center overflow-hidden">
-        <img 
-          src={LoginImage} 
+        <img
+          src={LoginImage}
           alt="Login Illustration"
           className="w-full h-full object-cover"
         />
