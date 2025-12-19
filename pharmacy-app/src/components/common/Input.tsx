@@ -9,7 +9,6 @@ type InputProps = {
   required?: boolean;
   error?: string;
   disabled?: boolean;
-  success?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   className?: string;
@@ -24,47 +23,76 @@ export default function Input({
   required = false,
   error,
   disabled = false,
-  success = false,
   leftIcon,
   rightIcon,
   className = "",
 }: InputProps) {
   return (
-    <div className="flex flex-col mb-4">
+    <div className="flex flex-col gap-1">
       {/* Label */}
       {label && (
-        <label className="mb-1 font-medium">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label className="text-sm font-medium text-gray-900">
+          {label}
+          {required && <span className="text-red-500"> *</span>}
         </label>
       )}
 
+      {/* Input Wrapper */}
       <div
-        className={`flex items-center border rounded px-3 py-2 
-          ${error ? "border-red-500" : success ? "border-green-500" : "border-gray-300"}
-          ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}
+        className={`
+          flex items-center gap-3
+          h-11 px-4
+          rounded-lg
+          transition-all duration-200
+          shadow-inner
+          
+          ${disabled
+            ? "bg-gray-100 cursor-not-allowed opacity-70"
+            : `
+              bg-gray-200
+              hover:bg-gray-300
+              focus-within:bg-gray-400
+            `}
+          
+          ${error ? "ring-1 ring-red-500 bg-red-50" : ""}
           ${className}
         `}
       >
         {/* Left Icon */}
-        {leftIcon && <span className="mr-2">{leftIcon}</span>}
+        {leftIcon && (
+          <span className="text-gray-400">
+            {leftIcon}
+          </span>
+        )}
 
-        {/* Actual Input */}
+        {/* Input */}
         <input
           type={type}
-          placeholder={placeholder}
           value={value}
           onChange={onChange}
+          placeholder={placeholder}
           disabled={disabled}
-          className="flex-1 outline-none bg-transparent"
+          className="
+            w-full
+            bg-transparent
+            text-sm
+            text-gray-900
+            placeholder:text-gray-500
+            outline-none
+          "
         />
 
         {/* Right Icon */}
-        {rightIcon && <span className="ml-2">{rightIcon}</span>}
+        {rightIcon && (
+          <span className="text-gray-400">
+            {rightIcon}
+          </span>
+        )}
       </div>
 
-      {/* Error Message */}
+      {/* Error */}
       {error && (
-        <p className="text-red-500 text-sm mt-1">
+        <p className="text-xs text-red-500 mt-1">
           {error}
         </p>
       )}

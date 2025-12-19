@@ -7,7 +7,9 @@ import {
   ArrowPathIcon,
   UserCircleIcon,
   BellIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export type UserRole = "Manager" | "Pharmacist" | "Technician";
 
@@ -18,19 +20,16 @@ type NavItem = {
 };
 
 const roleNavItems: Record<UserRole, NavItem[]> = {
-  Manager: [
-    { key: "dashboard", label: "Dashboard", icon: HomeIcon },
-  ],
+  Manager: [{ key: "dashboard", label: "Dashboard", icon: HomeIcon }],
 
   Pharmacist: [
     { key: "dashboard", label: "Dashboard", icon: HomeIcon },
-    { key: "entry", label: "Prescription Entry", icon: ClipboardDocumentListIcon },
-    { key: "validation", label: "Validation Queue", icon: CheckBadgeIcon },
-    { key: "clinical", label: "Clinical Check", icon: BeakerIcon },
-    { key: "label", label: "Label Generation", icon: TagIcon },
+    { key: "entry", label: "Manual Prescription Entry", icon: ClipboardDocumentListIcon },
+    { key: "validation", label: "Prescription Validation", icon: CheckBadgeIcon },
+    { key: "clinical", label: "Drug Interaction Checker", icon: BeakerIcon },
+    { key: "labels", label: "Label Generator", icon: TagIcon },
     { key: "refills", label: "Refill Management", icon: ArrowPathIcon },
     { key: "history", label: "Patient History", icon: UserCircleIcon },
-    { key: "alerts", label: "Alerts & Reminders", icon: BellIcon },
   ],
 
   Technician: [
@@ -42,32 +41,28 @@ const roleNavItems: Record<UserRole, NavItem[]> = {
 
 interface SidebarProps {
   role: UserRole;
-  activeKey: string;
-  onSelect: (key: string) => void;
 }
 
-export default function Sidebar({
-  role,
-  activeKey,
-  onSelect,
-}: SidebarProps) {
+export default function Sidebar({ role }: SidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const items = roleNavItems[role];
 
   return (
-    <aside className="w-64 border-r bg-white p-4">
-      <nav className="space-y-1">
+    <aside className="fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-white border-r">
+      <nav className="p-4 space-y-1">
         {items.map((item) => {
           const Icon = item.icon;
-          const isActive = activeKey === item.key;
+          const isActive = location.pathname.endsWith(item.key);
 
           return (
             <button
               key={item.key}
-              onClick={() => onSelect(item.key)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+              onClick={() => navigate(`/pharmacist/${item.key}`)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition
                 ${
                   isActive
-                    ? "bg-blue-50 text-blue-600 font-medium"
+                    ? "bg-green-50 text-green-700 font-medium"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
             >
@@ -76,6 +71,16 @@ export default function Sidebar({
             </button>
           );
         })}
+
+        <div className="pt-4 mt-4 border-t">
+          <button
+            onClick={() => navigate("/login")}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            Logout
+          </button>
+        </div>
       </nav>
     </aside>
   );
