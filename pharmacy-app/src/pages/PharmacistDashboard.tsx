@@ -1,75 +1,66 @@
-import { useState } from "react";
-import Sidebar from "../components/layouts/Sidebar";
-import TopNavbar from "../components/common/TopNavBar";
-import DashboardView from "../modules/pharmacist/DashboardView";
-import ManualPrescriptionView from "../modules/pharmacist/ManualPrescriptionView";
+import { useNavigate } from "react-router-dom";
+import Button from "../components/common/Button";
+import SectionHeader from "../components/common/SectionHeader";
+import StatusCard from "../components/common/StatusCard";
+import Table from "../components/common/Table";
+import Badge from "../components/common/Badge";
 
-export default function PharmasictDashboard() {
-  const [activeView, setActiveView] = useState("dashboard");
+export default function DashboardView() {
+  const navigate = useNavigate();
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <Sidebar
-        role="Pharmacist"
-        activeKey={activeView}
-        onSelect={setActiveView}
+    <div className="space-y-6">
+      {/* Header */}
+      <SectionHeader
+        title="Pharmacist Dashboard"
+        subtitle="Overview of today’s pharmacy operations"
+        action={
+          <Button onClick={() => navigate("/pharmacist/entry")}>
+            + Add New Prescription
+          </Button>
+        }
       />
 
-      {/* Right Side */}
-      <div className="flex-1 flex flex-col">
-        <TopNavbar />
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatusCard title="Total Prescriptions" value="120" />
+        <StatusCard title="Pending Validation" value="18" />
+        <StatusCard title="Completed" value="92" />
+        <StatusCard title="Alerts" value="5" />
+      </div>
 
-        <main className="flex-1 overflow-y-auto p-6">
-          {activeView === "dashboard" && (
-            <DashboardView
-              onAddPrescription={() => setActiveView("entry")}
-            />
-          )}
+      {/* Table */}
+      <div className="bg-white rounded-lg p-4">
+        <h2 className="font-semibold mb-3">Recent Prescriptions</h2>
 
-          {activeView === "entry" && (
-            <ManualPrescriptionView
-              onProceed={() => setActiveView("validation")}
-            />
-          )}
-
-          {activeView === "validation" && (
-            <h1 className="text-2xl font-semibold">
-              Validation Queue
-            </h1>
-          )}
-
-          {activeView === "clinical" && (
-            <h1 className="text-2xl font-semibold">
-              Clinical Check
-            </h1>
-          )}
-
-          {activeView === "label" && (
-            <h1 className="text-2xl font-semibold">
-              Label Generation
-            </h1>
-          )}
-
-          {activeView === "refills" && (
-            <h1 className="text-2xl font-semibold">
-              Refill Management
-            </h1>
-          )}
-
-          {activeView === "history" && (
-            <h1 className="text-2xl font-semibold">
-              Patient History
-            </h1>
-          )}
-
-          {activeView === "alerts" && (
-            <h1 className="text-2xl font-semibold">
-              Alerts & Reminders
-            </h1>
-          )}
-        </main>
+        <Table
+          columns={[
+            { key: "id", label: "ID" },
+            { key: "patient", label: "Patient" },
+            {
+              key: "status",
+              label: "Status",
+              render: (value) => <Badge label={value} />,
+            },
+            { key: "date", label: "Date" },
+          ]}
+          data={[
+            {
+              id: "RX001",
+              patient: "John Doe",
+              status: "Pending",
+              date: "Today",
+            },
+            {
+              id: "RX002",
+              patient: "Jane Smith",
+              status: "Completed",
+              date: "Today",
+            },
+          ]}
+        />
       </div>
     </div>
   );
 }
+  
