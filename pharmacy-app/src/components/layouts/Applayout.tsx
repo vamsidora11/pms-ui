@@ -1,23 +1,34 @@
 import { Outlet } from "react-router-dom";
-import type { UserRole } from "./Sidebar";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store";
+import Sidebar from "../layouts/Sidebar";
 import TopNavBar from "./TopNavBar";
-import Sidebar from "./Sidebar";
 
-interface AppLayoutProps {
-  role: UserRole;
-}
+export default function AppLayout() {
+  const user = useSelector((s: RootState) => s.auth.user);
 
-export default function AppLayout({ role }: AppLayoutProps) {
+  if (!user) return null; // or redirect to /login
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Top navigation bar */}
       <TopNavBar
-        userName={role === "Pharmacist" ? "Dr. Sarah Mitchell" : "John Davis"}
-        userRole={role}
+        userName={user.username}
+        userRole={user.role}
+        avatar={user.avatarUrl}
       />
 
-      <Sidebar role={role} />
+      {/* Sidebar */}
+      <Sidebar
+        user={{
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          avatarUrl: user.avatarUrl,
+        }}
+      />
 
-      {/* SINGLE SOURCE OF LAYOUT SPACING */}
+      {/* Main content area shifted for navbar + sidebar */}
       <main className="pt-16 pl-64">
         <div className="p-6">
           <Outlet />

@@ -1,6 +1,5 @@
-// src/api/http.ts
 import { store } from "../store";
-import { refreshAccess, logout } from "../store/authSlice";
+import { refreshAccess, logout } from "../store/auth/authSlice";
 
 export async function http(input: RequestInfo | URL, init?: RequestInit) {
   const state = store.getState();

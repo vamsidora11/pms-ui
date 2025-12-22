@@ -1,4 +1,3 @@
-// src/api/auth.ts
 import { ENDPOINTS, API_BASE } from "./endpoints";
 
 export async function loginApi(credentials: { username: string; password: string }) {

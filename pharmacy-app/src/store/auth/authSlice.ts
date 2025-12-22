@@ -1,7 +1,7 @@
 // src/store/authSlice.ts (replace direct fetch calls)
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import {jwtDecode} from "jwt-decode";
-import { loginApi, refreshApi, logoutApi } from "../api/auth";
+import { jwtDecode } from "jwt-decode";
+import { loginApi, refreshApi, logoutApi } from "../../api/auth";
 
 export const loginUser = createAsyncThunk("auth/login", async (credentials: { username: string; password: string }) => {
   return await loginApi(credentials);
@@ -15,9 +15,9 @@ export const serverLogout = createAsyncThunk("auth/serverLogout", async () => {
   await logoutApi();
 });
 
-type UserRole = "Manager" | "Pharmacist" | "Technician";
-type TokenPayload = { sub: string; username: string; role: UserRole; exp: number };
-type User = { id: string; username: string; role: UserRole };
+import type { User, UserRole } from "./authtype";
+
+type TokenPayload = { sub: string; username: string; role: UserRole; exp: number; avatarUrl?: string };
 
 interface AuthState {
   user: User | null;
@@ -25,6 +25,7 @@ interface AuthState {
   status: "idle" | "loading" | "succeeded" | "failed";
   error?: string;
 }
+
 
 const initialState: AuthState = { user: null, accessToken: null, status: "idle" };
 
@@ -47,7 +48,7 @@ const slice = createSlice({
         s.status = "succeeded";
         s.accessToken = a.payload.accessToken;
         const payload = jwtDecode<TokenPayload>(a.payload.accessToken);
-        s.user = { id: payload.sub, username: payload.username, role: payload.role };
+        s.user = { id: payload.sub, username: payload.username, role: payload.role ,avatarUrl: payload.avatarUrl};
       })
       .addCase(loginUser.rejected, (s, a) => {
         s.status = "failed";
@@ -56,7 +57,7 @@ const slice = createSlice({
       .addCase(refreshAccess.fulfilled, (s, a) => {
         s.accessToken = a.payload.accessToken;
         const payload = jwtDecode<TokenPayload>(a.payload.accessToken);
-        s.user = { id: payload.sub, username: payload.username, role: payload.role };
+        s.user = { id: payload.sub, username: payload.username, role: payload.role ,avatarUrl: payload.avatarUrl};
       })
       .addCase(serverLogout.fulfilled, (s) => {
         s.user = null;
