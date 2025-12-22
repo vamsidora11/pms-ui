@@ -1,43 +1,55 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";   // ✅ Added
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../store/auth/authSlice";
+import type { AppDispatch, RootState } from "../store";
+
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import LoginImage from "../assets/Login.png";
 
 export default function LoginPage() {
-  const navigate = useNavigate();   // ✅ Added
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { status, error, user } = useSelector((s: RootState) => s.auth);
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(""); // keep username for backend login
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Basic check (replace with real authentication later)
-    if (email && password) {
-      navigate("/pharmacist/dashboard");   // ✅ Redirect after login
-    } else {
-      alert("Please enter valid credentials");
+    const result = await dispatch(loginUser({ username, password }));
+    if (loginUser.fulfilled.match(result)) {
+      const role = user?.role;
+      const to =
+        role === "Manager"
+          ? "/manager/dashboard"
+          : role === "Pharmacist"
+          ? "/pharmacist/dashboard"
+          : "/technician/dashboard";
+      navigate(to);
     }
   };
 
   return (
     <div className="flex w-screen h-screen">
-
       {/* LEFT SECTION */}
       <div className="w-[50%] bg-gray-200 border-r-2 border-blue-500 flex justify-center items-center">
-        
         {/* CARD */}
-        <form onSubmit={handleLogin} className="bg-white shadow-lg rounded-xl p-10 w-[65%]">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white shadow-lg rounded-xl p-10 w-[65%]"
+        >
           <h1 className="text-3xl font-semibold text-center mb-8">Login</h1>
 
           <div className="space-y-6">
             <Input
-              label="Email Address"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              label="Username"
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
             />
 
             <Input
@@ -46,14 +58,20 @@ export default function LoginPage() {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
 
             <Button
-              type="submit"  // ✅ Form submission triggers navigation
+              type="submit"
+              disabled={status === "loading"}
               className="w-full justify-center mt-4"
             >
-              Sign In
+              {status === "loading" ? "Signing in..." : "Sign In"}
             </Button>
+
+            {error && (
+              <p className="text-red-600 text-sm mt-2 text-center">{error}</p>
+            )}
           </div>
         </form>
       </div>
@@ -66,7 +84,6 @@ export default function LoginPage() {
           className="w-full h-full object-cover"
         />
       </div>
-
     </div>
   );
 }

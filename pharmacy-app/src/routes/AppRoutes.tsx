@@ -1,31 +1,39 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import ProtectedRoute from "./ProtectedRoute";
+import AppLayout from "../components/layouts/Applayout";
 import LoginPage from "../pages/LoginPage";
 import PharmacistDashboard from "../pages/PharmacistDashboard";
-import TechnicianDashboard from "../pages/TechnicianDashboard";
 import ManualPrescriptionView from "../modules/pharmacist/ManualPrescriptionView";
 import PrescriptionValidationPage from "../modules/pharmacist/PrescriptionValidationPage";
-import AppLayout from "../components/layouts/Applayout";
+import TechnicianDashboard from "../pages/TechnicianDashboard";
 
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Pharmacist */}
-      <Route path="/pharmacist" element={<AppLayout role="Pharmacist" />}>
-        <Route path="dashboard" element={<PharmacistDashboard />} />
-        <Route path="entry" element={<ManualPrescriptionView />} />
-        <Route path="validation" element={<PrescriptionValidationPage />} />
+      <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
+        <Route path="/manager" element={<AppLayout />}>
+          <Route path="dashboard" element={<div>Manager Dashboard</div>} />
+        </Route>
       </Route>
 
-      {/* Technician */}
-      <Route path="/technician" element={<AppLayout role="Technician" />}>
-        <Route path="dashboard" element={<TechnicianDashboard />} />
+      <Route element={<ProtectedRoute allowedRoles={["Pharmacist"]} />}>
+        <Route path="/pharmacist" element={<AppLayout />}>
+          <Route index element={<PharmacistDashboard />} /> {/* default */}
+          <Route path="dashboard" element={<PharmacistDashboard />} />
+          <Route path="entry" element={<ManualPrescriptionView />} />
+          <Route path="validation" element={<PrescriptionValidationPage />} />
+        </Route>
       </Route>
 
-      {/* Default */}
-      <Route path="*" element={<Navigate to="/login" />} />
+      <Route element={<ProtectedRoute allowedRoles={["Technician"]} />}>
+        <Route path="/technician" element={<AppLayout />}>
+          <Route path="dashboard" element={<TechnicianDashboard />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

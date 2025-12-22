@@ -1,9 +1,10 @@
 import { Bell, Settings, ChevronDown } from "lucide-react";
+import type { UserRole } from "../../store/auth/authtype"; 
 
 type TopNavBarProps = {
   onSearch?: (value: string) => void;
   userName: string;
-  userRole: string;
+  userRole: UserRole; 
   avatar?: string;
 };
 

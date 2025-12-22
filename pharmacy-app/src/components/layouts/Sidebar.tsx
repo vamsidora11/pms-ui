@@ -1,3 +1,4 @@
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
@@ -9,79 +10,123 @@ import {
   BellIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
-import { useNavigate, useLocation } from "react-router-dom";
-
-export type UserRole = "Manager" | "Pharmacist" | "Technician";
-
-type NavItem = {
-  key: string;
-  label: string;
-  icon: React.ElementType;
-};
-
-const roleNavItems: Record<UserRole, NavItem[]> = {
-  Manager: [{ key: "dashboard", label: "Dashboard", icon: HomeIcon }],
-
-  Pharmacist: [
-    { key: "dashboard", label: "Dashboard", icon: HomeIcon },
-    { key: "entry", label: "Manual Prescription Entry", icon: ClipboardDocumentListIcon },
-    { key: "validation", label: "Prescription Validation", icon: CheckBadgeIcon },
-    { key: "clinical", label: "Drug Interaction Checker", icon: BeakerIcon },
-    { key: "labels", label: "Label Generator", icon: TagIcon },
-    { key: "refills", label: "Refill Management", icon: ArrowPathIcon },
-    { key: "history", label: "Patient History", icon: UserCircleIcon },
-  ],
-
-  Technician: [
-    { key: "dashboard", label: "Dashboard", icon: HomeIcon },
-    { key: "status", label: "Prescription Status", icon: ClipboardDocumentListIcon },
-    { key: "alerts", label: "Alerts", icon: BellIcon },
-  ],
-};
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState } from "../../store";
+import { toggleSidebar } from "../../store/ui/uiSlice"; 
+import type { User, UserRole } from "../../store/auth/authtype";
 
 interface SidebarProps {
-  role: UserRole;
+  user: User;
 }
 
-export default function Sidebar({ role }: SidebarProps) {
+const roleNavItems: Record<
+  UserRole,
+  { key: string; label: string; to: string; icon: React.ElementType }[]
+> = {
+  Manager: [
+    { key: "dashboard", label: "Dashboard", to: "/manager/dashboard", icon: HomeIcon },
+  ],
+  Pharmacist: [
+    { key: "dashboard", label: "Dashboard", to: "/pharmacist/dashboard", icon: HomeIcon },
+    { key: "entry", label: "Manual Prescription Entry", to: "/pharmacist/entry", icon: ClipboardDocumentListIcon },
+    { key: "validation", label: "Prescription Validation", to: "/pharmacist/validation", icon: CheckBadgeIcon },
+    { key: "clinical", label: "Drug Interaction Checker", to: "/pharmacist/clinical", icon: BeakerIcon },
+    { key: "labels", label: "Label Generator", to: "/pharmacist/labels", icon: TagIcon },
+    { key: "refills", label: "Refill Management", to: "/pharmacist/refills", icon: ArrowPathIcon },
+    { key: "history", label: "Patient History", to: "/pharmacist/history", icon: UserCircleIcon },
+  ],
+  Technician: [
+    { key: "dashboard", label: "Dashboard", to: "/technician/dashboard", icon: HomeIcon },
+    { key: "status", label: "Prescription Status", to: "/technician/status", icon: ClipboardDocumentListIcon },
+    { key: "alerts", label: "Alerts", to: "/technician/alerts", icon: BellIcon },
+  ],
+};
+
+export default function Sidebar({ user }: SidebarProps) {
+  const dispatch = useDispatch();
+  const collapsed = useSelector((s: RootState) => s.ui.sidebarCollapsed);
   const navigate = useNavigate();
   const location = useLocation();
-  const items = roleNavItems[role];
+  const navItems = roleNavItems[user.role];
 
   return (
-    <aside className="fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-white border-r">
-      <nav className="p-4 space-y-1">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname.endsWith(item.key);
+    <aside
+      className={`fixed left-0 top-16 ${
+        collapsed ? "w-16" : "w-64"
+      } h-[calc(100vh-4rem)] bg-white border-r flex flex-col transition-all duration-300`}
+    >
+      {/* Toggle button */}
+      <div className="px-3 py-2 border-b flex justify-between items-center">
+        {!collapsed && <span className="font-semibold">Menu</span>}
+        <button
+          onClick={() => dispatch(toggleSidebar())}
+          className="text-gray-600 hover:text-gray-900"
+        >
+          {collapsed ? "➡️" : "⬅️"}
+        </button>
+      </div>
 
+      {/* User block
+      <div className="px-3 py-3 border-b">
+        <div className="flex items-center gap-3">
+          <div className="size-8 rounded-full bg-gray-200 overflow-hidden">
+            {user.avatarUrl && (
+              <img
+                src={user.avatarUrl}
+                alt={user.username}
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+          {!collapsed && (
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-900">{user.username}</span>
+              <span className="text-xs text-gray-600">{user.role}</span>
+            </div>
+          )}
+        </div>
+      </div> */}
+
+      {/* Role nav */}
+      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
           return (
-            <button
+            <NavLink
               key={item.key}
-              onClick={() => navigate(`/pharmacist/${item.key}`)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition
-                ${
+              to={item.to}
+              className={({ isActive }) =>
+                [
+                  "flex items-center gap-3 px-3 py-2 rounded-md transition text-sm",
                   isActive
                     ? "bg-green-50 text-green-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                    : "text-gray-700 hover:bg-gray-100",
+                  collapsed ? "justify-center" : "",
+                ].join(" ")
+              }
             >
               <Icon className="h-5 w-5" />
-              {item.label}
-            </button>
+              {!collapsed && <span>{item.label}</span>}
+            </NavLink>
           );
         })}
 
+        {/* Logout */}
         <div className="pt-4 mt-4 border-t">
           <button
             onClick={() => navigate("/login")}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-700"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-red-50 hover:text-red-700"
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5" />
-            Logout
+            {!collapsed && <span>Logout</span>}
           </button>
         </div>
       </nav>
+
+      {/* Footer */}
+      <div className="p-3 border-t text-sm text-gray-500">
+        {!collapsed && "© 2025 Pharmacy App"}
+      </div>
     </aside>
   );
 }

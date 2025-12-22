@@ -5,7 +5,7 @@ import StatusCard from "../components/common/StatusCard";
 import Table from "../components/common/Table";
 import Badge from "../components/common/Badge";
 
-export default function DashboardView() {
+export default function PharmacistDashboard() {
   const navigate = useNavigate();
 
   return (
