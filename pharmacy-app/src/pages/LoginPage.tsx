@@ -13,7 +13,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { status, error, user } = useSelector((s: RootState) => s.auth);
 
-  const [username, setUsername] = useState(""); // keep username for backend login
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
