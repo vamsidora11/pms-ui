@@ -7,7 +7,7 @@ import TopNavBar from "./TopNavBar";
 export default function AppLayout() {
   const user = useSelector((s: RootState) => s.auth.user);
 
-  if (!user) return null; // or redirect to /login
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">

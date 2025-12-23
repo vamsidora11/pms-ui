@@ -1,28 +1,28 @@
-// import { StrictMode } from 'react'
-// import { createRoot } from 'react-dom/client'
-// import './index.css'
-// import App from './App.tsx'
+// import React from "react";
+// import ReactDOM from "react-dom/client";
+// import App from "./App";
+// import "./index.css";
 
-// createRoot(document.getElementById('root')!).render(
-//   <StrictMode>
+// const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
+
+// root.render(
+//   <React.StrictMode>
 //     <App />
-//   </StrictMode>,
-// )
-// Entry point: Redux Provider + PersistGate to rehydrate persisted state.
-// Reasoning:
-// - Ensures tokens/user persist across reloads.
-
-// src/main.tsx
-// src/main.tsx
+//   </React.StrictMode>
+// );
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
 import App from "./App";
+import { store, persistor } from "./store";
 import "./index.css";
 
-const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
-
+const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
+      <App />
+    </PersistGate>
+  </Provider>
 );

@@ -1,4 +1,3 @@
-// src/store/authSlice.ts (replace direct fetch calls)
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { jwtDecode } from "jwt-decode";
 import { loginApi, refreshApi, logoutApi } from "../../api/auth";
@@ -11,7 +10,7 @@ export const refreshAccess = createAsyncThunk("auth/refresh", async () => {
   return await refreshApi();
 });
 
-export const serverLogout = createAsyncThunk("auth/serverLogout", async () => {
+export const serverLogout = createAsyncThunk("auth/logout", async () => {
   await logoutApi();
 });
 

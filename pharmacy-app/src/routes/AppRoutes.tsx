@@ -3,8 +3,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import AppLayout from "../components/layouts/Applayout";
 import LoginPage from "../pages/LoginPage";
 import PharmacistDashboard from "../pages/PharmacistDashboard";
-import ManualPrescriptionView from "../modules/pharmacist/ManualPrescriptionView";
-import PrescriptionValidationPage from "../modules/pharmacist/PrescriptionValidationPage";
+import ManualPrescriptionView from "../modules/prescription/ManualPrescriptionView";
+import PrescriptionValidationPage from "../modules/prescription/PrescriptionValidationPage";
 import TechnicianDashboard from "../pages/TechnicianDashboard";
 
 export default function AppRoutes() {

@@ -1,3 +1,4 @@
+import { serverLogout } from "../../store/auth/authSlice";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   HomeIcon,
@@ -14,6 +15,7 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../store";
 import { toggleSidebar } from "../../store/ui/uiSlice"; 
 import type { User, UserRole } from "../../store/auth/authtype";
+import type { AppDispatch } from "../../store/index";
 
 interface SidebarProps {
   user: User;
@@ -43,12 +45,11 @@ const roleNavItems: Record<
 };
 
 export default function Sidebar({ user }: SidebarProps) {
-  const dispatch = useDispatch();
   const collapsed = useSelector((s: RootState) => s.ui.sidebarCollapsed);
   const navigate = useNavigate();
   const location = useLocation();
   const navItems = roleNavItems[user.role];
-
+  const dispatch = useDispatch<AppDispatch>();
   return (
     <aside
       className={`fixed left-0 top-16 ${
@@ -65,27 +66,6 @@ export default function Sidebar({ user }: SidebarProps) {
           {collapsed ? "➡️" : "⬅️"}
         </button>
       </div>
-
-      {/* User block
-      <div className="px-3 py-3 border-b">
-        <div className="flex items-center gap-3">
-          <div className="size-8 rounded-full bg-gray-200 overflow-hidden">
-            {user.avatarUrl && (
-              <img
-                src={user.avatarUrl}
-                alt={user.username}
-                className="w-full h-full object-cover"
-              />
-            )}
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-900">{user.username}</span>
-              <span className="text-xs text-gray-600">{user.role}</span>
-            </div>
-          )}
-        </div>
-      </div> */}
 
       {/* Role nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
@@ -114,7 +94,11 @@ export default function Sidebar({ user }: SidebarProps) {
         {/* Logout */}
         <div className="pt-4 mt-4 border-t">
           <button
-            onClick={() => navigate("/login")}
+          
+            onClick={() => {
+              dispatch(serverLogout()); 
+              navigate("/login");      
+            }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-red-50 hover:text-red-700"
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5" />
