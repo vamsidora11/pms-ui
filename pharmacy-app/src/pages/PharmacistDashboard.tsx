@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import Button from "../components/common/Button";
-import SectionHeader from "../components/common/SectionHeader";
-import StatusCard from "../components/common/StatusCard";
-import Table from "../components/common/Table";
-import Badge from "../components/common/Badge";
+import Button from "../components/common/Button/Button";
+import SectionHeader from "../components/common/SectionHeader/SectionHeader";
+import StatusCard from "../components/common/StatusCard/StatusCard";
+import Table from "../components/common/Table/Table";
+import Badge from "../components/common/Badge/Badge";
 
 export default function PharmacistDashboard() {
   const navigate = useNavigate();
