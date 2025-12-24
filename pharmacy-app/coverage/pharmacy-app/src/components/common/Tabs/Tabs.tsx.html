@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>5/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -91,44 +91,44 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">type TabsProps = {
   tabs: string[];
   active: string;
   onChange: (tab: string) =&gt; void;
 };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default function Tabs({ tabs, active, onChange }: TabsProps) {</span>
-<span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className="flex gap-6 border-b pb-2"&gt;</span>
-<span class="cstat-no" title="statement not covered" >      {tabs.map((tab) =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >        &lt;button</span>
-<span class="cstat-no" title="statement not covered" >          key={tab}</span>
-<span class="cstat-no" title="statement not covered" >          onClick={() =&gt; onChange(tab)}</span>
-<span class="cstat-no" title="statement not covered" >          className={`pb-1 text-sm font-medium </span>
-<span class="cstat-no" title="statement not covered" >            ${active === tab ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"}`}</span>
+export default function Tabs({ tabs, active, onChange }: TabsProps<span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >) {</span></span></span>
+  return (
+    &lt;div className="flex gap-6 border-b pb-2"&gt;
+      {tabs.map((tab) =&gt; (
+        &lt;button
+          key={tab}
+          onClick={() =&gt; onChange(tab)}
+          className={`pb-1 text-sm font-medium 
+            ${active === tab ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"}`}
         &gt;
-<span class="cstat-no" title="statement not covered" >          {tab}</span>
-<span class="cstat-no" title="statement not covered" >        &lt;/button&gt;</span>
-<span class="cstat-no" title="statement not covered" >      ))}</span>
-<span class="cstat-no" title="statement not covered" >    &lt;/div&gt;</span>
+          {tab}
+        &lt;/button&gt;
+      )<span class="branch-0 cbranch-no" title="branch not covered" >)<span class="branch-0 cbranch-no" title="branch not covered" >}</span></span>
+    &lt;/div&gt;
   );
-<span class="cstat-no" title="statement not covered" >}</span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -136,7 +136,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-23T13:02:53.504Z
+                at 2025-12-24T10:46:27.935Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>

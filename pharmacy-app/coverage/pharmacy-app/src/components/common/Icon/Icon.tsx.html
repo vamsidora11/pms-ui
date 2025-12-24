@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>13/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>9/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>13/14</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -85,8 +85,8 @@
 <a name='L20'></a><a href='#L20'>20</a>
 <a name='L21'></a><a href='#L21'>21</a>
 <a name='L22'></a><a href='#L22'>22</a>
-<a name='L23'></a><a href='#L23'>23</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -94,49 +94,52 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import React from "react";<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
-<span class="cstat-no" title="statement not covered" >import { FiAlertCircle, FiCheckCircle, FiClock, FiPackage } from "react-icons/fi"; </span>
-// You can import more icons from react-icons or your own SVGs
+<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">import { FiAlertCircle, FiCheckCircle, FiClock, FiPackage } from "react-icons/fi";
 &nbsp;
 interface IconProps {
-  name: "alert" | "check" | "clock" | "package"; // extend with more names
-  size?: number;   // default size
-  color?: string;  // Tailwind color class, e.g. "text-red-500"
+  name: "alert" | "check" | "clock" | "package";
+  size?: number;
+  color?: string;
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >const Icon: React.FC&lt;IconProps&gt; = ({ name, size = 20, color = "text-gray-600" }) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  const icons: Record&lt;string, JSX.Element&gt; = {</span>
-<span class="cstat-no" title="statement not covered" >    alert: &lt;FiAlertCircle className={`${color}`} size={size} /&gt;,</span>
-<span class="cstat-no" title="statement not covered" >    check: &lt;FiCheckCircle className={`${color}`} size={size} /&gt;,</span>
-<span class="cstat-no" title="statement not covered" >    clock: &lt;FiClock className={`${color}`} size={size} /&gt;,</span>
-<span class="cstat-no" title="statement not covered" >    package: &lt;FiPackage className={`${color}`} size={size} /&gt;,</span>
-<span class="cstat-no" title="statement not covered" >  };</span>
+const Icon = ({ name, size = 20, color = "text-gray-600" }: IconProps) =&gt; {
+  switch (name) {
+    case "alert"<span class="branch-0 cbranch-no" title="branch not covered" >:</span>
+      return &lt;FiAlertCircle className={color} size={size} /&gt;<span class="branch-0 cbranch-no" title="branch not covered" >;</span>
+    case "check"<span class="branch-0 cbranch-no" title="branch not covered" >:</span>
+      return &lt;FiCheckCircle className={color} size={size} /&gt;<span class="branch-0 cbranch-no" title="branch not covered" >;</span>
+    case "clock"<span class="branch-0 cbranch-no" title="branch not covered" >:</span>
+      return &lt;FiClock className={color} size={size} /&gt;<span class="branch-0 cbranch-no" title="branch not covered" >;</span>
+    case "package"<span class="branch-0 cbranch-no" title="branch not covered" >:</span>
+      return &lt;FiPackage className={color} size={size} /&gt;<span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >;</span></span>
+    default:
+<span class="cstat-no" title="statement not covered" >      return &lt;span className={color}&gt;?&lt;/span&gt;;</span>
+  }
+};
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return icons[name] || &lt;span className={`${color}`}&gt;?&lt;/span&gt;;</span>
-<span class="cstat-no" title="statement not covered" >};</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >export default Icon;</span>
-&nbsp;</pre></td></tr></table></pre>
+export default Icon;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-23T13:02:53.504Z
+                at 2025-12-24T10:46:27.935Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>

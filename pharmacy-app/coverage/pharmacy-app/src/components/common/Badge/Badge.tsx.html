@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/25</span>
+                <span class='fraction'>20/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">71.42% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>5/7</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/25</span>
+                <span class='fraction'>20/20</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -125,36 +125,36 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// import React from "react";
 &nbsp;
 type BadgeVariant =
@@ -171,36 +171,36 @@ type BadgeProps = {
   className?: string;
 };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default function Badge({</span>
-<span class="cstat-no" title="statement not covered" >  label,</span>
-<span class="cstat-no" title="statement not covered" >  variant = "default",</span>
-<span class="cstat-no" title="statement not covered" >  className = "",</span>
-<span class="cstat-no" title="statement not covered" >}: BadgeProps) {</span>
-<span class="cstat-no" title="statement not covered" >  const base =</span>
-<span class="cstat-no" title="statement not covered" >    "inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap";</span>
+export default function Badge({
+  label,
+  variant = "default",
+  className = "",
+}: BadgeProps) {
+  const base =
+    "inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap";
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  const variants: Record&lt;BadgeVariant, string&gt; = {</span>
-<span class="cstat-no" title="statement not covered" >    default: "bg-blue-600 text-white",</span>
-<span class="cstat-no" title="statement not covered" >    secondary: "bg-gray-200 text-gray-800",</span>
-<span class="cstat-no" title="statement not covered" >    success: "bg-green-100 text-green-700",</span>
-<span class="cstat-no" title="statement not covered" >    warning: "bg-yellow-100 text-yellow-700",</span>
-<span class="cstat-no" title="statement not covered" >    error: "bg-red-100 text-red-700",</span>
-<span class="cstat-no" title="statement not covered" >    outline: "border border-gray-300 text-gray-700 bg-transparent",</span>
-<span class="cstat-no" title="statement not covered" >  };</span>
+  const variants: Record&lt;BadgeVariant, string&gt; = {
+    default: "bg-blue-600 text-white",
+    secondary: "bg-gray-200 text-gray-800",
+    success: "bg-green-100 text-green-700",
+    warning: "bg-yellow-100 text-yellow-700",
+    error: "bg-red-100 text-red-700",
+    outline: "border border-gray-300 text-gray-700 bg-transparent",
+  }<span class="branch-0 cbranch-no" title="branch not covered" >;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;span</span>
-<span class="cstat-no" title="statement not covered" >      role="status"</span>
-<span class="cstat-no" title="statement not covered" >      className={`</span>
-<span class="cstat-no" title="statement not covered" >        ${base}</span>
-<span class="cstat-no" title="statement not covered" >        ${variants[variant]}</span>
-<span class="cstat-no" title="statement not covered" >        ${className}</span>
-      `}
+  return (
+    &lt;span
+      role="status"
+      className={`
+        ${base}
+        ${variants[variant]}
+        ${className}
+      `<span class="branch-0 cbranch-no" title="branch not covered" >}</span>
     &gt;
-<span class="cstat-no" title="statement not covered" >      {label}</span>
-<span class="cstat-no" title="statement not covered" >    &lt;/span&gt;</span>
+      {label}
+    &lt;/span&gt;
   );
-<span class="cstat-no" title="statement not covered" >}</span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -208,7 +208,7 @@ type BadgeProps = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-23T13:02:53.504Z
+                at 2025-12-24T10:46:27.935Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>

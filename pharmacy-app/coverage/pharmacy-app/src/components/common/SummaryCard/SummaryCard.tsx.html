@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">42.85% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>3/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -91,7 +91,7 @@
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L29'></a><a href='#L29'>29</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -100,26 +100,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import React from "react";<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from "react";
 &nbsp;
 type SummaryCardProps = {
   title: string;
@@ -128,23 +128,23 @@ type SummaryCardProps = {
   footer?: string;
 };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default function SummaryCard({</span>
-<span class="cstat-no" title="statement not covered" >  title,</span>
-<span class="cstat-no" title="statement not covered" >  value,</span>
-<span class="cstat-no" title="statement not covered" >  icon,</span>
-<span class="cstat-no" title="statement not covered" >  footer,</span>
-<span class="cstat-no" title="statement not covered" >}: SummaryCardProps) {</span>
-<span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className="p-4 bg-white rounded-lg shadow-sm border flex items-center gap-4"&gt;</span>
-<span class="cstat-no" title="statement not covered" >      {icon &amp;&amp; &lt;div className="text-blue-600"&gt;{icon}&lt;/div&gt;}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;div className="flex flex-col"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;span className="text-gray-500 text-sm"&gt;{title}&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;span className="text-2xl font-bold"&gt;{value}&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >        {footer &amp;&amp; &lt;span className="text-green-600 text-sm"&gt;{footer}&lt;/span&gt;}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >    &lt;/div&gt;</span>
+export default function SummaryCard({
+  title,
+  value,
+  icon,
+  footer,
+}: SummaryCardProps) {
+  return (
+    &lt;div className="p-4 bg-white rounded-lg shadow-sm border flex items-center gap-4"&gt;
+      {icon &amp;&amp; &lt;div className="text-blue-600"&gt;{icon}&lt;/div&gt;<span class="branch-0 cbranch-no" title="branch not covered" >}</span>
+      &lt;div className="flex flex-col"&gt;
+        &lt;span className="text-gray-500 text-sm"&gt;{title}&lt;/span&gt;
+        &lt;span className="text-2xl font-bold"&gt;{value}&lt;/span&gt;
+        {footer &amp;&amp; &lt;span className="text-green-600 text-sm"&gt;{footer}&lt;/span&gt;<span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >}</span></span></span>
+      &lt;/div&gt;
+    &lt;/div&gt;
   );
-<span class="cstat-no" title="statement not covered" >}</span>
+}
 &nbsp;
 &nbsp;
 &nbsp;</pre></td></tr></table></pre>
@@ -154,7 +154,7 @@ type SummaryCardProps = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-23T13:02:53.504Z
+                at 2025-12-24T10:46:27.935Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>

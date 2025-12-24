@@ -3,7 +3,7 @@ import React from "react";
 type Column<T> = {
   key: keyof T;
   label: string;
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => React.ReactNode;
 };
 
 type TableProps<T> = {

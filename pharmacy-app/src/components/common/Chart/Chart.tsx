@@ -1,4 +1,3 @@
-import React from "react";
 import {
   LineChart,
   Line,
@@ -11,8 +10,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+type ChartData = Record<string, string | number>;
+
 type ChartProps = {
-  data: any[];
+  data: ChartData[];
   xKey: string;
   yKey: string;
   type?: "line" | "bar";
