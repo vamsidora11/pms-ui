@@ -1,5 +1,4 @@
 import React from "react";
-
 type ButtonProps = {
   children: React.ReactNode;
   type?: "button" | "submit";
@@ -9,7 +8,6 @@ type ButtonProps = {
   disabled?: boolean;
   className?: string;
 };
-
 export default function Button({
   children,
   type = "button",
@@ -21,13 +19,11 @@ export default function Button({
 }: ButtonProps) {
   const base =
     "inline-flex items-center rounded-lg font-medium transition";
-
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700",
     secondary: "bg-gray-300 text-gray-800 hover:bg-gray-400",
     danger: "bg-red-600 text-white hover:bg-red-700",
   };
-
   const sizes = {
     sm: "px-3 py-1.5 text-sm",
     md: "px-4 py-2",
