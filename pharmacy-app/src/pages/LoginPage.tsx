@@ -16,8 +16,9 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;  if (!form.checkValidity()) { form.reportValidity(); return; }
     const result = await dispatch(loginUser({ username, password }));
     if (loginUser.fulfilled.match(result)) {
       const role = user?.role;

@@ -93,7 +93,7 @@ export default function PrescriptionValidationPage() {
       <div className="grid grid-cols-12 gap-6">
         {/* LEFT QUEUE */}
         <div className="col-span-12 lg:col-span-3">
-          <Card className="h-[calc(100vh-180px)]">
+          <Card className="h-full">
             <CardHeader>
               <CardTitle>Validation Queue</CardTitle>
               <CardDescription>

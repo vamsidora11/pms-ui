@@ -16,7 +16,7 @@ import uiReducer from "./ui/uiSlice";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage
 import { persistStore, persistReducer } from "redux-persist";
 
-const authPersistConfig = { key: "auth", storage };
+const authPersistConfig = { key: "auth", storage, whitelist: ["user", "accessToken"], };
 const uiPersistConfig = { key: "ui", storage };
 
 const persistedAuth = persistReducer(authPersistConfig, authReducer);
