@@ -7,5 +7,7 @@ export const ENDPOINTS = {
 
   // prescriptions
   prescriptions: "/api/prescriptions",
-  prescriptionById: (id: string) => `/api/prescriptions/${id}`,
+  prescriptionentry: "/api/prescriptions/entry",
+  prescriptionDetails: "/api/prescriptions/details",
+  validatePrescription: "/api/prescription/validate",
 };

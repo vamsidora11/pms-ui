@@ -72,6 +72,7 @@ export default function Input({
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
+          required={required}
           className="
             w-full
             bg-transparent
