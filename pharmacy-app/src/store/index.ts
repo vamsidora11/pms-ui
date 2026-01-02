@@ -1,20 +1,9 @@
-// import { configureStore } from "@reduxjs/toolkit";
-// import authReducer from "../store/auth/authSlice";
-// import uiReducer from "../store/ui/uiSlice";
-
-// export const store = configureStore({
-//   reducer: { auth: authReducer,
-//     ui: uiReducer,
-//    },
-// });
-
-// export type RootState = ReturnType<typeof store.getState>;
-// export type AppDispatch = typeof store.dispatch;
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./auth/authSlice";
 import uiReducer from "./ui/uiSlice";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage
 import { persistStore, persistReducer } from "redux-persist";
+import prescriptionReducer from "./prescription/prescriptionSlice";
 
 const authPersistConfig = { key: "auth", storage, whitelist: ["user", "accessToken"], };
 const uiPersistConfig = { key: "ui", storage };
@@ -26,6 +15,7 @@ export const store = configureStore({
   reducer: {
     auth: persistedAuth,
     ui: persistedUi,
+    prescriptions: prescriptionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

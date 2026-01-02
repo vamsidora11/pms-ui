@@ -10,7 +10,6 @@ const api = axios.create({
 
 // Interceptor for attaching token
 api.interceptors.request.use((config) => {
-  // if ( config.url?.includes("/login") && (!config.data?.username || !config.data?.password) ) { return Promise.reject(new Error("Username and password required")); }
   const token = store.getState().auth.accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

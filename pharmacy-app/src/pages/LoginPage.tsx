@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { loginUser } from "../store/auth/authSlice";
 import type { AppDispatch, RootState } from "../store";
 
-import Input from "../components/common/Input";
-import Button from "../components/common/Button";
+import Input from "../components/common/Input/Input";
+import Button from "../components/common/Button/Button";
 import LoginImage from "../assets/Login.png";
 
 export default function LoginPage() {
@@ -18,7 +18,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;  if (!form.checkValidity()) { form.reportValidity(); return; }
     const result = await dispatch(loginUser({ username, password }));
     if (loginUser.fulfilled.match(result)) {
       const role = user?.role;

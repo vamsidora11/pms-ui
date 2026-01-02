@@ -1,36 +1,3 @@
-// import { createAsyncThunk } from "@reduxjs/toolkit";
-// import api from "../../api/axiosInstance";
-// import { ENDPOINTS } from "../../api/endpoints";
-// import { createSlice } from "@reduxjs/toolkit";
-
-// export const createPrescription = createAsyncThunk(
-//   "prescriptions/create",
-//   async (prescriptionData) => {
-//     const response = await api.post(ENDPOINTS.prescriptionentry, prescriptionData);
-//     return response.data;
-//   }
-// );
-
-// const prescriptionsSlice = createSlice({
-//   name: "prescriptions",
-//   initialState: { items: [], status: "idle", error: null },
-//   reducers: {},
-//   extraReducers: (builder) => {
-//     builder
-//       .addCase(createPrescription.pending, (state) => {
-//         state.status = "loading";
-//       })
-//       .addCase(createPrescription.fulfilled, (state, action) => {
-//         state.status = "succeeded";
-//         state.items.push(action.payload);
-//       })
-//       .addCase(createPrescription.rejected, (state, action) => {
-//         state.status = "failed";
-//         state.error = action.error.message;
-//       });
-//   },
-// });
-
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { prescriptionApi, getPrescriptionDetails, validatePrescription } from "../../api/prescription";
 
