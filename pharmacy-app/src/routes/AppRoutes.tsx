@@ -1,11 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import AppLayout from "../components/layouts/Applayout";
-import LoginPage from "../pages/LoginPage";
-import PharmacistDashboard from "../pages/PharmacistDashboard";
-import ManualPrescriptionView from "../modules/prescription/ManualPrescriptionView";
-import PrescriptionValidationPage from "../modules/prescription/PrescriptionValidationPage";
-import TechnicianDashboard from "../pages/TechnicianDashboard";
+import LoginPage from "../features/auth/LoginPage";
+import PharmacistDashboard from "../features/auth/PharmacistDashboard";
+import ManualPrescriptionView from "../features/prescription/ManualPrescriptionView";
+import PrescriptionValidationPage from "../features/prescription/PrescriptionValidationPage";
+import TechnicianDashboard from "../features/auth/TechnicianDashboard";
 
 export default function AppRoutes() {
   return (
