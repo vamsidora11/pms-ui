@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1766573188390" clover="3.2.0">
-  <project timestamp="1766573188390" name="All files">
-    <metrics statements="1665" coveredstatements="547" conditionals="351" coveredconditionals="226" methods="62" coveredmethods="41" elements="2078" coveredelements="814" complexity="0" loc="1665" ncloc="1665" packages="35" files="47" classes="47"/>
+<coverage generated="1767592565529" clover="3.2.0">
+  <project timestamp="1767592565530" name="All files">
+    <metrics statements="1755" coveredstatements="548" conditionals="355" coveredconditionals="226" methods="65" coveredmethods="41" elements="2175" coveredelements="815" complexity="0" loc="1755" ncloc="1755" packages="36" files="50" classes="50"/>
     <package name="pharmacy-app">
       <metrics statements="14" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="2" coveredmethods="0"/>
-      <file name="postcss.config.js" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\postcss.config.js">
+      <file name="postcss.config.js" path="C:\PMS-UI\pharmacy-app\postcss.config.js">
         <metrics statements="6" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -13,7 +13,7 @@
         <line num="5" count="0" type="stmt"/>
         <line num="6" count="0" type="stmt"/>
       </file>
-      <file name="tailwind.config.js" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\tailwind.config.js">
+      <file name="tailwind.config.js" path="C:\PMS-UI\pharmacy-app\tailwind.config.js">
         <metrics statements="8" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -27,7 +27,7 @@
     </package>
     <package name="pharmacy-app.src">
       <metrics statements="27" coveredstatements="0" conditionals="2" coveredconditionals="1" methods="2" coveredmethods="1"/>
-      <file name="App.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\App.tsx">
+      <file name="App.tsx" path="C:\PMS-UI\pharmacy-app\src\App.tsx">
         <metrics statements="12" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -42,7 +42,7 @@
         <line num="12" count="0" type="stmt"/>
         <line num="14" count="0" type="stmt"/>
       </file>
-      <file name="main.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\main.tsx">
+      <file name="main.tsx" path="C:\PMS-UI\pharmacy-app\src\main.tsx">
         <metrics statements="15" coveredstatements="0" conditionals="1" coveredconditionals="1" methods="1" coveredmethods="1"/>
         <line num="13" count="0" type="stmt"/>
         <line num="14" count="0" type="stmt"/>
@@ -62,8 +62,8 @@
       </file>
     </package>
     <package name="pharmacy-app.src.api">
-      <metrics statements="58" coveredstatements="0" conditionals="4" coveredconditionals="0" methods="4" coveredmethods="0"/>
-      <file name="auth.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\api\auth.ts">
+      <metrics statements="74" coveredstatements="0" conditionals="5" coveredconditionals="0" methods="5" coveredmethods="0"/>
+      <file name="auth.ts" path="C:\PMS-UI\pharmacy-app\src\api\auth.ts">
         <metrics statements="13" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -79,7 +79,7 @@
         <line num="15" count="0" type="stmt"/>
         <line num="16" count="0" type="stmt"/>
       </file>
-      <file name="axiosInstance.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\api\axiosInstance.ts">
+      <file name="axiosInstance.ts" path="C:\PMS-UI\pharmacy-app\src\api\axiosInstance.ts">
         <metrics statements="33" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -115,8 +115,8 @@
         <line num="38" count="0" type="stmt"/>
         <line num="40" count="0" type="stmt"/>
       </file>
-      <file name="endpoints.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\api\endpoints.ts">
-        <metrics statements="8" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
+      <file name="endpoints.ts" path="C:\PMS-UI\pharmacy-app\src\api\endpoints.ts">
+        <metrics statements="10" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="3" count="0" type="stmt"/>
         <line num="4" count="0" type="stmt"/>
@@ -125,18 +125,37 @@
         <line num="9" count="0" type="stmt"/>
         <line num="10" count="0" type="stmt"/>
         <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
       </file>
-      <file name="http.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\api\http.ts">
+      <file name="http.ts" path="C:\PMS-UI\pharmacy-app\src\api\http.ts">
         <metrics statements="4" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="3" count="0" type="stmt"/>
         <line num="4" count="0" type="stmt"/>
         <line num="5" count="0" type="stmt"/>
       </file>
+      <file name="prescription.ts" path="C:\PMS-UI\pharmacy-app\src\api\prescription.ts">
+        <metrics statements="14" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="2" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="17" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="19" count="0" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
+      </file>
     </package>
     <package name="pharmacy-app.src.components.common.Badge">
       <metrics statements="20" coveredstatements="20" conditionals="7" coveredconditionals="5" methods="1" coveredmethods="1"/>
-      <file name="Badge.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Badge\Badge.tsx">
+      <file name="Badge.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Badge\Badge.tsx">
         <metrics statements="20" coveredstatements="20" conditionals="7" coveredconditionals="5" methods="1" coveredmethods="1"/>
         <line num="17" count="27" type="cond" truecount="1" falsecount="0"/>
         <line num="19" count="27" type="cond" truecount="2" falsecount="0"/>
@@ -162,7 +181,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Button">
       <metrics statements="30" coveredstatements="30" conditionals="19" coveredconditionals="13" methods="1" coveredmethods="1"/>
-      <file name="Button.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Button\Button.tsx">
+      <file name="Button.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Button\Button.tsx">
         <metrics statements="30" coveredstatements="30" conditionals="19" coveredconditionals="13" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="11" count="21" type="cond" truecount="1" falsecount="0"/>
@@ -198,7 +217,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Card">
       <metrics statements="52" coveredstatements="52" conditionals="25" coveredconditionals="7" methods="7" coveredmethods="7"/>
-      <file name="Card.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Card\Card.tsx">
+      <file name="Card.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Card\Card.tsx">
         <metrics statements="52" coveredstatements="52" conditionals="25" coveredconditionals="7" methods="7" coveredmethods="7"/>
         <line num="1" count="1" type="stmt"/>
         <line num="3" count="54" type="cond" truecount="1" falsecount="0"/>
@@ -256,7 +275,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Chart">
       <metrics statements="24" coveredstatements="24" conditionals="12" coveredconditionals="9" methods="1" coveredmethods="1"/>
-      <file name="Chart.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Chart\Chart.tsx">
+      <file name="Chart.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Chart\Chart.tsx">
         <metrics statements="24" coveredstatements="24" conditionals="12" coveredconditionals="9" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="23" count="29" type="cond" truecount="1" falsecount="0"/>
@@ -286,7 +305,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Checkbox">
       <metrics statements="35" coveredstatements="35" conditionals="33" coveredconditionals="32" methods="2" coveredmethods="2"/>
-      <file name="Checkbox.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Checkbox\Checkbox.tsx">
+      <file name="Checkbox.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Checkbox\Checkbox.tsx">
         <metrics statements="35" coveredstatements="35" conditionals="33" coveredconditionals="32" methods="2" coveredmethods="2"/>
         <line num="1" count="1" type="stmt"/>
         <line num="14" count="37" type="cond" truecount="1" falsecount="0"/>
@@ -327,7 +346,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Drawer">
       <metrics statements="15" coveredstatements="15" conditionals="11" coveredconditionals="7" methods="1" coveredmethods="1"/>
-      <file name="Drawer.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Drawer\Drawer.tsx">
+      <file name="Drawer.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Drawer\Drawer.tsx">
         <metrics statements="15" coveredstatements="15" conditionals="11" coveredconditionals="7" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="10" count="30" type="cond" truecount="1" falsecount="1"/>
@@ -348,7 +367,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.FilterBar">
       <metrics statements="10" coveredstatements="10" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
-      <file name="FilterBar.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\FilterBar\FilterBar.tsx">
+      <file name="FilterBar.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\FilterBar\FilterBar.tsx">
         <metrics statements="10" coveredstatements="10" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
         <line num="6" count="15" type="cond" truecount="1" falsecount="0"/>
         <line num="8" count="15" type="stmt"/>
@@ -364,7 +383,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Icon">
       <metrics statements="14" coveredstatements="13" conditionals="18" coveredconditionals="9" methods="1" coveredmethods="1"/>
-      <file name="Icon.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Icon\Icon.tsx">
+      <file name="Icon.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Icon\Icon.tsx">
         <metrics statements="14" coveredstatements="13" conditionals="18" coveredconditionals="9" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="9" count="1" type="cond" truecount="5" falsecount="0"/>
@@ -383,9 +402,9 @@
       </file>
     </package>
     <package name="pharmacy-app.src.components.common.Input">
-      <metrics statements="46" coveredstatements="46" conditionals="30" coveredconditionals="14" methods="1" coveredmethods="1"/>
-      <file name="Input.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Input\Input.tsx">
-        <metrics statements="46" coveredstatements="46" conditionals="30" coveredconditionals="14" methods="1" coveredmethods="1"/>
+      <metrics statements="47" coveredstatements="47" conditionals="31" coveredconditionals="14" methods="1" coveredmethods="1"/>
+      <file name="Input.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Input\Input.tsx">
+        <metrics statements="47" coveredstatements="47" conditionals="31" coveredconditionals="14" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="17" count="7" type="cond" truecount="1" falsecount="0"/>
         <line num="22" count="7" type="cond" truecount="0" falsecount="1"/>
@@ -410,7 +429,7 @@
         <line num="63" count="1" type="stmt"/>
         <line num="64" count="1" type="stmt"/>
         <line num="65" count="1" type="stmt"/>
-        <line num="66" count="7" type="cond" truecount="0" falsecount="5"/>
+        <line num="66" count="7" type="cond" truecount="0" falsecount="6"/>
         <line num="69" count="7" type="stmt"/>
         <line num="70" count="7" type="stmt"/>
         <line num="71" count="7" type="stmt"/>
@@ -418,25 +437,26 @@
         <line num="73" count="7" type="stmt"/>
         <line num="74" count="7" type="stmt"/>
         <line num="75" count="7" type="stmt"/>
-        <line num="82" count="7" type="stmt"/>
+        <line num="76" count="7" type="stmt"/>
         <line num="83" count="7" type="stmt"/>
-        <line num="86" count="7" type="cond" truecount="1" falsecount="0"/>
-        <line num="87" count="1" type="stmt"/>
+        <line num="84" count="7" type="stmt"/>
+        <line num="87" count="7" type="cond" truecount="1" falsecount="0"/>
         <line num="88" count="1" type="stmt"/>
         <line num="89" count="1" type="stmt"/>
-        <line num="90" count="7" type="cond" truecount="0" falsecount="4"/>
-        <line num="91" count="7" type="stmt"/>
-        <line num="94" count="7" type="cond" truecount="1" falsecount="0"/>
-        <line num="95" count="1" type="stmt"/>
+        <line num="90" count="1" type="stmt"/>
+        <line num="91" count="7" type="cond" truecount="0" falsecount="4"/>
+        <line num="92" count="7" type="stmt"/>
+        <line num="95" count="7" type="cond" truecount="1" falsecount="0"/>
         <line num="96" count="1" type="stmt"/>
         <line num="97" count="1" type="stmt"/>
-        <line num="98" count="7" type="cond" truecount="0" falsecount="3"/>
-        <line num="99" count="7" type="stmt"/>
+        <line num="98" count="1" type="stmt"/>
+        <line num="99" count="7" type="cond" truecount="0" falsecount="3"/>
+        <line num="100" count="7" type="stmt"/>
       </file>
     </package>
     <package name="pharmacy-app.src.components.common.Logo">
       <metrics statements="33" coveredstatements="33" conditionals="28" coveredconditionals="23" methods="1" coveredmethods="1"/>
-      <file name="Logo.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Logo\Logo.tsx">
+      <file name="Logo.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Logo\Logo.tsx">
         <metrics statements="33" coveredstatements="33" conditionals="28" coveredconditionals="23" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="40" count="9" type="cond" truecount="1" falsecount="0"/>
@@ -475,7 +495,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Modal">
       <metrics statements="16" coveredstatements="16" conditionals="7" coveredconditionals="6" methods="1" coveredmethods="1"/>
-      <file name="Modal.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Modal\Modal.tsx">
+      <file name="Modal.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Modal\Modal.tsx">
         <metrics statements="16" coveredstatements="16" conditionals="7" coveredconditionals="6" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="10" count="5" type="cond" truecount="1" falsecount="0"/>
@@ -497,7 +517,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.PrescriptionCard">
       <metrics statements="39" coveredstatements="39" conditionals="15" coveredconditionals="7" methods="1" coveredmethods="1"/>
-      <file name="PrescriptionCard.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\PrescriptionCard\PrescriptionCard.tsx">
+      <file name="PrescriptionCard.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\PrescriptionCard\PrescriptionCard.tsx">
         <metrics statements="39" coveredstatements="39" conditionals="15" coveredconditionals="7" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="14" count="1" type="cond" truecount="1" falsecount="0"/>
@@ -542,7 +562,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.ScrollArea">
       <metrics statements="14" coveredstatements="14" conditionals="8" coveredconditionals="7" methods="1" coveredmethods="1"/>
-      <file name="ScrollArea.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\ScrollArea\ScrollArea.tsx">
+      <file name="ScrollArea.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\ScrollArea\ScrollArea.tsx">
         <metrics statements="14" coveredstatements="14" conditionals="8" coveredconditionals="7" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="10" count="5" type="cond" truecount="1" falsecount="0"/>
@@ -562,7 +582,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.SectionHeader">
       <metrics statements="17" coveredstatements="17" conditionals="7" coveredconditionals="3" methods="1" coveredmethods="1"/>
-      <file name="SectionHeader.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\SectionHeader\SectionHeader.tsx">
+      <file name="SectionHeader.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\SectionHeader\SectionHeader.tsx">
         <metrics statements="17" coveredstatements="17" conditionals="7" coveredconditionals="3" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="9" count="1" type="cond" truecount="1" falsecount="0"/>
@@ -585,7 +605,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Separator">
       <metrics statements="30" coveredstatements="30" conditionals="18" coveredconditionals="12" methods="1" coveredmethods="1"/>
-      <file name="Separator.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Separator\Separator.tsx">
+      <file name="Separator.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Separator\Separator.tsx">
         <metrics statements="30" coveredstatements="30" conditionals="18" coveredconditionals="12" methods="1" coveredmethods="1"/>
         <line num="10" count="9" type="cond" truecount="1" falsecount="0"/>
         <line num="11" count="9" type="cond" truecount="2" falsecount="0"/>
@@ -621,7 +641,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.StatusCard">
       <metrics statements="14" coveredstatements="14" conditionals="7" coveredconditionals="6" methods="1" coveredmethods="1"/>
-      <file name="StatusCard.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\StatusCard\StatusCard.tsx">
+      <file name="StatusCard.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\StatusCard\StatusCard.tsx">
         <metrics statements="14" coveredstatements="14" conditionals="7" coveredconditionals="6" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="12" count="1" type="cond" truecount="1" falsecount="0"/>
@@ -641,7 +661,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.SummaryCard">
       <metrics statements="11" coveredstatements="11" conditionals="7" coveredconditionals="3" methods="1" coveredmethods="1"/>
-      <file name="SummaryCard.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\SummaryCard\SummaryCard.tsx">
+      <file name="SummaryCard.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\SummaryCard\SummaryCard.tsx">
         <metrics statements="11" coveredstatements="11" conditionals="7" coveredconditionals="3" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="10" count="7" type="cond" truecount="1" falsecount="0"/>
@@ -658,7 +678,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Table">
       <metrics statements="30" coveredstatements="30" conditionals="8" coveredconditionals="5" methods="3" coveredmethods="3"/>
-      <file name="Table.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Table\Table.tsx">
+      <file name="Table.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Table\Table.tsx">
         <metrics statements="30" coveredstatements="30" conditionals="8" coveredconditionals="5" methods="3" coveredmethods="3"/>
         <line num="1" count="1" type="stmt"/>
         <line num="14" count="5" type="cond" truecount="2" falsecount="0"/>
@@ -694,7 +714,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Tabs">
       <metrics statements="12" coveredstatements="12" conditionals="10" coveredconditionals="5" methods="3" coveredmethods="3"/>
-      <file name="Tabs.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Tabs\Tabs.tsx">
+      <file name="Tabs.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Tabs\Tabs.tsx">
         <metrics statements="12" coveredstatements="12" conditionals="10" coveredconditionals="5" methods="3" coveredmethods="3"/>
         <line num="7" count="6" type="cond" truecount="1" falsecount="3"/>
         <line num="9" count="6" type="stmt"/>
@@ -712,7 +732,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.TextArea">
       <metrics statements="31" coveredstatements="31" conditionals="22" coveredconditionals="21" methods="1" coveredmethods="1"/>
-      <file name="TextArea.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\TextArea\TextArea.tsx">
+      <file name="TextArea.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\TextArea\TextArea.tsx">
         <metrics statements="31" coveredstatements="31" conditionals="22" coveredconditionals="21" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="14" count="14" type="cond" truecount="1" falsecount="0"/>
@@ -749,7 +769,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Toast">
       <metrics statements="18" coveredstatements="18" conditionals="11" coveredconditionals="7" methods="2" coveredmethods="2"/>
-      <file name="Toast.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Toast\Toast.tsx">
+      <file name="Toast.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Toast\Toast.tsx">
         <metrics statements="18" coveredstatements="18" conditionals="11" coveredconditionals="7" methods="2" coveredmethods="2"/>
         <line num="1" count="1" type="stmt"/>
         <line num="10" count="8" type="cond" truecount="1" falsecount="0"/>
@@ -773,7 +793,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.Tooltip">
       <metrics statements="15" coveredstatements="15" conditionals="9" coveredconditionals="8" methods="3" coveredmethods="3"/>
-      <file name="Tooltip.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\Tooltip\Tooltip.tsx">
+      <file name="Tooltip.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\Tooltip\Tooltip.tsx">
         <metrics statements="15" coveredstatements="15" conditionals="9" coveredconditionals="8" methods="3" coveredmethods="3"/>
         <line num="1" count="1" type="stmt"/>
         <line num="8" count="1" type="cond" truecount="1" falsecount="0"/>
@@ -794,7 +814,7 @@
     </package>
     <package name="pharmacy-app.src.components.common.ValidationMessage">
       <metrics statements="22" coveredstatements="22" conditionals="13" coveredconditionals="12" methods="1" coveredmethods="1"/>
-      <file name="Validationmessage.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\common\ValidationMessage\Validationmessage.tsx">
+      <file name="Validationmessage.tsx" path="C:\PMS-UI\pharmacy-app\src\components\common\ValidationMessage\Validationmessage.tsx">
         <metrics statements="22" coveredstatements="22" conditionals="13" coveredconditionals="12" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>
@@ -822,7 +842,7 @@
     </package>
     <package name="pharmacy-app.src.components.layouts">
       <metrics statements="151" coveredstatements="0" conditionals="3" coveredconditionals="0" methods="3" coveredmethods="0"/>
-      <file name="Applayout.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\layouts\Applayout.tsx">
+      <file name="Applayout.tsx" path="C:\PMS-UI\pharmacy-app\src\components\layouts\Applayout.tsx">
         <metrics statements="29" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -854,7 +874,7 @@
         <line num="37" count="0" type="stmt"/>
         <line num="39" count="0" type="stmt"/>
       </file>
-      <file name="Sidebar.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\layouts\Sidebar.tsx">
+      <file name="Sidebar.tsx" path="C:\PMS-UI\pharmacy-app\src\components\layouts\Sidebar.tsx">
         <metrics statements="80" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -937,7 +957,7 @@
         <line num="114" count="0" type="stmt"/>
         <line num="116" count="0" type="stmt"/>
       </file>
-      <file name="TopNavBar.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\components\layouts\TopNavBar.tsx">
+      <file name="TopNavBar.tsx" path="C:\PMS-UI\pharmacy-app\src\components\layouts\TopNavBar.tsx">
         <metrics statements="42" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="11" count="0" type="stmt"/>
@@ -985,7 +1005,7 @@
     </package>
     <package name="pharmacy-app.src.constant">
       <metrics statements="4" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
-      <file name="routes.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\constant\routes.ts">
+      <file name="routes.ts" path="C:\PMS-UI\pharmacy-app\src\constant\routes.ts">
         <metrics statements="4" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -995,7 +1015,7 @@
     </package>
     <package name="pharmacy-app.src.modules.prescription">
       <metrics statements="589" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="2" coveredmethods="0"/>
-      <file name="ManualPrescriptionView.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\modules\prescription\ManualPrescriptionView.tsx">
+      <file name="ManualPrescriptionView.tsx" path="C:\PMS-UI\pharmacy-app\src\modules\prescription\ManualPrescriptionView.tsx">
         <metrics statements="330" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1328,7 +1348,7 @@
         <line num="409" count="0" type="stmt"/>
         <line num="411" count="0" type="stmt"/>
       </file>
-      <file name="PrescriptionValidationPage.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\modules\prescription\PrescriptionValidationPage.tsx">
+      <file name="PrescriptionValidationPage.tsx" path="C:\PMS-UI\pharmacy-app\src\modules\prescription\PrescriptionValidationPage.tsx">
         <metrics statements="259" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1593,7 +1613,7 @@
     </package>
     <package name="pharmacy-app.src.pages">
       <metrics statements="128" coveredstatements="0" conditionals="3" coveredconditionals="0" methods="3" coveredmethods="0"/>
-      <file name="LoginPage.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\pages\LoginPage.tsx">
+      <file name="LoginPage.tsx" path="C:\PMS-UI\pharmacy-app\src\pages\LoginPage.tsx">
         <metrics statements="71" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1667,7 +1687,7 @@
         <line num="87" count="0" type="stmt"/>
         <line num="89" count="0" type="stmt"/>
       </file>
-      <file name="PharmacistDashboard.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\pages\PharmacistDashboard.tsx">
+      <file name="PharmacistDashboard.tsx" path="C:\PMS-UI\pharmacy-app\src\pages\PharmacistDashboard.tsx">
         <metrics statements="54" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1724,7 +1744,7 @@
         <line num="63" count="0" type="stmt"/>
         <line num="65" count="0" type="stmt"/>
       </file>
-      <file name="TechnicianDashboard.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\pages\TechnicianDashboard.tsx">
+      <file name="TechnicianDashboard.tsx" path="C:\PMS-UI\pharmacy-app\src\pages\TechnicianDashboard.tsx">
         <metrics statements="3" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1733,7 +1753,7 @@
     </package>
     <package name="pharmacy-app.src.routes">
       <metrics statements="49" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="2" coveredmethods="0"/>
-      <file name="AppRoutes.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\routes\AppRoutes.tsx">
+      <file name="AppRoutes.tsx" path="C:\PMS-UI\pharmacy-app\src\routes\AppRoutes.tsx">
         <metrics statements="33" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1769,7 +1789,7 @@
         <line num="37" count="0" type="stmt"/>
         <line num="39" count="0" type="stmt"/>
       </file>
-      <file name="ProtectedRoute.tsx" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\routes\ProtectedRoute.tsx">
+      <file name="ProtectedRoute.tsx" path="C:\PMS-UI\pharmacy-app\src\routes\ProtectedRoute.tsx">
         <metrics statements="16" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1790,34 +1810,36 @@
       </file>
     </package>
     <package name="pharmacy-app.src.store">
-      <metrics statements="20" coveredstatements="0" conditionals="1" coveredconditionals="1" methods="1" coveredmethods="1"/>
-      <file name="index.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\store\index.ts">
-        <metrics statements="20" coveredstatements="0" conditionals="1" coveredconditionals="1" methods="1" coveredmethods="1"/>
-        <line num="13" count="0" type="stmt"/>
+      <metrics statements="22" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
+      <file name="index.ts" path="C:\PMS-UI\pharmacy-app\src\store\index.ts">
+        <metrics statements="22" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="2" count="0" type="stmt"/>
+        <line num="3" count="0" type="stmt"/>
+        <line num="4" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
         <line num="14" count="0" type="stmt"/>
         <line num="15" count="0" type="stmt"/>
         <line num="16" count="0" type="stmt"/>
         <line num="17" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
         <line num="19" count="0" type="stmt"/>
         <line num="20" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
         <line num="22" count="0" type="stmt"/>
         <line num="23" count="0" type="stmt"/>
-        <line num="25" count="0" type="stmt"/>
+        <line num="24" count="0" type="stmt"/>
         <line num="26" count="0" type="stmt"/>
-        <line num="27" count="0" type="stmt"/>
-        <line num="28" count="0" type="stmt"/>
-        <line num="29" count="0" type="stmt"/>
-        <line num="30" count="0" type="stmt"/>
-        <line num="31" count="0" type="stmt"/>
-        <line num="32" count="0" type="stmt"/>
-        <line num="33" count="0" type="stmt"/>
-        <line num="34" count="0" type="stmt"/>
-        <line num="36" count="0" type="stmt"/>
       </file>
     </package>
     <package name="pharmacy-app.src.store.auth">
       <metrics statements="52" coveredstatements="0" conditionals="2" coveredconditionals="1" methods="2" coveredmethods="1"/>
-      <file name="authSlice.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\store\auth\authSlice.ts">
+      <file name="authSlice.ts" path="C:\PMS-UI\pharmacy-app\src\store\auth\authSlice.ts">
         <metrics statements="52" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>
@@ -1872,13 +1894,93 @@
         <line num="69" count="0" type="stmt"/>
         <line num="70" count="0" type="stmt"/>
       </file>
-      <file name="authtype.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\store\auth\authtype.ts">
+      <file name="authtype.ts" path="C:\PMS-UI\pharmacy-app\src\store\auth\authtype.ts">
+        <metrics statements="0" coveredstatements="0" conditionals="1" coveredconditionals="1" methods="1" coveredmethods="1"/>
+      </file>
+    </package>
+    <package name="pharmacy-app.src.store.prescription">
+      <metrics statements="71" coveredstatements="0" conditionals="2" coveredconditionals="1" methods="2" coveredmethods="1"/>
+      <file name="prescriptionSlice.ts" path="C:\PMS-UI\pharmacy-app\src\store\prescription\prescriptionSlice.ts">
+        <metrics statements="71" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="2" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="17" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="24" count="0" type="stmt"/>
+        <line num="25" count="0" type="stmt"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="35" count="0" type="stmt"/>
+        <line num="37" count="0" type="stmt"/>
+        <line num="38" count="0" type="stmt"/>
+        <line num="39" count="0" type="stmt"/>
+        <line num="40" count="0" type="stmt"/>
+        <line num="41" count="0" type="stmt"/>
+        <line num="43" count="0" type="stmt"/>
+        <line num="44" count="0" type="stmt"/>
+        <line num="45" count="0" type="stmt"/>
+        <line num="46" count="0" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
+        <line num="49" count="0" type="stmt"/>
+        <line num="50" count="0" type="stmt"/>
+        <line num="51" count="0" type="stmt"/>
+        <line num="52" count="0" type="stmt"/>
+        <line num="53" count="0" type="stmt"/>
+        <line num="54" count="0" type="stmt"/>
+        <line num="57" count="0" type="stmt"/>
+        <line num="58" count="0" type="stmt"/>
+        <line num="59" count="0" type="stmt"/>
+        <line num="60" count="0" type="stmt"/>
+        <line num="61" count="0" type="stmt"/>
+        <line num="62" count="0" type="stmt"/>
+        <line num="63" count="0" type="stmt"/>
+        <line num="64" count="0" type="stmt"/>
+        <line num="65" count="0" type="stmt"/>
+        <line num="66" count="0" type="stmt"/>
+        <line num="67" count="0" type="stmt"/>
+        <line num="68" count="0" type="stmt"/>
+        <line num="71" count="0" type="stmt"/>
+        <line num="72" count="0" type="stmt"/>
+        <line num="73" count="0" type="stmt"/>
+        <line num="74" count="0" type="stmt"/>
+        <line num="75" count="0" type="stmt"/>
+        <line num="76" count="0" type="stmt"/>
+        <line num="78" count="0" type="stmt"/>
+        <line num="79" count="0" type="stmt"/>
+        <line num="80" count="0" type="stmt"/>
+        <line num="81" count="0" type="stmt"/>
+        <line num="83" count="0" type="stmt"/>
+        <line num="84" count="0" type="stmt"/>
+        <line num="85" count="0" type="stmt"/>
+        <line num="86" count="0" type="stmt"/>
+        <line num="87" count="0" type="stmt"/>
+        <line num="88" count="0" type="stmt"/>
+        <line num="89" count="0" type="stmt"/>
+        <line num="90" count="0" type="stmt"/>
+        <line num="91" count="0" type="stmt"/>
+        <line num="92" count="0" type="stmt"/>
+        <line num="94" count="0" type="stmt"/>
+      </file>
+      <file name="prescriptiontype.ts" path="C:\PMS-UI\pharmacy-app\src\store\prescription\prescriptiontype.ts">
         <metrics statements="0" coveredstatements="0" conditionals="1" coveredconditionals="1" methods="1" coveredmethods="1"/>
       </file>
     </package>
     <package name="pharmacy-app.src.store.ui">
       <metrics statements="18" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
-      <file name="uiSlice.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\store\ui\uiSlice.ts">
+      <file name="uiSlice.ts" path="C:\PMS-UI\pharmacy-app\src\store\ui\uiSlice.ts">
         <metrics statements="18" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="7" count="0" type="stmt"/>
@@ -1902,7 +2004,7 @@
     </package>
     <package name="pharmacy-app.src.utils">
       <metrics statements="7" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
-      <file name="format.ts" path="C:\Users\299802\Desktop\PMS\PMS-UI\pharmacy-app\src\utils\format.ts">
+      <file name="format.ts" path="C:\PMS-UI\pharmacy-app\src\utils\format.ts">
         <metrics statements="7" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="2" count="0" type="stmt"/>

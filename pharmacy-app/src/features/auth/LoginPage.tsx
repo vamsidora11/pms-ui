@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../store/auth/authSlice";
-import type { AppDispatch, RootState } from "../store";
+import { loginUser } from "../../store/auth/authSlice";
+import type { AppDispatch, RootState } from "../../store";
 
-import Input from "../components/common/Input/Input";
-import Button from "../components/common/Button/Button";
-import LoginImage from "../assets/Login.png";
+import Input from "../../components/common/Input/Input";
+import Button from "../../components/common/Button/Button";
+import LoginImage from "../../assets/Login.png";
 
 export default function LoginPage() {
   const dispatch = useDispatch<AppDispatch>();
