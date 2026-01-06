@@ -6,6 +6,10 @@ import PharmacistDashboard from "../features/auth/PharmacistDashboard";
 import ManualPrescriptionView from "../features/prescription/ManualPrescriptionView";
 import PrescriptionValidationPage from "../features/prescription/PrescriptionValidationPage";
 import TechnicianDashboard from "../features/auth/TechnicianDashboard";
+import LabelGeneration from "../features/prescription/LabelGeneration";
+import Refill from "../features/prescription/Refill";
+import PrescriptionHistory from "../features/prescription/PrescriptionHistory";
+import PatientProfile from "../features/prescription/PatientProfile";
 
 export default function AppRoutes() {
   return (
@@ -24,6 +28,10 @@ export default function AppRoutes() {
           <Route path="dashboard" element={<PharmacistDashboard />} />
           <Route path="entry" element={<ManualPrescriptionView />} />
           <Route path="validation" element={<PrescriptionValidationPage />} />
+          <Route path="labels" element={<LabelGeneration/>} />
+          <Route path="refills" element={<Refill/>} />
+          <Route path="history" element={<PrescriptionHistory/>} />
+          <Route path="profiles" element={<PatientProfile/>} />
         </Route>
       </Route>
 
