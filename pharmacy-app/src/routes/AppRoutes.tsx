@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
-import AppLayout from "../components/layouts/Applayout";
+import AppLayout from "../components/layouts/Applayout/Applayout";
 import LoginPage from "../features/auth/LoginPage";
 import PharmacistDashboard from "../features/auth/PharmacistDashboard";
 import ManualPrescriptionView from "../features/prescription/ManualPrescriptionView";
