@@ -61,7 +61,7 @@ export default function Sidebar({ user }: SidebarProps) {
         {!collapsed && <span className="font-semibold">Menu</span>}
         <button
           onClick={() => dispatch(toggleSidebar())}
-          className="text-gray-600 hover:text-gray-900"
+          className="flex items-center justify-center text-gray-600 hover:text-gray-900 w-10 h-8"
         >
           {collapsed ? "➡️" : "⬅️"}
         </button>
