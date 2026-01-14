@@ -1,6 +1,6 @@
 import axios from "axios";
 import { store } from "../store";
-import { refreshAccess, logout } from "../store/auth/authSlice";
+import { refreshAccess, logout } from "@store/auth/authSlice";
 
 const api = axios.create({
   baseURL: "http://localhost:5287",

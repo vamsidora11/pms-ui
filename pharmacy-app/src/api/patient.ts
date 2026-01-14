@@ -5,7 +5,7 @@ import type {
   UpdatePatientRequest,
   PatientDetailsDto,
   PatientSummaryDto,
-} from "../store/patient/patienttype";
+} from "@store/patient/patienttype";
 /*create new patient profile*/
 export const createPatient = async (request: CreatePatientRequest) => {
   try {
