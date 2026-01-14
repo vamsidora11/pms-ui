@@ -9,7 +9,7 @@ import TechnicianDashboard from "../features/auth/TechnicianDashboard";
 import LabelGeneration from "../features/prescription/LabelGeneration";
 import Refill from "../features/prescription/Refill";
 import PrescriptionHistory from "../features/prescription/PrescriptionHistory";
-import PatientProfile from "../features/prescription/PatientProfile";
+import PatientProfile from "../features/patient/PatientProfile";
 
 export default function AppRoutes() {
   return (

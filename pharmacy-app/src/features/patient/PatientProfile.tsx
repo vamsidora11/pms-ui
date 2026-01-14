@@ -16,7 +16,10 @@ import {
   getPatientDetails,
   searchPatients,
 } from "../../api/patient"; // <-- your API layer
-import type { PatientDetailsDto, PatientSummaryDto } from "../../store/patient/patienttype";
+import type {
+  PatientDetailsDto,
+  PatientSummaryDto,
+} from "../../store/patient/patienttype";
 
 /* =========================
    Types
@@ -33,7 +36,8 @@ interface Prescription {
 ========================= */
 export default function PatientProfiles() {
   const [patients, setPatients] = useState<PatientSummaryDto[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<PatientDetailsDto | null>(null);
+  const [selectedPatient, setSelectedPatient] =
+    useState<PatientDetailsDto | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
@@ -134,9 +138,7 @@ export default function PatientProfiles() {
                 }`}
               >
                 <div className="font-medium">{p.fullName}</div>
-                <div className="text-sm text-gray-500">
-                  {p.id}
-                </div>
+                <div className="text-sm text-gray-500">{p.id}</div>
                 <div className="text-sm text-gray-500">{p.phone}</div>
               </button>
             ))}
@@ -149,16 +151,36 @@ export default function PatientProfiles() {
             <>
               {/* Demographics */}
               <Section title="Patient Demographics">
-                <Info icon={User} label="Full Name" value={selectedPatient.fullName} />
+                <Info
+                  icon={User}
+                  label="Full Name"
+                  value={selectedPatient.fullName}
+                />
                 <Info
                   icon={Calendar}
                   label="Date of Birth"
                   value={new Date(selectedPatient.dob).toLocaleDateString()}
                 />
-                <Info icon={Phone} label="Phone" value={selectedPatient.phone} />
-                <Info icon={Mail} label="Email" value={selectedPatient.email ?? ""} />
-                <Info icon={MapPin} label="Address" value={selectedPatient.address} />
-                <Info icon={User} label="Gender" value={selectedPatient.gender} />
+                <Info
+                  icon={Phone}
+                  label="Phone"
+                  value={selectedPatient.phone}
+                />
+                <Info
+                  icon={Mail}
+                  label="Email"
+                  value={selectedPatient.email ?? ""}
+                />
+                <Info
+                  icon={MapPin}
+                  label="Address"
+                  value={selectedPatient.address}
+                />
+                <Info
+                  icon={User}
+                  label="Gender"
+                  value={selectedPatient.gender}
+                />
               </Section>
 
               {/* Allergies */}
@@ -227,25 +249,28 @@ export default function PatientProfiles() {
       {/* Add Patient Modal */}
       {showAddModal && (
         <AddPatientModal
-  onClose={() => setShowAddModal(false)}
-  onSave={async (request) => {
-    try {
-      const result = await createPatient(request); 
-      const details = await getPatientDetails(result.patientId);
+          onClose={() => setShowAddModal(false)}
+          onSave={async (request) => {
+            try {
+              const result = await createPatient(request);
+              const details = await getPatientDetails(result.patientId);
 
-      setPatients(prev => [
-        ...prev,
-        { id: details.id, fullName: details.fullName, phone: details.phone }
-      ]);
-      setSelectedPatient(details);
-      setShowAddModal(false);
-    } catch (err) {
-      console.error("Failed to add patient", err);
-      alert("Error adding patient");
-    }
-  }}
-/>
-
+              setPatients((prev) => [
+                ...prev,
+                {
+                  id: details.id,
+                  fullName: details.fullName,
+                  phone: details.phone,
+                },
+              ]);
+              setSelectedPatient(details);
+              setShowAddModal(false);
+            } catch (err) {
+              console.error("Failed to add patient", err);
+              alert("Error adding patient");
+            }
+          }}
+        />
       )}
     </div>
   );
@@ -254,7 +279,13 @@ export default function PatientProfiles() {
 /* =========================
    Reusable UI Helpers
 ========================= */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-white rounded-2xl border shadow-sm">
       <div className="p-6 border-b">
