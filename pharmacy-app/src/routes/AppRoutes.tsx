@@ -1,15 +1,15 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
-import AppLayout from "../components/layouts/Applayout/Applayout";
-import LoginPage from "../features/auth/LoginPage";
-import PharmacistDashboard from "../features/auth/PharmacistDashboard";
-import ManualPrescriptionView from "../features/prescription/ManualPrescriptionView";
-import PrescriptionValidationPage from "../features/prescription/PrescriptionValidationPage";
-import TechnicianDashboard from "../features/auth/TechnicianDashboard";
-import LabelGeneration from "../features/prescription/LabelGeneration";
-import Refill from "../features/prescription/Refill";
-import PrescriptionHistory from "../features/prescription/PrescriptionHistory";
-import PatientProfile from "../features/patient/PatientProfile";
+import AppLayout from "@components/layouts/Applayout/Applayout";
+import LoginPage from "@auth/LoginPage";
+import PharmacistDashboard from "@auth/PharmacistDashboard";
+import ManualPrescriptionView from "@prescription/ManualPrescriptionView";
+import PrescriptionValidationPage from "@prescription/PrescriptionValidationPage";
+import TechnicianDashboard from "@auth/TechnicianDashboard";
+import LabelGeneration from "@prescription/LabelGeneration";
+import Refill from "@prescription/Refill";
+import PrescriptionHistory from "@prescription/PrescriptionHistory";
+import PatientProfile from "@patient/PatientProfile";
 
 export default function AppRoutes() {
   return (

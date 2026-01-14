@@ -1,21 +1,29 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import type { CreatePatientRequest } from "../../store/patient/patienttype";
+import type { CreatePatientRequest } from "@store/patient/patienttype";
 
 interface AddPatientModalProps {
   onClose: () => void;
-  onSave: (request: CreatePatientRequest) => void; // parent does API call
+  onSave: (request: CreatePatientRequest) => void;
 }
 
-export default function AddPatientModal({ onClose, onSave }: AddPatientModalProps) {
-  const [name, setName] = useState("");
-  const [dob, setDob] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState(""); // collected but not sent
-  const [address, setAddress] = useState("");
-  const [allergies, setAllergies] = useState<string[]>([]);
-  const [newAllergy, setNewAllergy] = useState("");
+export default function AddPatientModal({
+  onClose,
+  onSave,
+}: AddPatientModalProps) {
+  const [form, setForm] = useState({
+    fullName: "",
+    dob: "",
+    gender: "Male",
+    phone: "",
+    email: "",
+    address: "",
+    allergies: [] as string[],
+    newAllergy: "",
+  });
+
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -29,26 +37,48 @@ export default function AddPatientModal({ onClose, onSave }: AddPatientModalProp
     };
   }, [onClose]);
 
+  const updateField = (field: keyof typeof form, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: "" })); // clear error when user types
+  };
+
   const handleSave = () => {
-    if (!name || !dob || !phone) {
-      alert("Full Name, Date of Birth and Phone are required");
+    const newErrors: { [key: string]: string } = {};
+    if (!form.fullName) newErrors.fullName = "Full Name is required";
+    if (!form.dob) newErrors.dob = "Date of Birth is required";
+    if (!form.phone) newErrors.phone = "Phone number is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormError("Please fix the errors below before saving.");
       return;
     }
-    const isoDob = new Date(dob).toISOString();
+
+    const isoDob = new Date(form.dob).toISOString();
     const request: CreatePatientRequest = {
-      fullName: name,
-      dob: isoDob, // normalize date string
-      gender,
-      phone,
-      email,
-      address,
-      allergies: allergies.map(a => ({ code: a, displayName: a }))
-      // insurance: { provider: "...", memberId: "..." } // if you collect it
+      fullName: form.fullName,
+      dob: isoDob,
+      gender: form.gender,
+      phone: form.phone,
+      email: form.email,
+      address: form.address,
+      allergies: form.allergies.map((a) => ({ code: a, displayName: a })),
     };
 
-    onSave(request); 
+    onSave(request);
     onClose();
-    setName(""); setDob(""); setGender("Male"); setPhone(""); setEmail(""); setAddress(""); setAllergies([]); setNewAllergy("");
+    setForm({
+      fullName: "",
+      dob: "",
+      gender: "Male",
+      phone: "",
+      email: "",
+      address: "",
+      allergies: [],
+      newAllergy: "",
+    });
+    setErrors({});
+    setFormError("");
   };
 
   return (
@@ -57,41 +87,87 @@ export default function AddPatientModal({ onClose, onSave }: AddPatientModalProp
         {/* Header */}
         <div className="px-6 py-4 border-b flex justify-between items-center">
           <h3 className="text-lg font-semibold">Add New Patient</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800"
+          >
             <X />
           </button>
         </div>
 
+        {/* Global Alert Bar */}
+        {formError && (
+          <div className="bg-red-100 text-red-700 px-6 py-3">{formError}</div>
+        )}
+
         {/* Body */}
         <div className="px-6 py-4 overflow-y-auto flex-1 space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Full Name *" value={name} onChange={setName} />
-            <Input label="Date of Birth *" type="date" value={dob} onChange={setDob} />
+            <Input
+              label="Full Name *"
+              value={form.fullName}
+              onChange={(v) => updateField("fullName", v)}
+              error={errors.fullName}
+            />
+            <Input
+              label="Date of Birth *"
+              type="date"
+              value={form.dob}
+              onChange={(v) => updateField("dob", v)}
+              error={errors.dob}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Gender" value={gender} onChange={setGender} options={["Male", "Female", "Other"]} />
-            <Input label="Phone *" value={phone} onChange={setPhone} />
+            <Select
+              label="Gender"
+              value={form.gender}
+              onChange={(v) => updateField("gender", v)}
+              options={["Male", "Female", "Other"]}
+            />
+            <Input
+              label="Phone *"
+              value={form.phone}
+              onChange={(v) => updateField("phone", v)}
+              error={errors.phone}
+            />
           </div>
 
-          <Input label="Email" value={email} onChange={setEmail} />
-          <Input label="Address" value={address} onChange={setAddress} />
+          <Input
+            label="Email"
+            value={form.email}
+            onChange={(v) => updateField("email", v)}
+          />
+          <Input
+            label="Address"
+            value={form.address}
+            onChange={(v) => updateField("address", v)}
+          />
 
           {/* Allergies */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Allergies</label>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">
+              Allergies
+            </label>
             <div className="flex gap-2">
               <input
-                value={newAllergy}
-                onChange={(e) => setNewAllergy(e.target.value)}
+                value={form.newAllergy}
+                onChange={(e) => updateField("newAllergy", e.target.value)}
                 placeholder="Add allergy"
                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
+                type="button"
                 onClick={() => {
-                  if (newAllergy && !allergies.includes(newAllergy)) {
-                    setAllergies([...allergies, newAllergy]);
-                    setNewAllergy("");
+                  if (
+                    form.newAllergy &&
+                    !form.allergies.includes(form.newAllergy)
+                  ) {
+                    setForm((prev) => ({
+                      ...prev,
+                      allergies: [...prev.allergies, prev.newAllergy],
+                      newAllergy: "",
+                    }));
                   }
                 }}
                 className="px-5 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
@@ -100,11 +176,23 @@ export default function AddPatientModal({ onClose, onSave }: AddPatientModalProp
               </button>
             </div>
 
+            {/* Show added allergies */}
             <div className="flex flex-wrap gap-2 mt-3">
-              {allergies.map((a) => (
-                <span key={a} className="px-3 py-1 bg-red-100 text-red-700 rounded-lg flex items-center gap-1">
+              {form.allergies.map((a) => (
+                <span
+                  key={a}
+                  className="px-3 py-1 bg-red-100 text-red-700 rounded-lg flex items-center gap-1"
+                >
                   {a}
-                  <button onClick={() => setAllergies(allergies.filter((x) => x !== a))}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        allergies: prev.allergies.filter((x) => x !== a),
+                      }))
+                    }
+                  >
                     <X size={14} />
                   </button>
                 </span>
@@ -115,7 +203,10 @@ export default function AddPatientModal({ onClose, onSave }: AddPatientModalProp
 
         {/* Footer */}
         <div className="px-6 py-4 border-t flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg border hover:bg-gray-50">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border hover:bg-gray-50"
+          >
             Cancel
           </button>
           <button
@@ -130,25 +221,56 @@ export default function AddPatientModal({ onClose, onSave }: AddPatientModalProp
   );
 }
 
-/* Inputs */
-function Input({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+/* Inputs with error support */
+function Input({
+  label,
+  value,
+  onChange,
+  type = "text",
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  error?: string;
+}) {
   return (
     <div>
-      <label className="text-sm font-medium text-gray-700 mb-1 block">{label}</label>
+      <label className="text-sm font-medium text-gray-700 mb-1 block">
+        {label}
+      </label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={`w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 ${
+          error
+            ? "border-red-500 bg-red-50 focus:ring-red-500"
+            : "border-gray-200 bg-gray-50 focus:ring-blue-500"
+        }`}
       />
+      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
     </div>
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
   return (
     <div>
-      <label className="text-sm font-medium text-gray-700 mb-1 block">{label}</label>
+      <label className="text-sm font-medium text-gray-700 mb-1 block">
+        {label}
+      </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}

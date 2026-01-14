@@ -4,7 +4,7 @@ import {
   updatePatient,
   getPatientDetails,
   searchPatients,
-} from "../../api/patient";
+} from "@api/patient";
 import type {
   PatientDetailsDto,
   PatientSummaryDto,

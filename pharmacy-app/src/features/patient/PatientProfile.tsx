@@ -15,11 +15,11 @@ import {
   createPatient,
   getPatientDetails,
   searchPatients,
-} from "../../api/patient"; // <-- your API layer
+} from "@api/patient"; // <-- your API layer
 import type {
   PatientDetailsDto,
   PatientSummaryDto,
-} from "../../store/patient/patienttype";
+} from "@store/patient/patienttype";
 
 /* =========================
    Types

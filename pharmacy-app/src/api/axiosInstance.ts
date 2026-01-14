@@ -3,8 +3,8 @@ import { store } from "../store";
 import { refreshAccess, logout } from "../store/auth/authSlice";
 
 const api = axios.create({
-  baseURL: "http://localhost:5287", 
-  withCredentials: true,     
+  baseURL: "http://localhost:5287",
+  withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor for handling 401 and refreshing
+// Interceptor for handling 401, 403, 500 and refreshing
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -32,6 +32,12 @@ api.interceptors.response.use(
         return api(originalRequest);
       }
       store.dispatch(logout());
+    }
+    if (error.response?.status === 403) {
+      console.error("Forbidden: insufficient permissions");
+    }
+    if (error.response?.status === 500) {
+      console.error("Server error occurred");
     }
     return Promise.reject(error);
   }

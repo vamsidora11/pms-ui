@@ -2,15 +2,30 @@ import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
 
 export async function loginApi(credentials: { username: string; password: string }) {
-  const res = await api.post(ENDPOINTS.login, credentials);
-  return res.data as { accessToken: string };
+  try {
+    const res = await api.post(ENDPOINTS.login, credentials);
+    return res.data as { accessToken: string };
+  } catch (error: any) {
+    console.error("Login failed:", error);
+    // throw error; // rethrow so UI can show a message
+  }
 }
 
 export async function refreshApi() {
-  const res = await api.post(ENDPOINTS.refresh);
-  return res.data as { accessToken: string };
+  try {
+    const res = await api.post(ENDPOINTS.refresh);
+    return res.data as { accessToken: string };
+  } catch (error: any) {
+    console.error("Token refresh failed:", error);
+    // throw error;
+  }
 }
 
 export async function logoutApi() {
-  await api.post(ENDPOINTS.logout);
+  try {
+    await api.post(ENDPOINTS.logout);
+  } catch (error: any) {
+    console.error("Logout failed:", error);
+    // throw error;
+  }
 }
