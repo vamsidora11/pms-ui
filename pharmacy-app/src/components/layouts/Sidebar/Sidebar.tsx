@@ -4,7 +4,6 @@ import {
   HomeIcon,
   ClipboardDocumentListIcon,
   CheckBadgeIcon,
-  // BeakerIcon,
   TagIcon,
   ArrowPathIcon,
   UserCircleIcon,

@@ -5,6 +5,10 @@ export const ENDPOINTS = {
   refresh: "/api/auth/refresh",
   logout: "/api/auth/logout",
 
+  patients: "/api/patients", 
+  patientDetails: "/api/patients",  
+  patientSearch: "/api/patients/search",
+
   // prescriptions
   prescriptions: "/api/prescriptions",
   prescriptionentry: "/api/prescriptions/entry",
