@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SectionHeader from "../../components/common/SectionHeader/SectionHeader";
-import Button from "../../components/common/Button/Button";
-import Input from "../../components/common/Input/Input";
-import Textarea from "../../components/common/TextArea/TextArea";
+import SectionHeader from "@components/common/SectionHeader/SectionHeader";
+import Button from "@components/common/Button/Button";
+import Input from "@components/common/Input/Input";
+import Textarea from "@components/common/TextArea/TextArea";
 
 type Medicine = {
   id: string;

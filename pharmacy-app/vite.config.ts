@@ -5,6 +5,19 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@components": path.resolve(__dirname, "src/components"),
+      "@store": path.resolve(__dirname, "src/store"),
+      "@api": path.resolve(__dirname, "src/api"),
+      "@utils": path.resolve(__dirname, "src/utils"),
+      "@types": path.resolve(__dirname, "src/types"),
+      "@auth": path.resolve(__dirname, "src/features/auth"),
+      "@patient": path.resolve(__dirname, "src/features/patient"),
+      "@prescription": path.resolve(__dirname, "src/features/prescription"),
+      "@assets": path.resolve(__dirname, "src/assets")
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,

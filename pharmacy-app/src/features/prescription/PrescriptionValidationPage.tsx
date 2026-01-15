@@ -17,12 +17,12 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "../../components/common/Card/Card";
+} from "@components/common/Card/Card";
 
-import Button from "../../components/common/Button/Button";
-import Badge from "../../components/common/Badge/Badge";
-import Separator from "../../components/common/Separator/Separator";
-import ScrollArea from "../../components/common/ScrollArea/ScrollArea";
+import Button from "@components/common/Button/Button";
+import Badge from "@components/common/Badge/Badge";
+import Separator from "@components/common/Separator/Separator";
+import ScrollArea from "@components/common/ScrollArea/ScrollArea";
 
 type Risk = "low" | "moderate" | "high";
 
