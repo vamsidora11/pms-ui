@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { jwtDecode } from "jwt-decode";
-import { loginApi, refreshApi, logoutApi } from "../../api/auth";
+import { loginApi, refreshApi, logoutApi } from "@api/auth";
 
 export const loginUser = createAsyncThunk("auth/login", async (credentials: { username: string; password: string }) => {
   return await loginApi(credentials);

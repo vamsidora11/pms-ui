@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
-import type { RootState } from "../store";
+import type { RootState } from "store";
 
 type Props = { allowedRoles?: Array<"Manager" | "Pharmacist" | "Technician"> };
 

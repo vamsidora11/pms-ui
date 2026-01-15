@@ -6,6 +6,7 @@ import TopNavBar from "../TopNavBar/TopNavBar";
 
 export default function AppLayout() {
   const user = useSelector((s: RootState) => s.auth.user);
+  const sidebarCollapsed = useSelector((s: RootState) => s.ui.sidebarCollapsed);
 
   if (!user) return null;
 
@@ -29,7 +30,11 @@ export default function AppLayout() {
       />
 
       {/* Main content area shifted for navbar + sidebar */}
-      <main className="pt-16 pl-64">
+      <main
+        className={`pt-16 transition-all duration-300 ${
+          sidebarCollapsed ? "pl-16" : "pl-64"
+        }`}
+      >
         <div className="p-6">
           <Outlet />
         </div>

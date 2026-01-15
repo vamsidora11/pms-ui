@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { prescriptionApi, getPrescriptionDetails, validatePrescription } from "../../api/prescription";
+import { prescriptionApi, getPrescriptionDetails, validatePrescription } from "@api/prescription";
 
 // Create a new manual prescription
 export const createPrescription = createAsyncThunk(

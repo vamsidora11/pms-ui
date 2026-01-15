@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   User,
@@ -11,22 +11,19 @@ import {
 } from "lucide-react";
 
 import AddPatientModal from "./addpatient";
+import {
+  createPatient,
+  getPatientDetails,
+  searchPatients,
+} from "@api/patient"; // <-- your API layer
+import type {
+  PatientDetailsDto,
+  PatientSummaryDto,
+} from "@store/patient/patienttype";
 
 /* =========================
    Types
 ========================= */
-export interface Patient {
-  id: string;
-  name: string;
-  dob: string;
-  age: number;
-  gender: string;
-  phone: string;
-  email: string;
-  address: string;
-  allergies: string[];
-}
-
 interface Prescription {
   id: string;
   patientId: string;
@@ -35,73 +32,40 @@ interface Prescription {
 }
 
 /* =========================
-   Dummy Data
-========================= */
-const INITIAL_PATIENTS: Patient[] = [
-  {
-    id: "PT-001",
-    name: "Sarah Johnson",
-    dob: "1978-05-15",
-    age: 45,
-    gender: "Female",
-    phone: "+1 (555) 123-4567",
-    email: "sarah.johnson@email.com",
-    address: "123 Main St, Springfield, IL 62701",
-    allergies: ["Penicillin", "Sulfa drugs"],
-  },
-  {
-    id: "PT-002",
-    name: "Robert Williams",
-    dob: "1961-09-22",
-    age: 62,
-    gender: "Male",
-    phone: "+1 (555) 234-5678",
-    email: "robert.w@email.com",
-    address: "45 Oak Avenue, Springfield, IL 62701",
-    allergies: [],
-  },
-  {
-    id: "PT-003",
-    name: "Maria Garcia",
-    dob: "1996-02-10",
-    age: 28,
-    gender: "Female",
-    phone: "+1 (555) 345-6789",
-    email: "maria.g@email.com",
-    address: "89 Pine Road, Springfield, IL 62701",
-    allergies: ["Latex"],
-  },
-];
-
-const DUMMY_PRESCRIPTIONS: Prescription[] = [
-  { id: "RX-2026-001", patientId: "PT-001", medicationsCount: 2, status: "Pending" },
-  { id: "RX-2026-007", patientId: "PT-001", medicationsCount: 1, status: "Rejected" },
-  { id: "RX-2026-010", patientId: "PT-003", medicationsCount: 3, status: "Approved" },
-];
-
-/* =========================
    Component
 ========================= */
 export default function PatientProfiles() {
-  const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
-    INITIAL_PATIENTS[0]
-  );
+  const [patients, setPatients] = useState<PatientSummaryDto[]>([]);
+  const [selectedPatient, setSelectedPatient] =
+    useState<PatientDetailsDto | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
 
+  // Fetch initial patient list
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const result = await searchPatients(""); // empty query returns all
+        setPatients(result);
+        if (result.length > 0) {
+          const details = await getPatientDetails(result[0].id);
+          setSelectedPatient(details);
+        }
+      } catch (err) {
+        console.error("Failed to fetch patients", err);
+      }
+    };
+    fetchPatients();
+  }, []);
+
+  // Filter patients client‑side
   const filteredPatients = patients.filter(
     (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.phone.includes(searchTerm)
+      (p.fullName ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.id ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.phone ?? "").includes(searchTerm)
   );
-
-  const prescriptions = selectedPatient
-    ? DUMMY_PRESCRIPTIONS.filter(
-        (p) => p.patientId === selectedPatient.id
-      )
-    : [];
 
   const getStatusStyle = (status: Prescription["status"]) => {
     switch (status) {
@@ -161,17 +125,20 @@ export default function PatientProfiles() {
             {filteredPatients.map((p) => (
               <button
                 key={p.id}
-                onClick={() => setSelectedPatient(p)}
+                onClick={async () => {
+                  const details = await getPatientDetails(p.id);
+                  setSelectedPatient(details);
+                  // TODO: fetch prescriptions for this patient from backend
+                  setPrescriptions([]); // placeholder until you wire prescriptions API
+                }}
                 className={`w-full p-4 text-left rounded-xl transition ${
                   selectedPatient?.id === p.id
                     ? "bg-blue-50 ring-2 ring-blue-400"
                     : "hover:bg-gray-50 border"
                 }`}
               >
-                <div className="font-medium">{p.name}</div>
-                <div className="text-sm text-gray-500">
-                  {p.id} • {p.age}y • {p.gender}
-                </div>
+                <div className="font-medium">{p.fullName}</div>
+                <div className="text-sm text-gray-500">{p.id}</div>
                 <div className="text-sm text-gray-500">{p.phone}</div>
               </button>
             ))}
@@ -184,18 +151,36 @@ export default function PatientProfiles() {
             <>
               {/* Demographics */}
               <Section title="Patient Demographics">
-                <Info icon={User} label="Full Name" value={selectedPatient.name} />
+                <Info
+                  icon={User}
+                  label="Full Name"
+                  value={selectedPatient.fullName}
+                />
                 <Info
                   icon={Calendar}
                   label="Date of Birth"
-                  value={`${new Date(
-                    selectedPatient.dob
-                  ).toLocaleDateString()} (${selectedPatient.age} years)`}
+                  value={new Date(selectedPatient.dob).toLocaleDateString()}
                 />
-                <Info icon={Phone} label="Phone" value={selectedPatient.phone} />
-                <Info icon={Mail} label="Email" value={selectedPatient.email} />
-                <Info icon={MapPin} label="Address" value={selectedPatient.address} />
-                <Info icon={User} label="Gender" value={selectedPatient.gender} />
+                <Info
+                  icon={Phone}
+                  label="Phone"
+                  value={selectedPatient.phone}
+                />
+                <Info
+                  icon={Mail}
+                  label="Email"
+                  value={selectedPatient.email ?? ""}
+                />
+                <Info
+                  icon={MapPin}
+                  label="Address"
+                  value={selectedPatient.address}
+                />
+                <Info
+                  icon={User}
+                  label="Gender"
+                  value={selectedPatient.gender}
+                />
               </Section>
 
               {/* Allergies */}
@@ -208,10 +193,10 @@ export default function PatientProfiles() {
                   {selectedPatient.allergies.length ? (
                     selectedPatient.allergies.map((a) => (
                       <span
-                        key={a}
+                        key={a.code}
                         className="px-4 py-2 bg-red-100 text-red-700 rounded-lg"
                       >
-                        {a}
+                        {a.displayName}
                       </span>
                     ))
                   ) : (
@@ -265,10 +250,25 @@ export default function PatientProfiles() {
       {showAddModal && (
         <AddPatientModal
           onClose={() => setShowAddModal(false)}
-          onSave={(patient) => {
-            setPatients((prev) => [...prev, patient]);
-            setSelectedPatient(patient);
-            setShowAddModal(false);
+          onSave={async (request) => {
+            try {
+              const result = await createPatient(request);
+              const details = await getPatientDetails(result.patientId);
+
+              setPatients((prev) => [
+                ...prev,
+                {
+                  id: details.id,
+                  fullName: details.fullName,
+                  phone: details.phone,
+                },
+              ]);
+              setSelectedPatient(details);
+              setShowAddModal(false);
+            } catch (err) {
+              console.error("Failed to add patient", err);
+              alert("Error adding patient");
+            }
           }}
         />
       )}
@@ -310,7 +310,7 @@ function Info({
       <Icon className="text-gray-400 mt-1" size={18} />
       <div>
         <div className="text-sm text-gray-500">{label}</div>
-        <div className="text-gray-900">{value}</div>
+        <div className="text-gray-900">{value || "—"}</div>
       </div>
     </div>
   );
