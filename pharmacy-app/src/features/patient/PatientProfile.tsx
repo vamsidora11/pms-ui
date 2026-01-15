@@ -11,11 +11,9 @@ import {
 } from "lucide-react";
 
 import AddPatientModal from "./addpatient";
-import {
-  createPatient,
-  getPatientDetails,
-  searchPatients,
-} from "@api/patient"; // <-- your API layer
+import UpdatePatientModal from "./updatePatient";
+
+import { createPatient, getPatientDetails, searchPatients } from "@api/patient"; // <-- your API layer
 import type {
   PatientDetailsDto,
   PatientSummaryDto,
@@ -40,6 +38,7 @@ export default function PatientProfiles() {
     useState<PatientDetailsDto | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
 
   // Fetch initial patient list
@@ -149,6 +148,7 @@ export default function PatientProfiles() {
         <div className="col-span-2 space-y-6">
           {selectedPatient && (
             <>
+              
               {/* Demographics */}
               <Section title="Patient Demographics">
                 <Info
@@ -206,7 +206,14 @@ export default function PatientProfiles() {
                   )}
                 </div>
               </div>
-
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowUpdateModal(true)}
+                  className="px-4 py-2 bg-green-400 text-white rounded-lg hover:bg-green-200"
+                >
+                  Update Patient
+                </button>
+              </div>
               {/* Prescriptions */}
               <div className="bg-white rounded-2xl border shadow-sm">
                 <div className="p-6 border-b">
@@ -269,6 +276,30 @@ export default function PatientProfiles() {
               console.error("Failed to add patient", err);
               alert("Error adding patient");
             }
+          }}
+        />
+      )}
+
+      {/* Update Patient Modal */}
+      {showUpdateModal && selectedPatient && (
+        <UpdatePatientModal
+          patient={selectedPatient}
+          onClose={() => setShowUpdateModal(false)}
+          onSave={(updated) => {
+            // update local state with updated patient
+            setPatients((prev) =>
+              prev.map((p) =>
+                p.id === updated.id
+                  ? {
+                      id: updated.id,
+                      fullName: updated.fullName,
+                      phone: updated.phone,
+                    }
+                  : p
+              )
+            );
+            setSelectedPatient(updated);
+            setShowUpdateModal(false);
           }}
         />
       )}

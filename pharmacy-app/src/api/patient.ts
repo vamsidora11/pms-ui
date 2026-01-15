@@ -13,7 +13,7 @@ export const createPatient = async (request: CreatePatientRequest) => {
     return response.data as { patientId: string };
   } catch (error: any) {
     console.error("Failed to create patient:", error);
-    throw error; // rethrow so UI can handle
+    // throw error; // rethrow so UI can handle
   }
 };
 /*update existing patient profile*/
