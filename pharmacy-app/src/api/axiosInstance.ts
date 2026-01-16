@@ -3,7 +3,7 @@ import { store } from "../store";
 import { refreshAccess, logout } from "@store/auth/authSlice";
 
 const api = axios.create({
-  baseURL: "http://localhost:5287",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
