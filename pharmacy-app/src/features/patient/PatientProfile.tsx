@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Search,
   User,
@@ -18,6 +18,7 @@ import type {
   PatientDetailsDto,
   PatientSummaryDto,
 } from "@store/patient/patienttype";
+import clsx from "clsx";
 
 /* =========================
    Types
@@ -59,25 +60,14 @@ export default function PatientProfiles() {
   }, []);
 
   // Filter patients client‑side
-  const filteredPatients = patients.filter(
-    (p) =>
-      (p.fullName ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.id ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.phone ?? "").includes(searchTerm)
-  );
-
-  const getStatusStyle = (status: Prescription["status"]) => {
-    switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "Approved":
-        return "bg-green-100 text-green-700";
-      case "Rejected":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+  const filteredPatients = useMemo(() => {
+    return patients.filter(
+      (p) =>
+        (p.fullName ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.id ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.phone ?? "").includes(searchTerm),
+    );
+  }, [patients, searchTerm]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -130,11 +120,12 @@ export default function PatientProfiles() {
                   // TODO: fetch prescriptions for this patient from backend
                   setPrescriptions([]); // placeholder until you wire prescriptions API
                 }}
-                className={`w-full p-4 text-left rounded-xl transition ${
+                className={clsx(
+                  "w-full p-4 text-left rounded-xl transition",
                   selectedPatient?.id === p.id
                     ? "bg-blue-50 ring-2 ring-blue-400"
-                    : "hover:bg-gray-50 border"
-                }`}
+                    : "hover:bg-gray-50 border",
+                )}
               >
                 <div className="font-medium">{p.fullName}</div>
                 <div className="text-sm text-gray-500">{p.id}</div>
@@ -148,7 +139,6 @@ export default function PatientProfiles() {
         <div className="col-span-2 space-y-6">
           {selectedPatient && (
             <>
-              
               {/* Demographics */}
               <Section title="Patient Demographics">
                 <Info
@@ -233,9 +223,18 @@ export default function PatientProfiles() {
                           </div>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-sm ${getStatusStyle(
-                            rx.status
-                          )}`}
+                          className={clsx("px-3 py-1 rounded-full text-sm", {
+                            "bg-yellow-100 text-yellow-700":
+                              rx.status === "Pending",
+                            "bg-green-100 text-green-700":
+                              rx.status === "Approved",
+                            "bg-red-100 text-red-700": rx.status === "Rejected",
+                            "bg-gray-100 text-gray-700": ![
+                              "Pending",
+                              "Approved",
+                              "Rejected",
+                            ].includes(rx.status),
+                          })}
                         >
                           {rx.status}
                         </span>
@@ -295,8 +294,8 @@ export default function PatientProfiles() {
                       fullName: updated.fullName,
                       phone: updated.phone,
                     }
-                  : p
-              )
+                  : p,
+              ),
             );
             setSelectedPatient(updated);
             setShowUpdateModal(false);

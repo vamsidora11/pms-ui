@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import type { CreatePatientRequest } from "@store/patient/patienttype";
+import Input from "@components/common/Input/Input";
+import Select from "@components/common/Select/Select";
 
 interface AddPatientModalProps {
   onClose: () => void;
@@ -217,69 +219,6 @@ export default function AddPatientModal({
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-/* Inputs with error support */
-function Input({
-  label,
-  value,
-  onChange,
-  type = "text",
-  error,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  error?: string;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-medium text-gray-700 mb-1 block">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 ${
-          error
-            ? "border-red-500 bg-red-50 focus:ring-red-500"
-            : "border-gray-200 bg-gray-50 focus:ring-blue-500"
-        }`}
-      />
-      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
-    </div>
-  );
-}
-
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-}) {
-  return (
-    <div>
-      <label className="text-sm font-medium text-gray-700 mb-1 block">
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {options.map((o) => (
-          <option key={o}>{o}</option>
-        ))}
-      </select>
     </div>
   );
 }

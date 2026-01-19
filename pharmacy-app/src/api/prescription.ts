@@ -4,11 +4,14 @@ import { ENDPOINTS } from "./endpoints";
 // Create a new manual prescription
 export const prescriptionApi = async (prescriptionData: any) => {
   try {
-    const response = await api.post(ENDPOINTS.prescriptionentry, prescriptionData);
+    const response = await api.post(
+      ENDPOINTS.prescriptionentry,
+      prescriptionData
+    );
     return response.data;
   } catch (error: any) {
     console.error("Failed to create prescription:", error);
-    // throw error; // rethrow so UI can handle
+    throw error; // rethrow so UI can handle
   }
 };
 
@@ -19,7 +22,7 @@ export const getPrescriptionDetails = async (id: string) => {
     return response.data;
   } catch (error: any) {
     console.error(`Failed to fetch prescription details for ${id}:`, error);
-    // throw error;
+    throw error;
   }
 };
 
@@ -30,6 +33,6 @@ export const validatePrescription = async (id: string) => {
     return response.data;
   } catch (error: any) {
     console.error(`Failed to validate prescription ${id}:`, error);
-    // throw error;
+    throw error;
   }
 };
