@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Search, AlertTriangle } from "lucide-react";
-import { searchPatients } from "@api/patient.api";
+import { searchPatients } from "@api/patientSearch";
 import type { PatientSummary, PatientDetails } from "../models";
 
 interface Props {
