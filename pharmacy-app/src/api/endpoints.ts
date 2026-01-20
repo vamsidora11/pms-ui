@@ -9,6 +9,8 @@ export const ENDPOINTS = {
   patientDetails: "/api/patients",  
   patientSearch: "/api/patients/search",
 
+  inventorySearch: "/api/inventory/search",
+
   // prescriptions
   prescriptions: "/api/prescriptions",
   prescriptionentry: "/api/prescriptions/entry",

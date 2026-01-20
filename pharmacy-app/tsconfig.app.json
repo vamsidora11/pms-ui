@@ -34,7 +34,12 @@
       "@auth/*": ["features/auth/*"],
       "@patient/*": ["features/patient/*"],
       "@prescription/*": ["features/prescription/*"],
+      "@validation/*": ["features/validation/*"],
+      "@labels/*": ["features/labelgeneration/*"],  
+      "@refill/*": ["features/refillmanagement/*"],
+      "@history/*": ["features/refillmanagement/*"],
       "@assets/*": ["assets/*"]
+
     }
   },
   "include": ["src"]

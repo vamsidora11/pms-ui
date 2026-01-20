@@ -3,12 +3,13 @@ import ProtectedRoute from "./ProtectedRoute";
 import AppLayout from "@components/layouts/Applayout/Applayout";
 import LoginPage from "@auth/LoginPage";
 import PharmacistDashboard from "@auth/PharmacistDashboard";
-import ManualPrescriptionView from "@prescription/ManualPrescriptionView";
-import PrescriptionValidationPage from "@prescription/PrescriptionValidationPage";
+import ManualPrescriptionView from "@prescription/PrescriptionEntry";
+import PrescriptionValidationPage from "@validation/PrescriptionValidationPage";
+import LabelGeneration from "@labels/LabelGeneration";
+import Refill from "@refill/Refill";
+import PrescriptionHistory from "@refill/PrescriptionHistory";
 import TechnicianDashboard from "@auth/TechnicianDashboard";
-import LabelGeneration from "@prescription/LabelGeneration";
-import Refill from "@prescription/Refill";
-import PrescriptionHistory from "@prescription/PrescriptionHistory";
+
 import PatientProfile from "@patient/PatientProfile";
 
 export default function AppRoutes() {
