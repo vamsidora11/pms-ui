@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Search,
   User,
@@ -11,15 +11,14 @@ import {
 } from "lucide-react";
 
 import AddPatientModal from "./addpatient";
-import {
-  createPatient,
-  getPatientDetails,
-  searchPatients,
-} from "@api/patient"; // <-- your API layer
+import UpdatePatientModal from "./updatePatient";
+
+import { createPatient, getPatientDetails, searchPatients } from "@api/patient"; // <-- your API layer
 import type {
   PatientDetailsDto,
   PatientSummaryDto,
 } from "@store/patient/patienttype";
+import clsx from "clsx";
 
 /* =========================
    Types
@@ -40,6 +39,7 @@ export default function PatientProfiles() {
     useState<PatientDetailsDto | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
 
   // Fetch initial patient list
@@ -60,25 +60,14 @@ export default function PatientProfiles() {
   }, []);
 
   // Filter patients client‑side
-  const filteredPatients = patients.filter(
-    (p) =>
-      (p.fullName ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.id ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.phone ?? "").includes(searchTerm)
-  );
-
-  const getStatusStyle = (status: Prescription["status"]) => {
-    switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "Approved":
-        return "bg-green-100 text-green-700";
-      case "Rejected":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+  const filteredPatients = useMemo(() => {
+    return patients.filter(
+      (p) =>
+        (p.fullName ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.id ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.phone ?? "").includes(searchTerm),
+    );
+  }, [patients, searchTerm]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -131,11 +120,12 @@ export default function PatientProfiles() {
                   // TODO: fetch prescriptions for this patient from backend
                   setPrescriptions([]); // placeholder until you wire prescriptions API
                 }}
-                className={`w-full p-4 text-left rounded-xl transition ${
+                className={clsx(
+                  "w-full p-4 text-left rounded-xl transition",
                   selectedPatient?.id === p.id
                     ? "bg-blue-50 ring-2 ring-blue-400"
-                    : "hover:bg-gray-50 border"
-                }`}
+                    : "hover:bg-gray-50 border",
+                )}
               >
                 <div className="font-medium">{p.fullName}</div>
                 <div className="text-sm text-gray-500">{p.id}</div>
@@ -206,7 +196,14 @@ export default function PatientProfiles() {
                   )}
                 </div>
               </div>
-
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowUpdateModal(true)}
+                  className="px-4 py-2 bg-green-400 text-white rounded-lg hover:bg-green-200"
+                >
+                  Update Patient
+                </button>
+              </div>
               {/* Prescriptions */}
               <div className="bg-white rounded-2xl border shadow-sm">
                 <div className="p-6 border-b">
@@ -226,9 +223,18 @@ export default function PatientProfiles() {
                           </div>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-sm ${getStatusStyle(
-                            rx.status
-                          )}`}
+                          className={clsx("px-3 py-1 rounded-full text-sm", {
+                            "bg-yellow-100 text-yellow-700":
+                              rx.status === "Pending",
+                            "bg-green-100 text-green-700":
+                              rx.status === "Approved",
+                            "bg-red-100 text-red-700": rx.status === "Rejected",
+                            "bg-gray-100 text-gray-700": ![
+                              "Pending",
+                              "Approved",
+                              "Rejected",
+                            ].includes(rx.status),
+                          })}
                         >
                           {rx.status}
                         </span>
@@ -269,6 +275,30 @@ export default function PatientProfiles() {
               console.error("Failed to add patient", err);
               alert("Error adding patient");
             }
+          }}
+        />
+      )}
+
+      {/* Update Patient Modal */}
+      {showUpdateModal && selectedPatient && (
+        <UpdatePatientModal
+          patient={selectedPatient}
+          onClose={() => setShowUpdateModal(false)}
+          onSave={(updated) => {
+            // update local state with updated patient
+            setPatients((prev) =>
+              prev.map((p) =>
+                p.id === updated.id
+                  ? {
+                      id: updated.id,
+                      fullName: updated.fullName,
+                      phone: updated.phone,
+                    }
+                  : p,
+              ),
+            );
+            setSelectedPatient(updated);
+            setShowUpdateModal(false);
           }}
         />
       )}

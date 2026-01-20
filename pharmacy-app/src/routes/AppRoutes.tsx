@@ -1,48 +1,55 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import AppLayout from "@components/layouts/Applayout/Applayout";
-import LoginPage from "@auth/LoginPage";
-import PharmacistDashboard from "@auth/PharmacistDashboard";
-import ManualPrescriptionView from "@prescription/PrescriptionEntry";
-import PrescriptionValidationPage from "@validation/PrescriptionValidationPage";
-import LabelGeneration from "@labels/LabelGeneration";
-import Refill from "@refill/Refill";
-import PrescriptionHistory from "@refill/PrescriptionHistory";
-import TechnicianDashboard from "@auth/TechnicianDashboard";
+import { ROUTES } from "../constants/routes";
+import { lazy, Suspense } from "react";
 
-import PatientProfile from "@patient/PatientProfile";
+const LoginPage = lazy(() => import("@auth/LoginPage"));
+const PharmacistDashboard = lazy(() => import("@auth/PharmacistDashboard"));
+const ManualPrescriptionView = lazy(() => import("@prescription/ManualPrescriptionView"));
+const PrescriptionValidationPage = lazy(() => import("@validation/PrescriptionValidationPage"));
+const TechnicianDashboard = lazy(() => import("@auth/TechnicianDashboard"));
+const LabelGeneration = lazy(() => import("@labels/LabelGeneration"));
+const Refill = lazy(() => import("@refill/Refill"));
+const PrescriptionHistory = lazy(() => import("@refill/PrescriptionHistory"));
+const PatientProfile = lazy(() => import("@patient/PatientProfile"));
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
 
-      <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
-        <Route path="/manager" element={<AppLayout />}>
-          <Route path="dashboard" element={<div>Manager Dashboard</div>} />
+        <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
+          <Route path={ROUTES.MANAGER.BASE} element={<AppLayout />}>
+            <Route path="dashboard" element={<div>Manager Dashboard</div>} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["Pharmacist"]} />}>
-        <Route path="/pharmacist" element={<AppLayout />}>
-          <Route index element={<PharmacistDashboard />} /> {/* default */}
-          <Route path="dashboard" element={<PharmacistDashboard />} />
-          <Route path="entry" element={<ManualPrescriptionView />} />
-          <Route path="validation" element={<PrescriptionValidationPage />} />
-          <Route path="labels" element={<LabelGeneration/>} />
-          <Route path="refills" element={<Refill/>} />
-          <Route path="history" element={<PrescriptionHistory/>} />
-          <Route path="profiles" element={<PatientProfile/>} />
+        <Route element={<ProtectedRoute allowedRoles={["Pharmacist"]} />}>
+          <Route path={ROUTES.PHARMACIST.BASE} element={<AppLayout />}>
+            <Route index element={<PharmacistDashboard />} />
+            <Route path="dashboard" element={<PharmacistDashboard />} />
+            <Route path="entry" element={<ManualPrescriptionView />} />
+            <Route path="validation" element={<PrescriptionValidationPage />} />
+            <Route path="labels" element={<LabelGeneration />} />
+            <Route path="refills" element={<Refill />} />
+            <Route path="history" element={<PrescriptionHistory />} />
+            <Route path="profiles" element={<PatientProfile />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["Technician"]} />}>
-        <Route path="/technician" element={<AppLayout />}>
-          <Route path="dashboard" element={<TechnicianDashboard />} />
+        <Route element={<ProtectedRoute allowedRoles={["Technician"]} />}>
+          <Route path={ROUTES.TECHNICIAN.BASE} element={<AppLayout />}>
+            <Route path="dashboard" element={<TechnicianDashboard />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        <Route
+          path={ROUTES.FALLBACK}
+          element={<Navigate to={ROUTES.LOGIN} replace />}
+        />
+      </Routes>
+    </Suspense>
   );
 }

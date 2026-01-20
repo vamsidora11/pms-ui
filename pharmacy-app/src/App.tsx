@@ -3,15 +3,18 @@ import { store } from "./store";
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import { ToastProvider } from "@components/common/Toast/Toast";
+import { ErrorBoundary } from "@components/common/ErrorBoundary";
 
 export default function App() {
   return (
     <ToastProvider>
-      <Provider store={store}>
-        <BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
+        <ErrorBoundary fallback={<div>Something went wrong.</div>}>
           <AppRoutes />
-        </BrowserRouter>
-      </Provider>
+        </ErrorBoundary>
+      </BrowserRouter>
+    </Provider>
     </ToastProvider>
   );
 }
