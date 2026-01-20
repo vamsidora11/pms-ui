@@ -23,7 +23,7 @@ export const updatePatient = async (id: string, request: UpdatePatientRequest) =
     return response.data;
   } catch (error: any) {
     console.error(`Failed to update patient ${id}:`, error);
-    // throw error;
+    throw error;
   }
 };
 /*retrieve details of a patient*/
@@ -33,7 +33,7 @@ export const getPatientDetails = async (id: string) => {
     return response.data as PatientDetailsDto;
   } catch (error: any) {
     console.error(`Failed to fetch patient details for ${id}:`, error);
-    // throw error;
+    throw error;
   }
 };
 /*search a patient*/
@@ -50,6 +50,6 @@ export const searchPatients = async (query?: string) => {
     return response.data as PatientSummaryDto[];
   } catch (error: any) {
     console.error("Failed to search patients:", error);
-    // throw error;
+    throw error;
   }
 };
