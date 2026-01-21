@@ -60,7 +60,7 @@ export default function DoctorStep({ doctor, onChange }: DoctorStepProps) {
         </div>
 
         {/* Info Box */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+       {/*  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
             <div className="text-blue-600 text-xl">ℹ️</div>
             <div className="flex-1">
@@ -73,7 +73,7 @@ export default function DoctorStep({ doctor, onChange }: DoctorStepProps) {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Preview */}
         {doctor.id && doctor.name && (

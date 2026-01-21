@@ -113,11 +113,11 @@ export default function ReviewStep({
               <div className="text-sm font-medium text-gray-900">{doctor.name || "(Not set)"}</div>
             </div>
           </div>
-          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          {/* <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-700">
               ℹ️ Doctor information is stored as entered without validation
             </p>
-          </div>
+          </div> */}
         </section>
 
         {/* MEDICATIONS */}

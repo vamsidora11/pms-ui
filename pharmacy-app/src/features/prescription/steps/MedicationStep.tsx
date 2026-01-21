@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, X, Search } from "lucide-react";
-import { searchInventory } from "@api/inventory.api";
+import { searchInventory } from "@api/inventory";
 import type {
   MedicationDraft,
   InventorySearchItem,

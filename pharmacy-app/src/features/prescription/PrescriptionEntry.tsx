@@ -4,7 +4,7 @@ import {
   createPrescription,
   type CreatePrescriptionRequest,
   type DoctorDto,
-} from "@api/prescription.api";
+} from "@api/prescription";
 import { getPatientById } from "@api/patientSearch";
 import type { PatientSummary } from "./models";
 import { useToast } from "@components/common/Toast/useToast";

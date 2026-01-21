@@ -6,7 +6,7 @@ import { lazy, Suspense } from "react";
 
 const LoginPage = lazy(() => import("@auth/LoginPage"));
 const PharmacistDashboard = lazy(() => import("@auth/PharmacistDashboard"));
-const ManualPrescriptionView = lazy(() => import("@prescription/ManualPrescriptionView"));
+const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntry"));
 const PrescriptionValidationPage = lazy(() => import("@validation/PrescriptionValidationPage"));
 const TechnicianDashboard = lazy(() => import("@auth/TechnicianDashboard"));
 const LabelGeneration = lazy(() => import("@labels/LabelGeneration"));
