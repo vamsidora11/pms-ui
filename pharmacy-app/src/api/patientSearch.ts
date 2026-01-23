@@ -1,5 +1,6 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
+import { logger } from "@utils/logger/logger";
 import type { PatientSummary, PatientDetails } from "@prescription/models";
 
 /**
@@ -14,8 +15,11 @@ export async function searchPatients(
       { params: { query } }
     );
     return res.data;
-  } catch (error: any) {
-    console.error("Patient search failed:", error);
+  } catch (error) {
+    logger.error("Patient search failed", {
+      query,
+      error,
+    });
     return undefined;
   }
 }
@@ -31,8 +35,11 @@ export async function getPatientById(
       `${ENDPOINTS.patientDetails}/${patientId}`
     );
     return res.data;
-  } catch (error: any) {
-    console.error("Fetching patient details failed:", error);
+  } catch (error) {
+    logger.error("Fetching patient details failed", {
+      patientId,
+      error,
+    });
     return undefined;
   }
 }

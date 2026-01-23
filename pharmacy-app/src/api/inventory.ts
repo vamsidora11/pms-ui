@@ -1,5 +1,6 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
+import { logger } from "@utils/logger/logger";
 import type { InventorySearchItem } from "@prescription/models";
 
 /**
@@ -15,8 +16,11 @@ export async function searchInventory(
     );
 
     return res.data;
-  } catch (error: any) {
-    console.error("Inventory search failed:", error);
+  } catch (error) {
+    logger.error("Inventory search failed", {
+      query,
+      error,
+    });
     return undefined;
   }
 }
