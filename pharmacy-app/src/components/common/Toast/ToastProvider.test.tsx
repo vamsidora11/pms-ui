@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ToastProvider } from '@components/common/Toast/ToastProvider';
 import { useToast } from '@components/common/Toast/useToast';

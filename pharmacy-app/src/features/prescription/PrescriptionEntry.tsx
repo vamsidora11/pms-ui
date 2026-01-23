@@ -6,20 +6,20 @@ import {
   type DoctorDto,
 } from "@api/prescription";
 import { getPatientById } from "@api/patientSearch";
-import type { PatientSummary } from "./models";
+import type { PatientSummary } from "@prescription/models";
 import { useToast } from "@components/common/Toast/useToast";
 
-import Stepper from "./components/Stepper";
-import PatientStep from "./steps/PatientStep";
-import DoctorStep from "./steps/DoctorStep";
-import MedicationStep from "./steps/MedicationStep";
-import ReviewStep from "./steps/ReviewStep";
+import Stepper from "@components/common/Stepper/Stepper";
+import PatientStep from "@prescription/steps/PatientStep";
+import DoctorStep from "@prescription/steps/DoctorStep";
+import MedicationStep from "@prescription/steps/MedicationStep";
+import ReviewStep from "@prescription/steps/ReviewStep";
 
 import {
   validatePatientStep,
   validateDoctorStep,
   validateMedicationStep,
-} from "./validation";
+} from "@prescription/validation";
 
 /* ---------------- INITIAL STATE ---------------- */
 
@@ -39,6 +39,13 @@ const INITIAL_DRAFT: PrescriptionDraft = {
   ],
   notes: "",
 };
+
+const PRESCRIPTION_STEPS = [
+  { step: 1, label: "Patient" },
+  { step: 2, label: "Doctor" },
+  { step: 3, label: "Medications" },
+  { step: 4, label: "Review" },
+];
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -87,9 +94,7 @@ export default function PrescriptionEntry() {
         Id: draft.doctor.id,
         Name: draft.doctor.name,
       } as DoctorDto,
-      ExpiresAt: new Date(
-        Date.now() + 365 * 24 * 60 * 60 * 1000
-      ).toISOString(),
+      ExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       Items: draft.medications.map((m) => ({
         InventoryId: m.drugId!,
         MedicineName: m.drugName,
@@ -127,7 +132,7 @@ export default function PrescriptionEntry() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <Stepper currentStep={currentStep} />
+      <Stepper currentStep={currentStep} steps={PRESCRIPTION_STEPS} />
 
       {currentStep === 1 && (
         <PatientStep
@@ -165,9 +170,7 @@ export default function PrescriptionEntry() {
       {currentStep === 3 && (
         <MedicationStep
           medications={draft.medications}
-          onChange={(medications) =>
-            setDraft((d) => ({ ...d, medications }))
-          }
+          onChange={(medications) => setDraft((d) => ({ ...d, medications }))}
         />
       )}
 
