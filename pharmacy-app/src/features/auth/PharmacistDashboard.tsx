@@ -6,8 +6,8 @@ import type {
   ValueGetterParams,
 } from "ag-grid-community";
 
-import DataGrid from "../../components/common/Datagrid/Datagrid";
-import Button from "../../components/common/Button/Button";
+import DataGrid from "@components/common/Datagrid/Datagrid";
+import Button from "@components/common/Button/Button";
 
 type PrescriptionStatus =
   | "Pending"

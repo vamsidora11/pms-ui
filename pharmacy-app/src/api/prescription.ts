@@ -1,66 +1,15 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
+import { logger } from "@utils/logger/logger";
 
-// ===== DTOs matching C# backend =====
+import type {
+  CreatePrescriptionRequest,
+  CreatePrescriptionResponse,
+  PrescriptionSummaryDto,
+  PrescriptionDetailsDto,
+} from "./prescription.types";
 
-export interface DoctorDto {
-  Id: string;
-  Name: string;
-}
-
-export interface CreatePrescriptionItemDto {
-  InventoryId: string;
-  MedicineName: string;
-  Strength: string;
-  Frequency: string;
-  QuantityPrescribed: number;
-  DurationDays: number;
-  RemainingRefills: number;
-  Instructions: string;
-}
-
-export interface CreatePrescriptionRequest {
-  PatientId: string;
-  Doctor: DoctorDto;
-  ExpiresAt: string;
-  Items: CreatePrescriptionItemDto[];
-}
-
-export interface PrescriptionItemDto {
-  RxItemId: string;
-  InventoryId: string;
-  MedicineName: string;
-  Strength: string;
-  Frequency: string;
-  QuantityPrescribed: number;
-  DurationDays: number;
-  RemainingRefills: number;
-  Instructions: string;
-}
-
-export interface PrescriptionDetailsDto {
-  Id: string;
-  PatientId: string;
-  Doctor: DoctorDto;
-  CreatedAt: string;
-  ExpiresAt: string;
-  Status: string;
-  Items: PrescriptionItemDto[];
-}
-
-export interface PrescriptionSummaryDto {
-  Id: string;
-  CreatedAt: string;
-  ExpiresAt: string;
-  Status: string;
-}
-
-export interface CreatePrescriptionResponse {
-  prescriptionId: string;
-  status: string;
-}
-
-// ===== API FUNCTIONS =====
+// ================== API FUNCTIONS ==================
 
 export async function createPrescription(
   payload: CreatePrescriptionRequest
@@ -71,8 +20,11 @@ export async function createPrescription(
       payload
     );
     return res.data;
-  } catch (error: any) {
-    console.error("Create prescription failed:", error);
+  } catch (error) {
+    logger.error("Create prescription failed", {
+      payload,
+      error,
+    });
     return undefined;
   }
 }
@@ -85,8 +37,11 @@ export async function getPrescriptionsByPatient(
       `${ENDPOINTS.prescriptions}/patient/${patientId}`
     );
     return res.data;
-  } catch (error: any) {
-    console.error("Fetching prescriptions by patient failed:", error);
+  } catch (error) {
+    logger.error("Fetching prescriptions by patient failed", {
+      patientId,
+      error,
+    });
     return undefined;
   }
 }
@@ -99,8 +54,11 @@ export async function getPrescriptionById(
       `${ENDPOINTS.prescriptions}/${prescriptionId}`
     );
     return res.data;
-  } catch (error: any) {
-    console.error("Fetching prescription details failed:", error);
+  } catch (error) {
+    logger.error("Fetching prescription details failed", {
+      prescriptionId,
+      error,
+    });
     return undefined;
   }
 }
@@ -113,8 +71,11 @@ export async function cancelPrescription(
       `${ENDPOINTS.prescriptions}/${prescriptionId}/cancel`
     );
     return true;
-  } catch (error: any) {
-    console.error("Cancel prescription failed:", error);
+  } catch (error) {
+    logger.error("Cancel prescription failed", {
+      prescriptionId,
+      error,
+    });
     return false;
   }
 }

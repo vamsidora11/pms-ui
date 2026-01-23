@@ -10,7 +10,7 @@ const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntr
 const PrescriptionValidationPage = lazy(() => import("@validation/PrescriptionValidationPage"));
 const TechnicianDashboard = lazy(() => import("@auth/TechnicianDashboard"));
 const LabelGeneration = lazy(() => import("@labels/LabelGeneration"));
-const Refill = lazy(() => import("@refill/Refill"));
+const Refill = lazy(() => import ("@refill/Refill"));
 const PrescriptionHistory = lazy(() => import("@refill/PrescriptionHistory"));
 const PatientProfile = lazy(() => import("@patient/PatientProfile"));
 
