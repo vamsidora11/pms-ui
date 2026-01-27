@@ -10,6 +10,8 @@ export const ENDPOINTS = {
   patientSearch: "/api/patients/search",
   ALLERGY_SEARCH_ENDPOINT: "/api/catalogs/allergies/search",
 
+  products: "/api/products/search",
+
   // prescriptions
   // prescriptions: "/api/prescriptions",
   // prescriptionentry: "/api/prescriptions/entry",

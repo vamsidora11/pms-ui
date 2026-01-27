@@ -15,6 +15,10 @@ export default defineConfig({
       "@auth": path.resolve(__dirname, "src/features/auth"),
       "@patient": path.resolve(__dirname, "src/features/patient"),
       "@prescription": path.resolve(__dirname, "src/features/prescription"),
+      "@validation": path.resolve(__dirname, "src/features/validation"),
+      "@labels": path.resolve(__dirname, "src/features/labelgeneration"),
+      "@refill": path.resolve(__dirname, "src/features/refillmanagement"),
+      "@history": path.resolve(__dirname, "src/features/refillmanagement"),
       "@assets": path.resolve(__dirname, "src/assets")
     },
   },

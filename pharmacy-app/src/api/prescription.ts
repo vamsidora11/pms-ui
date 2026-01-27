@@ -36,120 +36,162 @@
 //     throw error;
 //   }
 // };
+///////////////--------///////
+// import api from "./axiosInstance";
+// import { ENDPOINTS } from "./endpoints";
+// import { logger } from "@utils/logger/logger";
 
+// import type {
+//   CreatePrescriptionRequest,
+//   CreatePrescriptionResponse,
+//   PrescriptionSummaryDto,
+//   PrescriptionDetailsDto,
+// } from "./prescription.types";
+
+// // ================== API FUNCTIONS ==================
+
+// export async function createPrescription(
+//   payload: CreatePrescriptionRequest
+// ): Promise<CreatePrescriptionResponse | undefined> {
+//   try {
+//     const res = await api.post<CreatePrescriptionResponse>(
+//       ENDPOINTS.prescriptions,
+//       payload
+//     );
+//     return res.data;
+//   } catch (error) {
+//     logger.error("Create prescription failed", {
+//       payload,
+//       error,
+//     });
+//     return undefined;
+//   }
+// }
+
+// export async function getPrescriptionsByPatient(
+//   patientId: string
+// ): Promise<PrescriptionSummaryDto[] | undefined> {
+//   try {
+//     const res = await api.get<PrescriptionSummaryDto[]>(
+//       `${ENDPOINTS.prescriptions}/patient/${patientId}`
+//     );
+//     return res.data;
+//   } catch (error) {
+//     logger.error("Fetching prescriptions by patient failed", {
+//       patientId,
+//       error,
+//     });
+//     return undefined;
+//   }
+// }
+
+// export async function getPrescriptionById(
+//   prescriptionId: string
+// ): Promise<PrescriptionDetailsDto | undefined> {
+//   try {
+//     const res = await api.get<PrescriptionDetailsDto>(
+//       `${ENDPOINTS.prescriptions}/${prescriptionId}`
+//     );
+//     return res.data;
+//   } catch (error) {
+//     logger.error("Fetching prescription details failed", {
+//       prescriptionId,
+//       error,
+//     });
+//     return undefined;
+//   }
+// }
+
+// export async function cancelPrescription(
+//   prescriptionId: string
+// ): Promise<boolean> {
+//   try {
+//     await api.post(
+//       `${ENDPOINTS.prescriptions}/${prescriptionId}/cancel`
+//     );
+//     return true;
+//   } catch (error) {
+//     logger.error("Cancel prescription failed", {
+//       prescriptionId,
+//       error,
+//     });
+//     return false;
+//   }
+// }
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
+import { logger } from "@utils/logger/logger";
 
-/**
- * EXPECTED ENDPOINTS SHAPE (align this to your endpoints.ts):
- *
- * export const ENDPOINTS = {
- *   prescriptions: "/api/prescriptions",                 // base
- *   prescriptionDetails: "/api/prescriptions",           // /:id
- *   prescriptionByPatient: "/api/prescriptions/patient", // /:patientId
- *   cancelPrescription: "/api/prescriptions",            // /:id/cancel
- *   // approvePrescription: "/api/prescriptions",       // /:id/approve (add when backend ready)
- * };
- *
- * If your current ENDPOINTS keys differ (e.g., prescriptionentry, validatePrescription),
- * either update ENDPOINTS or adjust the URLs below accordingly.
- */
+import type {
+  CreatePrescriptionRequest,
+  PrescriptionSummaryDto,
+  PrescriptionDetailsDto,
+} from "./prescription.types";
 
-/* -------------------------------------------
- * Create a new manual prescription
- * ----------------------------------------- */
-export const prescriptionApi = async (prescriptionData: any) => {
+// ================== API FUNCTIONS ==================
+
+export async function createPrescription(
+  payload: CreatePrescriptionRequest
+): Promise<PrescriptionDetailsDto> {
   try {
-    // POST /api/prescriptions
-    const url = ENDPOINTS.prescriptions ?? "/api/prescriptions";
-    const response = await api.post(url, prescriptionData);
-    // Swagger: returns { prescriptionId, status }
-    return response.data;
-  } catch (error: any) {
-    console.error("Failed to create prescription:", error);
-    throw error;
-  }
-};
-
-/* -------------------------------------------
- * Fetch prescription details by ID
- * ----------------------------------------- */
-export const getPrescriptionDetails = async (id: string) => {
-  try {
-    // GET /api/prescriptions/{id}
-    const base = ENDPOINTS.prescriptionDetails ?? "/api/prescriptions";
-    const response = await api.get(`${base}/${encodeURIComponent(id)}`);
-    return response.data;
-  } catch (error: any) {
-    console.error(`Failed to fetch prescription details for ${id}:`, error);
-    throw error;
-  }
-};
-
-/* -------------------------------------------
- * Fetch prescriptions for a patient
- * ----------------------------------------- */
-export const getPrescriptionsByPatient = async (
-  patientId: string
-) => {
-  try {
-    // GET /api/prescriptions/patient/{patientId}
-    const base = ENDPOINTS.prescriptionByPatient ?? "/api/prescriptions/patient";
-    const response = await api.get(`${base}/${encodeURIComponent(patientId)}`);
-    // If your backend returns an array, this is already correct.
-    // If it returns { items: [...] }, adjust to: return response.data.items;
-    return response.data;
-  } catch (error: any) {
-    console.error(`Failed to fetch prescriptions for patient ${patientId}:`, error);
-    throw error;
-  }
-};
-
-/* -------------------------------------------
- * Cancel a prescription (your Swagger has this)
- * ----------------------------------------- */
-export const cancelPrescription = async (id: string, reason?: string) => {
-  try {
-    // POST /api/prescriptions/{id}/cancel
-    const base = ENDPOINTS.cancelPrescription ?? "/api/prescriptions";
-    const response = await api.post(
-      `${base}/${encodeURIComponent(id)}/cancel`,
-      // If your endpoint doesn’t accept a body, you can pass undefined
-      reason ? { reason } : undefined
+    const res = await api.post<PrescriptionDetailsDto>(
+      ENDPOINTS.prescriptions,
+      payload
     );
-    // Often returns 204 No Content; guard for that:
-    return response.data ?? { status: "ok" };
-  } catch (error: any) {
-    console.error(`Failed to cancel prescription ${id}:`, error);
-    throw error;
+    console.log("Submitting prescription payload:", JSON.stringify(payload, null, 2));
+    return res.data;
+  } catch (error) {
+    logger.error("Create prescription failed", { payload, error });
+    throw error; // 🔥 important
   }
-};
+}
 
-/* -------------------------------------------
- * Validate/Approve a prescription
- * NOTE: Your Swagger does NOT have an approve/validate endpoint yet.
- * This function tries to call /approve; if it doesn't exist (404),
- * it throws a helpful error message.
- * ----------------------------------------- */
-export const validatePrescription = async (id: string) => {
+export async function getPrescriptionsByPatient(
+  patientId: string
+): Promise<PrescriptionSummaryDto[]> {
   try {
-    // Hypothetical: POST /api/prescriptions/{id}/approve
-    const base =
-      // Prefer explicit key if you added it:
-      (ENDPOINTS as any).approvePrescription ?? "/api/prescriptions";
-    const url = `${base}/${encodeURIComponent(id)}/approve`;
-    const response = await api.post(url);
-    return response.data ?? { status: "ok" };
-  } catch (error: any) {
-    // If backend hasn't implemented /approve yet, guide the developer.
-    if (error?.response?.status === 404) {
-      const msg =
-        "Approve endpoint not found. Implement POST /api/prescriptions/{id}/approve on the server, " +
-        "or stop calling validatePrescription and use cancelPrescription for rejection until approve is available.";
-      console.error(msg);
-      throw new Error(msg);
-    }
-    console.error(`Failed to validate (approve) prescription ${id}:`, error);
+    const res = await api.get<PrescriptionSummaryDto[]>(
+      `${ENDPOINTS.prescriptions}/patient/${patientId}`
+    );
+    return res.data;
+  } catch (error) {
+    logger.error("Fetching prescriptions by patient failed", {
+      patientId,
+      error,
+    });
     throw error;
   }
-};
+}
+
+export async function getPrescriptionById(
+  prescriptionId: string
+): Promise<PrescriptionDetailsDto> {
+  try {
+    const res = await api.get<PrescriptionDetailsDto>(
+      `${ENDPOINTS.prescriptions}/${prescriptionId}`
+    );
+    return res.data;
+  } catch (error) {
+    logger.error("Fetching prescription details failed", {
+      prescriptionId,
+      error,
+    });
+    throw error;
+  }
+}
+
+export async function cancelPrescription(
+  prescriptionId: string
+): Promise<void> {
+  try {
+    await api.post(
+      `${ENDPOINTS.prescriptions}/${prescriptionId}/cancel`
+    );
+  } catch (error) {
+    logger.error("Cancel prescription failed", {
+      prescriptionId,
+      error,
+    });
+    throw error;
+  }
+}

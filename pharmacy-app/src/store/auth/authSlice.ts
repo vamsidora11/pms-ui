@@ -1,19 +1,76 @@
+// import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+// import { jwtDecode } from "jwt-decode";
+// import { loginApi, refreshApi, logoutApi } from "@api/auth";
+
+// export const loginUser = createAsyncThunk("auth/login", async (credentials: { username: string; password: string }) => {
+//   return await loginApi(credentials);
+// });
+
+// export const refreshAccess = createAsyncThunk("auth/refresh", async () => {
+//   return await refreshApi();
+// });
+
+// export const serverLogout = createAsyncThunk("auth/logout", async () => {
+//   await logoutApi();
+// });
+
+// import type { User, UserRole } from "./authtype";
+
+// type TokenPayload = { sub: string; username: string; role: UserRole; exp: number; avatarUrl?: string };
+
+// interface AuthState {
+//   user: User | null;
+//   accessToken: string | null;
+//   status: "idle" | "loading" | "succeeded" | "failed";
+//   error?: string;
+// }
+
+
+// const initialState: AuthState = { user: null, accessToken: null, status: "idle" };
+
+// const slice = createSlice({
+//   name: "auth",
+//   initialState,
+//   reducers: {
+//     logout(state) {
+//       state.user = null;
+//       state.accessToken = null;
+//       state.status = "idle";
+//     },
+//   },
+//   extraReducers: (b) => {
+//     b.addCase(loginUser.pending, (s) => {
+//       s.status = "loading";
+//       s.error = undefined;
+//     })
+//       .addCase(loginUser.fulfilled, (s, a) => {
+//         s.status = "succeeded";
+//         s.accessToken = a.payload.accessToken;
+//         const payload = jwtDecode<TokenPayload>(a.payload.accessToken);
+//         s.user = { id: payload.sub, username: payload.username, role: payload.role ,avatarUrl: payload.avatarUrl};
+//       })
+//       .addCase(loginUser.rejected, (s, a) => {
+//         s.status = "failed";
+//         s.error = a.error.message;
+//       })
+//       .addCase(refreshAccess.fulfilled, (s, a) => {
+//         s.accessToken = a.payload.accessToken;
+//         const payload = jwtDecode<TokenPayload>(a.payload.accessToken);
+//         s.user = { id: payload.sub, username: payload.username, role: payload.role ,avatarUrl: payload.avatarUrl};
+//       })
+//       .addCase(serverLogout.fulfilled, (s) => {
+//         s.user = null;
+//         s.accessToken = null;
+//         s.status = "idle";
+//       });
+//   },
+// });
+
+// export const { logout } = slice.actions;
+// export default slice.reducer;
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { jwtDecode } from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 import { loginApi, refreshApi, logoutApi } from "@api/auth";
-
-export const loginUser = createAsyncThunk("auth/login", async (credentials: { username: string; password: string }) => {
-  return await loginApi(credentials);
-});
-
-export const refreshAccess = createAsyncThunk("auth/refresh", async () => {
-  return await refreshApi();
-});
-
-export const serverLogout = createAsyncThunk("auth/logout", async () => {
-  await logoutApi();
-});
-
 import type { User, UserRole } from "./authtype";
 
 type TokenPayload = { sub: string; username: string; role: UserRole; exp: number; avatarUrl?: string };
@@ -25,10 +82,39 @@ interface AuthState {
   error?: string;
 }
 
-
 const initialState: AuthState = { user: null, accessToken: null, status: "idle" };
 
-const slice = createSlice({
+// Helper to decode JWT
+const decodeToken = (token: string): User => {
+  const payload = jwtDecode<TokenPayload>(token);
+  return { id: payload.sub, username: payload.username, role: payload.role, avatarUrl: payload.avatarUrl };
+};
+
+// Thunks
+export const loginUser = createAsyncThunk("auth/login", async (credentials: { username: string; password: string }, { rejectWithValue }) => {
+  try {
+    const res = await loginApi(credentials);
+    return res;
+  } catch (error: any) {
+    return rejectWithValue(error.message || "Login failed");
+  }
+});
+
+export const refreshAccess = createAsyncThunk("auth/refresh", async (_, { rejectWithValue }) => {
+  try {
+    const res = await refreshApi();
+    return res; // { accessToken }
+  } catch (error: any) {
+    return rejectWithValue(error.message || "Refresh failed");
+  }
+});
+
+export const serverLogout = createAsyncThunk("auth/logout", async () => {
+  await logoutApi();
+});
+
+// Slice
+const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
@@ -36,35 +122,49 @@ const slice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.status = "idle";
+      state.error = undefined;
     },
   },
-  extraReducers: (b) => {
-    b.addCase(loginUser.pending, (s) => {
-      s.status = "loading";
-      s.error = undefined;
-    })
-      .addCase(loginUser.fulfilled, (s, a) => {
-        s.status = "succeeded";
-        s.accessToken = a.payload.accessToken;
-        const payload = jwtDecode<TokenPayload>(a.payload.accessToken);
-        s.user = { id: payload.sub, username: payload.username, role: payload.role ,avatarUrl: payload.avatarUrl};
+  extraReducers: (builder) => {
+    builder
+      // LOGIN
+      .addCase(loginUser.pending, (state) => {
+        state.status = "loading";
+        state.error = undefined;
       })
-      .addCase(loginUser.rejected, (s, a) => {
-        s.status = "failed";
-        s.error = a.error.message;
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.accessToken = action.payload.accessToken;
+        state.user = decodeToken(action.payload.accessToken);
       })
-      .addCase(refreshAccess.fulfilled, (s, a) => {
-        s.accessToken = a.payload.accessToken;
-        const payload = jwtDecode<TokenPayload>(a.payload.accessToken);
-        s.user = { id: payload.sub, username: payload.username, role: payload.role ,avatarUrl: payload.avatarUrl};
+      .addCase(loginUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload as string;
+        state.accessToken = null;
+        state.user = null;
       })
-      .addCase(serverLogout.fulfilled, (s) => {
-        s.user = null;
-        s.accessToken = null;
-        s.status = "idle";
+
+      // REFRESH
+      .addCase(refreshAccess.fulfilled, (state, action) => {
+        state.accessToken = action.payload.accessToken;
+        state.user = decodeToken(action.payload.accessToken);
+      })
+      .addCase(refreshAccess.rejected, (state) => {
+        // Clear state on refresh failure to force logout
+        state.accessToken = null;
+        state.user = null;
+        state.status = "idle";
+      })
+
+      // LOGOUT
+      .addCase(serverLogout.fulfilled, (state) => {
+        state.accessToken = null;
+        state.user = null;
+        state.status = "idle";
+        state.error = undefined;
       });
   },
 });
 
-export const { logout } = slice.actions;
-export default slice.reducer;
+export const { logout } = authSlice.actions;
+export default authSlice.reducer;
