@@ -22,9 +22,9 @@ export default function LoginPage() {
     if (loginUser.fulfilled.match(result)) {
       const role = user?.role;
       const to =
-        role === "Manager"
+        role === "manager"
           ? "/manager/dashboard"
-          : role === "Pharmacist"
+          : role === "pharmacist"
           ? "/pharmacist/dashboard"
           : "/technician/dashboard";
       navigate(to);
@@ -48,7 +48,7 @@ export default function LoginPage() {
               type="text"
               placeholder="Enter your username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={setUsername}
               required
             />
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
               type="password"
               placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
               required
             />
 

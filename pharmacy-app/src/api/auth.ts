@@ -13,6 +13,7 @@ export async function loginApi(credentials: { username: string; password: string
 
 export async function refreshApi() {
   try {
+    console.log("refreshed");
     const res = await api.post(ENDPOINTS.refresh);
     return res.data as { accessToken: string };
   } catch (error: any) {

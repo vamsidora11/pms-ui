@@ -24,10 +24,10 @@ const roleNavItems: Record<
   UserRole,
   { key: string; label: string; to: string; icon: React.ElementType }[]
 > = {
-  Manager: [
+  manager: [
     { key: "dashboard", label: "Dashboard", to: "/manager/dashboard", icon: HomeIcon },
   ],
-  Pharmacist: [
+  pharmacist: [
     { key: "dashboard", label: "Dashboard", to: "/pharmacist/dashboard", icon: HomeIcon },
     { key: "entry", label: "Manual Prescription Entry", to: "/pharmacist/entry", icon: ClipboardDocumentListIcon },
     { key: "validation", label: "Prescription Validation", to: "/pharmacist/validation", icon: CheckBadgeIcon },
@@ -36,7 +36,7 @@ const roleNavItems: Record<
     { key: "refills", label: "Refill Management", to: "/pharmacist/refills", icon: ArrowPathIcon },
     { key: "history", label: "Patient History", to: "/pharmacist/history", icon: UserCircleIcon },
   ],
-  Technician: [
+  technician: [
     { key: "dashboard", label: "Dashboard", to: "/technician/dashboard", icon: HomeIcon },
     { key: "status", label: "Prescription Status", to: "/technician/status", icon: ClipboardDocumentListIcon },
     { key: "alerts", label: "Alerts", to: "/technician/alerts", icon: BellIcon },

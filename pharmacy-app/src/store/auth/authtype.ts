@@ -1,7 +1,7 @@
 export enum UserRoleEnum {
-  Manager = "Manager",
-  Pharmacist = "Pharmacist",
-  Technician = "Technician",
+  manager = "manager",
+  pharmacist = "pharmacist",
+  technician = "technician",
 }
 
 export type UserRole = keyof typeof UserRoleEnum;

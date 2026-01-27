@@ -6,7 +6,7 @@ export interface Patient {
   phone: string;
   email?: string;
   address: string;
-  allergies?: { code: string; displayName: string }[];
+  allergies?: string[];
   insurance?: { provider: string; memberId: string };
 }
 
@@ -18,11 +18,6 @@ export interface PatientSummaryDto {
   fullName: string;
   phone: string;
 }
-export interface PatientAllergyDto {
-  code: string;
-  displayName: string;
-}
-
 export interface InsuranceDto {
   provider: string;
   memberId: string;
@@ -35,7 +30,7 @@ export interface CreatePatientRequest {
   phone: string;
   email?: string;
   address?: string;
-  allergies?: PatientAllergyDto[];
+  allergies?: string[];
   insurance?: InsuranceDto;
 }
 

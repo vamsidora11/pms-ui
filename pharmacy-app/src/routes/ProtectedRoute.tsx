@@ -7,9 +7,9 @@ import type { UserRole } from "@store/auth/authtype";
 type Props = { allowedRoles?: UserRole[] };
 
 const ROLE_FALLBACKS: Record<UserRole, string> = {
-  Manager: ROUTES.MANAGER.DASHBOARD,
-  Pharmacist: ROUTES.PHARMACIST.DASHBOARD,
-  Technician: ROUTES.TECHNICIAN.DASHBOARD,
+  manager: ROUTES.MANAGER.DASHBOARD,
+  pharmacist: ROUTES.PHARMACIST.DASHBOARD,
+  technician: ROUTES.TECHNICIAN.DASHBOARD,
 };
 
 export default function ProtectedRoute({ allowedRoles }: Props) {

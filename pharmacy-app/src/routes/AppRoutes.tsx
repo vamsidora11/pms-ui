@@ -7,7 +7,8 @@ import { lazy, Suspense } from "react";
 const LoginPage = lazy(() => import("@auth/LoginPage"));
 const PharmacistDashboard = lazy(() => import("@auth/PharmacistDashboard"));
 const ManualPrescriptionView = lazy(() => import("@prescription/ManualPrescriptionView"));
-const PrescriptionValidationPage = lazy(() => import("@prescription/PrescriptionValidationPage"));
+const PrescriptionValidationQueue = lazy(() => import("@prescription/PrescriptionValidationQueue")); // ✅ new
+const PrescriptionValidationPage = lazy(() => import("@prescription/PrescriptionValidationPage"));   // details
 const TechnicianDashboard = lazy(() => import("@auth/TechnicianDashboard"));
 const LabelGeneration = lazy(() => import("@prescription/LabelGeneration"));
 const Refill = lazy(() => import("@prescription/Refill"));
@@ -20,18 +21,23 @@ export default function AppRoutes() {
       <Routes>
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
 
-        <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
           <Route path={ROUTES.MANAGER.BASE} element={<AppLayout />}>
             <Route path="dashboard" element={<div>Manager Dashboard</div>} />
           </Route>
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["Pharmacist"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["pharmacist"]} />}>
           <Route path={ROUTES.PHARMACIST.BASE} element={<AppLayout />}>
             <Route index element={<PharmacistDashboard />} />
             <Route path="dashboard" element={<PharmacistDashboard />} />
             <Route path="entry" element={<ManualPrescriptionView />} />
-            <Route path="validation" element={<PrescriptionValidationPage />} />
+
+            {/* ✅ Queue at /pharmacist/validation */}
+            <Route path="validation" element={<PrescriptionValidationQueue />} />
+            {/* ✅ Details page at /pharmacist/validation/:id */}
+            <Route path="validation/:rxId" element={<PrescriptionValidationPage />} />
+
             <Route path="labels" element={<LabelGeneration />} />
             <Route path="refills" element={<Refill />} />
             <Route path="history" element={<PrescriptionHistory />} />
@@ -39,16 +45,13 @@ export default function AppRoutes() {
           </Route>
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["Technician"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["technician"]} />}>
           <Route path={ROUTES.TECHNICIAN.BASE} element={<AppLayout />}>
             <Route path="dashboard" element={<TechnicianDashboard />} />
           </Route>
         </Route>
 
-        <Route
-          path={ROUTES.FALLBACK}
-          element={<Navigate to={ROUTES.LOGIN} replace />}
-        />
+        <Route path={ROUTES.FALLBACK} element={<Navigate to={ROUTES.LOGIN} replace />} />
       </Routes>
     </Suspense>
   );
