@@ -1,118 +1,111 @@
-// // ===== DTOs matching C# backend =====
-
-// export interface DoctorDto {
-//   Id: string;
-//   Name: string;
-// }
-
-// export interface CreatePrescriptionItemDto {
-//   InventoryId: string;
-//   MedicineName: string;
-//   Strength: string;
-//   Frequency: string;
-//   QuantityPrescribed: number;
-//   DurationDays: number;
-//   RemainingRefills: number;
-//   Instructions: string;
-// }
-
-// export interface CreatePrescriptionRequest {
-//   PatientId: string;
-//   Doctor: DoctorDto;
-//   ExpiresAt: string;
-//   Items: CreatePrescriptionItemDto[];
-// }
-
-// export interface PrescriptionItemDto {
-//   RxItemId: string;
-//   InventoryId: string;
-//   MedicineName: string;
-//   Strength: string;
-//   Frequency: string;
-//   QuantityPrescribed: number;
-//   DurationDays: number;
-//   RemainingRefills: number;
-//   Instructions: string;
-// }
-
-// export interface PrescriptionDetailsDto {
-//   Id: string;
-//   PatientId: string;
-//   Doctor: DoctorDto;
-//   CreatedAt: string;
-//   ExpiresAt: string;
-//   Status: string;
-//   Items: PrescriptionItemDto[];
-// }
-
-// export interface PrescriptionSummaryDto {
-//   Id: string;
-//   CreatedAt: string;
-//   ExpiresAt: string;
-//   Status: string;
-// }
-
-// export interface CreatePrescriptionResponse {
-//   prescriptionId: string;
-//   status: string;
-// }
-
-// Request DTO
-// ===== DTOs matching backend JSON (camelCase) =====
-
-export interface DoctorDto {
+export interface PrescriberDto {
   id: string;
   name: string;
 }
 
-export interface CreatePrescriptionItemDto {
-  inventoryId: string;
-  medicineName: string;
+export interface CreatePrescriptionMedicineRequest {
+  productId: string;
+  name: string;
   strength: string;
+  prescribedQuantity: number;
+  totalRefillsAuthorized: number;
   frequency: string;
-  quantityPrescribed: number;
-  durationDays: number;
-  remainingRefills: number;
-  instructions: string;
+  daysSupply: number;
+  instruction?: string;
 }
 
 export interface CreatePrescriptionRequest {
   patientId: string;
-  doctor: DoctorDto;
-  expiresAt: string; // ISO string
-  items: CreatePrescriptionItemDto[];
+  patientName: string;
+  prescriber: PrescriberDto;
+  medicines: CreatePrescriptionMedicineRequest[];
 }
 
-export interface PrescriptionItemDto {
-  rxItemId: string;
-  inventoryId: string;
-  medicineName: string;
+export interface PrescriptionMedicineDto {
+  prescriptionMedicineId: string;
+  productId: string;
+  name: string;
   strength: string;
+  prescribedQuantity: number;
+  dispensedQuantity: number;
+  totalRefillsAuthorized: number;
+  refillsRemaining: number;
   frequency: string;
-  quantityPrescribed: number;
-  durationDays: number;
-  remainingRefills: number;
-  instructions: string;
+  daysSupply: number;
+  endDate: string | null;
+  instruction: string;
+  validation: MedicineValidationDto;
+  pharmacistReview: PharmacistReviewDto;
 }
 
 export interface PrescriptionDetailsDto {
   id: string;
   patientId: string;
-  doctor: DoctorDto;
+  patientName: string;
+  prescriber: PrescriberDto;
   createdAt: string;
   expiresAt: string;
   status: string;
-  items: PrescriptionItemDto[];
+  isRefillable: boolean;
+  medicines: PrescriptionMedicineDto[];
 }
 
 export interface PrescriptionSummaryDto {
   id: string;
+  patientId: string;
+  patientName: string;
+  prescriberName: string;
   createdAt: string;
   expiresAt: string;
   status: string;
+  medicineCount: number;
+  validationSummary: ValidationSummaryDto;
 }
 
-export interface CreatePrescriptionResponse {
-  prescriptionId: string;
-  status: string;
+export interface ValidationSummaryDto {
+  totalIssues: number;
+  highSeverityCount: number;
+  moderateCount: number;
+  lowCount: number;
+  requiresReview: boolean;
+}
+
+export interface MedicineValidationDto {
+  drugAllergy: DrugAllergyValidationDto;
+  drugInteraction: DrugInteractionValidationDto;
+  lowStock: LowStockValidationDto;
+}
+export interface DrugAllergyValidationDto {
+  isPresent: boolean;
+  overallSeverity: string | null;
+  allergies: AllergyValidationItemDto[];
+}
+export interface AllergyValidationItemDto {
+  allergenCode: string;
+  severity: string;
+  message: string;
+}
+export interface DrugInteractionValidationDto {
+  isPresent: boolean;
+  overallSeverity: string | null;
+  interactingWith: InteractionValidationItemDto[];
+}
+export interface InteractionValidationItemDto {
+  productId: string;
+  productName: string;
+  severity: string;
+  message: string;
+}
+export interface LowStockValidationDto {
+  isPresent: boolean;
+  severity: string | null;
+  requiredQty: number;
+  availableQty: number;
+  message: string | null;
+}
+export interface PharmacistReviewDto {
+  decision: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  overrideReason: string | null;
 }
