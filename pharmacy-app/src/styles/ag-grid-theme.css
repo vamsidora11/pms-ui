@@ -104,7 +104,7 @@
 /* Remove left/right spacers AG Grid adds */
 .ag-theme-alpine .ag-paging-panel > * {
  
-  margin-top: 0px;     /* 👈 GAP FROM TABLE */
+  margin-top: 0px;     /* GAP FROM TABLE */
   padding-top: 0px;
 }
 

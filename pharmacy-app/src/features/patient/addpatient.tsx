@@ -4,8 +4,7 @@ import type { CreatePatientRequest } from "@store/patient/patienttype";
 import Input from "@components/common/Input/Input";
 import Select from "@components/common/Select/Select";
 import clsx from "clsx";
-import { searchAllergies } from "@api/catalogs"; // 👈 new API
-
+import { searchAllergies } from "@api/catalogs";
 interface AddPatientModalProps {
   onClose: () => void;
   onSave: (request: CreatePatientRequest) => void;
@@ -32,8 +31,8 @@ export default function AddPatientModal({
     phone: "",
     email: "",
     address: "",
-    allergies: [] as string[], // 👈 string[]
-    newAllergy: "", // search box text
+    allergies: [] as string[],
+    newAllergy: "", 
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});

@@ -16,7 +16,7 @@ export async function searchAllergies(
 
   try {
     const res = await api.get(ENDPOINTS.ALLERGY_SEARCH_ENDPOINT, {
-      params: { q },           // 👈 backend expects `q`
+      params: { q },           //  backend expects `q`
       signal: opts?.signal,
     });
 
