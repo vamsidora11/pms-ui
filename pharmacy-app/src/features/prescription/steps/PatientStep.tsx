@@ -169,7 +169,6 @@ setResults(data);
                 <div className="text-gray-900">{patient.phone}</div>
               </div>
             </div>
-
             {/* Allergy Warning */}
             {patient.allergies.length > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -177,14 +176,13 @@ setResults(data);
                   <AlertTriangle className="w-4 h-4" />
                   Known Allergies
                 </div>
-
                 <div className="flex flex-wrap gap-2">
-                  {patient.allergies.map((a) => (
+                  {patient.allergies.map((allergy) => (
                     <span
-                      key={a.code}
+                      key={allergy}
                       className="px-3 py-1 bg-red-100 text-red-700 rounded-md text-sm"
                     >
-                      {a.displayName}
+                      {allergy}
                     </span>
                   ))}
                 </div>

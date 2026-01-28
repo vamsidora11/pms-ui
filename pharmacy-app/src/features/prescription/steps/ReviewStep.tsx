@@ -1,3 +1,4 @@
+import { formatDate } from "@utils/format";
 import type { PrescriptionDraft } from "../models";
 
 interface ReviewStepProps {
@@ -61,7 +62,7 @@ export default function ReviewStep({
               </div>
               <div>
                 <div className="text-xs text-gray-600 mb-1">Date of Birth</div>
-                <div className="text-sm font-medium text-gray-900">{patient.dob}</div>
+                <div className="text-sm font-medium text-gray-900">{formatDate(patient.dob)}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-600 mb-1">Phone</div>
@@ -87,12 +88,12 @@ export default function ReviewStep({
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h3 className="text-yellow-800 font-semibold mb-2 text-sm">⚠️ Patient Allergies:</h3>
               <div className="flex flex-wrap gap-2">
-                {patient.allergies.map((allergy, idx) => (
+                {patient.allergies.map((allergy) => (
                   <span
-                    key={idx}
+                    key={allergy}
                     className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium"
                   >
-                    {allergy.displayName}
+                    {allergy}
                   </span>
                 ))}
               </div>
