@@ -59,7 +59,13 @@ export interface PrescriptionSummaryDto {
   expiresAt: string;
   status: string;
   medicineCount: number;
-  validationSummary: ValidationSummaryDto;
+  validationSummary: {
+    totalIssues: number;
+    highSeverityCount: number;
+    moderateCount: number;
+    lowCount: number;
+    requiresReview: boolean;
+  };
 }
 
 export interface ValidationSummaryDto {
@@ -75,27 +81,32 @@ export interface MedicineValidationDto {
   drugInteraction: DrugInteractionValidationDto;
   lowStock: LowStockValidationDto;
 }
+
 export interface DrugAllergyValidationDto {
   isPresent: boolean;
   overallSeverity: string | null;
   allergies: AllergyValidationItemDto[];
 }
+
 export interface AllergyValidationItemDto {
   allergenCode: string;
   severity: string;
   message: string;
 }
+
 export interface DrugInteractionValidationDto {
   isPresent: boolean;
   overallSeverity: string | null;
   interactingWith: InteractionValidationItemDto[];
 }
+
 export interface InteractionValidationItemDto {
   productId: string;
   productName: string;
   severity: string;
   message: string;
 }
+
 export interface LowStockValidationDto {
   isPresent: boolean;
   severity: string | null;
@@ -103,9 +114,22 @@ export interface LowStockValidationDto {
   availableQty: number;
   message: string | null;
 }
+
 export interface PharmacistReviewDto {
   decision: string;
   reviewedBy: string | null;
   reviewedAt: string | null;
   overrideReason: string | null;
+}
+
+// ==================== REVIEW TYPES ====================
+
+export interface MedicineReviewDto {
+  prescriptionMedicineId: string;
+  decision: string; // "Accepted" | "Rejected"
+  overrideReason?: string | null;
+}
+
+export interface ReviewPrescriptionRequest {
+  medicines: MedicineReviewDto[];
 }

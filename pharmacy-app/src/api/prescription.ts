@@ -6,6 +6,7 @@ import type {
   CreatePrescriptionRequest,
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
+  ReviewPrescriptionRequest,
 } from "./prescription.types";
 
 // ================== API FUNCTIONS ==================
@@ -73,6 +74,46 @@ export async function cancelPrescription(
       prescriptionId,
       error,
     });
+    throw error;
+  }
+}
+
+// ================== REVIEW PRESCRIPTION ==================
+
+export async function reviewPrescription(
+  prescriptionId: string,
+  payload: ReviewPrescriptionRequest
+): Promise<void> {
+  try {
+    await api.put(
+      `${ENDPOINTS.prescriptions}/${prescriptionId}/review`,
+      payload
+    );
+    logger.info("Prescription reviewed successfully", { prescriptionId });
+  } catch (error) {
+    logger.error("Review prescription failed", {
+      prescriptionId,
+      payload,
+      error,
+    });
+    throw error;
+  }
+}
+
+// ================== GET PENDING PRESCRIPTIONS ==================
+
+export async function getPendingPrescriptions(): Promise<PrescriptionSummaryDto[]> {
+  try {
+    const res = await api.get(ENDPOINTS.prescriptions, {
+      params: {
+        status: "Created",
+        pageSize: 20,
+      },
+    });
+
+    return res.data.items; // PagedResultDto -> items
+  } catch (error) {
+    logger.error("Get pending prescriptions failed", { error });
     throw error;
   }
 }

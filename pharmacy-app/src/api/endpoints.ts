@@ -13,7 +13,11 @@ export const ENDPOINTS = {
 
   products: "/api/products/search",
   
-  prescriptions: "/api/prescriptions",           
+  prescriptions: "/api/prescriptions",        
+  
+  labelQueue: "/api/prescriptions/labels/queue",
+
+  prescriptionLabels: (id: string) => `/api/prescriptions/${id}/labels`,
  };
 
 

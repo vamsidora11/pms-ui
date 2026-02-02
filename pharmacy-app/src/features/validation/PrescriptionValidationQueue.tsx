@@ -1,103 +1,76 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import {
-  ClipboardList,
-  AlertTriangle,
-  ChevronRight,
-} from "lucide-react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ClipboardList, AlertTriangle, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 
-/* =========================
-   Types
-========================= */
-type QueueItem = {
-  id: string; // RX-2026-001
-  patientName: string;
-  patientId: string;
-  doctorName: string;
-  medicationsCount: number;
-  submittedAt: string; // ISO
-  alerts: {
-    critical: number;
-    warning: number;
-    info: number;
-  };
-};
-
-/* =========================
-   Dummy data + mock fetch
-========================= */
-const DUMMY_QUEUE: QueueItem[] = [
-  {
-    id: "RX-2026-001",
-    patientName: "Sarah Johnson",
-    patientId: "PT-001",
-    doctorName: "Dr. Michael Chen",
-    medicationsCount: 2,
-    submittedAt: "2026-01-02T09:30:00+05:30",
-    alerts: { critical: 3, warning: 0, info: 0 },
-  },
-  {
-    id: "RX-2026-004",
-    patientName: "James Chen",
-    patientId: "PT-004",
-    doctorName: "Dr. Sarah Martinez",
-    medicationsCount: 2,
-    submittedAt: "2026-01-02T10:45:00+05:30",
-    alerts: { critical: 2, warning: 0, info: 0 },
-  },
-  {
-    id: "RX-2026-008",
-    patientName: "Emily Davis",
-    patientId: "PT-005",
-    doctorName: "Dr. Michael Chen",
-    medicationsCount: 1,
-    submittedAt: "2026-01-02T11:15:00+05:30",
-    alerts: { critical: 1, warning: 1, info: 0 },
-  },
-];
-
-function mockFetchQueue(delayMs = 400): Promise<QueueItem[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(DUMMY_QUEUE), delayMs);
-  });
-}
+import { getPendingPrescriptions } from "@api/prescription";
+import type { PrescriptionSummaryDto } from "@api/prescription.types";
 
 /* =========================
    Component
 ========================= */
+
 export default function PrescriptionValidationQueue() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<QueueItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
-  useEffect(() => {
-    let done = false;
+  const [rows, setRows] = useState<PrescriptionSummaryDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  /* -------------------------
+     Fetch Function
+  ------------------------- */
+  const loadQueue = useCallback(() => {
     setLoading(true);
-    mockFetchQueue().then((res) => {
-      if (!done) {
-        setItems(res);
-        setLoading(false);
-      }
-    });
-    return () => {
-      done = true;
-    };
+    getPendingPrescriptions()
+      .then(setRows)
+      .catch(() => setError("Failed to load prescriptions"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const pendingCount = items.length;
+  /* Initial load */
+  useEffect(() => {
+    Promise.resolve().then(loadQueue);
+  }, [loadQueue]);
+
+  /* Refresh on window focus */
+  useEffect(() => {
+    const onFocus = () => loadQueue();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadQueue]);
+
+  /* Refresh after coming back from details page */
+  useEffect(() => {
+    if ((location.state as { refresh?: boolean })?.refresh) {
+      Promise.resolve().then(loadQueue);
+    }
+  }, [location.state, loadQueue]);
+
+  /* -------------------------
+     Derived
+  ------------------------- */
+
+  const pendingCount = rows.length;
 
   const sorted = useMemo(
     () =>
-      [...items].sort(
+      [...rows].sort(
         (a, b) =>
-          new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime(),
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime()
       ),
-    [items],
+    [rows]
   );
+
+  /* -------------------------
+     Render
+  ------------------------- */
 
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6">
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">
@@ -113,14 +86,17 @@ export default function PrescriptionValidationQueue() {
         <div className="p-5 flex items-center justify-between">
           <div>
             <div className="text-sm text-gray-500">Pending Validations</div>
+
             {loading ? (
               <div className="h-6 w-56 bg-gray-200 rounded animate-pulse mt-1" />
             ) : (
               <div className="text-gray-900 font-medium">
-                {pendingCount} prescription{pendingCount === 1 ? "" : "s"} awaiting review
+                {pendingCount} prescription
+                {pendingCount === 1 ? "" : "s"} awaiting review
               </div>
             )}
           </div>
+
           <div className="p-2 rounded-full bg-yellow-100 text-yellow-700">
             <ClipboardList size={20} />
           </div>
@@ -129,14 +105,23 @@ export default function PrescriptionValidationQueue() {
 
       {/* List */}
       <div className="bg-white rounded-2xl border shadow-sm">
+
         <div className="p-5 border-b">
-          <h2 className="font-semibold text-gray-900">Pending Prescriptions</h2>
+          <h2 className="font-semibold text-gray-900">
+            Pending Prescriptions
+          </h2>
         </div>
+
+        {error && (
+          <div className="p-5 text-red-600">{error}</div>
+        )}
 
         {loading ? (
           <ListSkeleton />
         ) : sorted.length === 0 ? (
-          <div className="p-6 text-gray-500 text-center">No pending items</div>
+          <div className="p-6 text-gray-500 text-center">
+            No pending items
+          </div>
         ) : (
           <ul className="divide-y">
             {sorted.map((rx) => (
@@ -145,56 +130,78 @@ export default function PrescriptionValidationQueue() {
                 className="p-5 hover:bg-gray-50/70 transition"
               >
                 <div className="flex items-start justify-between gap-4">
-                  {/* Left content */}
-                  <div className="min-w-0">
-                    {/* Row 1: badges */}
-                    <div className="flex items-center gap-2 mb-3">
+
+                  {/* Left */}
+                  <div>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+
                       <Badge tone="amber">{rx.id}</Badge>
 
-                      {rx.alerts.critical > 0 && (
+                      {rx.validationSummary.highSeverityCount > 0 && (
                         <Badge tone="red">
                           <span className="inline-flex items-center gap-1">
                             <AlertTriangle size={14} />
-                            {rx.alerts.critical} Critical
+                            {rx.validationSummary.highSeverityCount} Critical
                           </span>
                         </Badge>
                       )}
-                      {rx.alerts.warning > 0 && (
+
+                      {rx.validationSummary.moderateCount > 0 && (
                         <Badge tone="amber-soft">
-                          {rx.alerts.warning} Warning
+                          {rx.validationSummary.moderateCount} Moderate
                         </Badge>
                       )}
-                      {rx.alerts.info > 0 && (
-                        <Badge tone="gray">{rx.alerts.info} Info</Badge>
+
+                      {rx.validationSummary.lowCount > 0 && (
+                        <Badge tone="gray">
+                          {rx.validationSummary.lowCount} Info
+                        </Badge>
                       )}
+
+                      {rx.validationSummary.totalIssues === 0 && (
+                        <Badge tone="gray">No Issues</Badge>
+                      )}
+
                     </div>
 
-                    {/* Row 2: grid details */}
+                    {/* Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                      <KV label="Patient" value={`${rx.patientName}\n${rx.patientId}`} multiline />
-                      <KV label="Doctor" value={rx.doctorName} />
+
+                      <KV
+                        label="Patient"
+                        value={`${rx.patientName}\n${rx.patientId}`}
+                        multiline
+                      />
+
+                      <KV label="Doctor" value={rx.prescriberName} />
+
                       <KV
                         label="Medications"
-                        value={`${rx.medicationsCount} item${rx.medicationsCount === 1 ? "" : "s"}`}
+                        value={`${rx.medicineCount} item${
+                          rx.medicineCount === 1 ? "" : "s"
+                        }`}
                       />
+
                       <KV
                         label="Submitted"
-                        value={formatDateTime(rx.submittedAt)}
+                        value={formatDateTime(rx.createdAt)}
                       />
+
                     </div>
                   </div>
 
-                  {/* Right: action */}
+                  {/* Action */}
                   <button
                     onClick={() =>
                       navigate(`/pharmacist/validation/${rx.id}`)
                     }
-                    className="text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 shrink-0"
-                    aria-label={`Review ${rx.id}`}
-                    title="Review"
+                    className="text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
                   >
                     Review <ChevronRight size={18} />
                   </button>
+
                 </div>
               </li>
             ))}
@@ -206,8 +213,9 @@ export default function PrescriptionValidationQueue() {
 }
 
 /* =========================
-   UI bits
+   UI Helpers
 ========================= */
+
 function Badge({
   children,
   tone,
@@ -221,6 +229,7 @@ function Badge({
     "amber-soft": "bg-amber-100 text-amber-800",
     gray: "bg-gray-100 text-gray-700",
   } as const;
+
   return (
     <span className={clsx("px-2 py-0.5 rounded text-xs", map[tone])}>
       {children}
@@ -238,9 +247,14 @@ function KV({
   multiline?: boolean;
 }) {
   return (
-    <div className="min-w-0">
+    <div>
       <div className="text-xs text-gray-500">{label}</div>
-      <div className={clsx("text-gray-900", multiline && "whitespace-pre-line")}>
+      <div
+        className={clsx(
+          "text-gray-900",
+          multiline && "whitespace-pre-line"
+        )}
+      >
         {value || "—"}
       </div>
     </div>
@@ -255,7 +269,10 @@ function ListSkeleton() {
           <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((__, j) => (
-              <div key={j} className="h-10 bg-gray-200 rounded animate-pulse" />
+              <div
+                key={j}
+                className="h-10 bg-gray-200 rounded animate-pulse"
+              />
             ))}
           </div>
         </div>
@@ -265,6 +282,5 @@ function ListSkeleton() {
 }
 
 function formatDateTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleString();
+  return new Date(iso).toLocaleString();
 }
