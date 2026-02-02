@@ -7,6 +7,7 @@ import type {
   CreatePrescriptionRequest,
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
+  ReviewPrescriptionRequest,
 } from "./prescription.types";
 
 // ================== CREATE PRESCRIPTION ==================
@@ -165,21 +166,42 @@ export async function cancelPrescription(
   }
 }
 
-// ================== VALIDATE/APPROVE PRESCRIPTION ==================
+// ================== REVIEW PRESCRIPTION ==================
 
-export async function validatePrescription(id: string): Promise<any> {
+export async function reviewPrescription(
+  prescriptionId: string,
+  payload: ReviewPrescriptionRequest
+): Promise<void> {
   try {
-    const response = await api.post(
-      `${ENDPOINTS.prescriptions}/${id}/approve`
+    await api.put(
+      `${ENDPOINTS.prescriptions}/${prescriptionId}/review`,
+      payload
     );
-    return response.data ?? { status: "ok" };
+    logger.info("Prescription reviewed successfully", { prescriptionId });
   } catch (error) {
-    logger.error("Validate prescription failed", { id, error });
+    logger.error("Review prescription failed", {
+      prescriptionId,
+      payload,
+      error,
+    });
     throw error;
   }
 }
 
-// ================== LEGACY ALIASES ==================
+// ================== GET PENDING PRESCRIPTIONS ==================
 
-// For backward compatibility with your old code
-export const prescriptionApi = createPrescription;
+export async function getPendingPrescriptions(): Promise<PrescriptionSummaryDto[]> {
+  try {
+    const res = await api.get(ENDPOINTS.prescriptions, {
+      params: {
+        status: "Created",
+        pageSize: 20,
+      },
+    });
+
+    return res.data.items; // PagedResultDto -> items
+  } catch (error) {
+    logger.error("Get pending prescriptions failed", { error });
+    throw error;
+  }
+}

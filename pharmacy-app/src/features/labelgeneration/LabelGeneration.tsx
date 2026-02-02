@@ -1,76 +1,86 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Printer, Download } from "lucide-react";
 
-/* =========================
-   Dummy Data Types
-========================= */
-interface Medication {
-  drugName: string;
-  strength: string;
-  quantity: number;
-  instructions: string;
+import type  {
+  LabelQueuePrescription,
+  LabelPrescriptionDetails,
+} from "@api/label.types";
+
+import {
+  getLabelQueue,
+  getPrescriptionForLabels,
+} from "@api/label";
+
+const FREQUENCY_LABEL_MAP: Record<string, string> = {
+  OD: "Once Daily",
+  BID: "Twice Daily",
+  TID: "Three Times Daily",
+  QID: "Four Times Daily",
+  Q4H: "Every 4 Hours",
+  Q6H: "Every 6 Hours",
+  Q8H: "Every 8 Hours",
+  Q12H: "Every 12 Hours",
+  PRN: "As Needed",
+  STAT: "Immediately",
+};
+
+function getFrequencyLabel(code?: string) {
+  if (!code) return "";
+  return FREQUENCY_LABEL_MAP[code] ?? code;
 }
 
-interface Prescription {
-  id: string;
-  patientName: string;
-  doctorName: string;
-  createdAt: Date;
-  medications: Medication[];
-}
 
-/* =========================
-   Dummy Prescriptions
-========================= */
-const DUMMY_PRESCRIPTIONS: Prescription[] = [
-  {
-    id: "RX-2026-003",
-    patientName: "Maria Garcia",
-    doctorName: "Dr. Michael Chen",
-    createdAt: new Date("2026-01-01"),
-    medications: [
-      {
-        drugName: "Amoxicillin",
-        strength: "500mg",
-        quantity: 21,
-        instructions: "Take three times daily with food",
-      },
-    ],
-  },
-  {
-    id: "RX-2026-005",
-    patientName: "Emily Davis",
-    doctorName: "Dr. Robert Allen",
-    createdAt: new Date("2026-01-02"),
-    medications: [
-      {
-        drugName: "Paracetamol",
-        strength: "650mg",
-        quantity: 10,
-        instructions: "Take one tablet every 6 hours as needed",
-      },
-    ],
-  },
-];
-
-/* =========================
-   Component
-========================= */
 export default function LabelGeneration() {
+
+  /* ================= STATE ================= */
+
+  const [prescriptions, setPrescriptions] =
+    useState<LabelQueuePrescription[]>([]);
+
   const [selectedPrescription, setSelectedPrescription] =
-    useState<Prescription | null>(null);
+    useState<LabelPrescriptionDetails | null>(null);
+
+  const [loading, setLoading] = useState(false);
+
+  /* ================= LOAD QUEUE ================= */
+
+  useEffect(() => {
+    loadQueue();
+  }, []);
+
+  async function loadQueue() {
+    setLoading(true);
+    try {
+      const res = await getLabelQueue();
+      setPrescriptions(res.items);
+    } finally {
+      setLoading(false);
+    }
+  }
+  
+  /* ================= SELECT RX ================= */
+
+  async function handleSelectPrescription(id: string) {
+    const data = await getPrescriptionForLabels(id);
+    setSelectedPrescription(data);
+  }
+
+  /* ================= HELPERS ================= */
 
   const handlePrint = () => window.print();
 
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString("en-US", {
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
     });
 
+  /* ================= UI ================= */
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">
@@ -82,59 +92,97 @@ export default function LabelGeneration() {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        {/* Ready Prescriptions */}
+
+        {/* ================= LEFT PANEL ================= */}
+
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+
           <div className="p-6 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">
               Ready Prescriptions
             </h2>
           </div>
 
+          {loading && (
+            <div className="p-4 text-gray-500">
+              Loading...
+            </div>
+          )}
+
+          {!loading && prescriptions.length === 0 && (
+            <div className="p-4 text-gray-500">
+              No prescriptions ready for labels
+            </div>
+          )}
+
           <div className="divide-y divide-gray-100">
-            {DUMMY_PRESCRIPTIONS.map((rx) => (
+            {prescriptions.map((rx) => (
               <button
                 key={rx.id}
-                onClick={() => setSelectedPrescription(rx)}
-                className={`w-full p-4 text-left transition-colors ${
-                  selectedPrescription?.id === rx.id
-                    ? "bg-blue-50"
-                    : "hover:bg-gray-50"
-                }`}
+                onClick={() => handleSelectPrescription(rx.id)}
+                className={`w-full p-4 text-left transition-colors
+                  ${
+                    selectedPrescription?.id === rx.id
+                      ? "bg-blue-50"
+                      : "hover:bg-gray-50"
+                  }`}
               >
-                <div className="font-medium text-gray-900">{rx.id}</div>
-                <div className="text-gray-600">{rx.patientName}</div>
+                <div className="font-medium text-gray-900">
+                  {rx.id}
+                </div>
+
+                <div className="text-gray-600">
+                  {rx.patientName}
+                </div>
+
                 <div className="text-sm text-gray-500">
-                  {rx.medications.length} medication(s)
+                  {rx.totalMedicines} medication(s)
                 </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Label Preview */}
+        {/* ================= RIGHT PANEL ================= */}
+
         <div className="col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm">
+
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="font-semibold text-gray-900">Label Preview</h2>
+
+            <h2 className="font-semibold text-gray-900">
+              Label Preview
+            </h2>
 
             {selectedPrescription && (
               <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <button
+                  className="flex items-center gap-2 px-4 py-2
+                  border border-gray-200 rounded-lg text-gray-700
+                  hover:bg-gray-50"
+                >
                   <Download size={16} />
                   Download
                 </button>
 
                 <button
                   onClick={handlePrint}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 shadow-md"
+                  className="flex items-center gap-2 px-4 py-2
+                  rounded-lg text-white
+                  bg-gradient-to-r from-blue-600 to-teal-500
+                  hover:from-blue-700 hover:to-teal-600"
                 >
                   <Printer size={16} />
                   Print Label
                 </button>
+
               </div>
             )}
+
           </div>
 
           <div className="p-6">
+
             {!selectedPrescription && (
               <div className="text-center py-12 text-gray-500">
                 Select a prescription to preview labels
@@ -142,12 +190,14 @@ export default function LabelGeneration() {
             )}
 
             {selectedPrescription &&
-              selectedPrescription.medications.map((med, idx) => (
+              selectedPrescription.medicines.map((med) => (
+
                 <div
-                  key={idx}
-                  className="print-label border-2 border-gray-300 rounded-lg p-6 bg-white"
+                  key={med.prescriptionMedicineId}
+                  className="print-label border-2 border-gray-300 rounded-lg p-6 bg-white mb-6"
                   style={{ fontFamily: "monospace" }}
                 >
+
                   {/* Pharmacy Header */}
                   <div className="border-b-2 border-gray-300 pb-4 mb-4">
                     <div className="font-bold">MEDIFLOW PHARMACY</div>
@@ -157,42 +207,57 @@ export default function LabelGeneration() {
 
                   {/* RX Info */}
                   <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b-2 border-gray-300">
+
                     <div>
                       <div className="text-xs">PATIENT</div>
                       <div>{selectedPrescription.patientName}</div>
                     </div>
+
                     <div>
                       <div className="text-xs">RX #</div>
                       <div>{selectedPrescription.id}</div>
                     </div>
+
                     <div>
                       <div className="text-xs">DATE</div>
-                      <div>
-                        {formatDate(selectedPrescription.createdAt)}
-                      </div>
+                      <div>{formatDate(selectedPrescription.createdAt)}</div>
                     </div>
+
                     <div>
                       <div className="text-xs">DOCTOR</div>
-                      <div>{selectedPrescription.doctorName}</div>
+                      <div>
+                        {selectedPrescription.prescriber.name}
+                      </div>
                     </div>
+
                   </div>
 
                   {/* Medication */}
                   <div className="mb-4">
                     <div className="font-semibold">
-                      {med.drugName} {med.strength}
+                      {med.name} {med.strength}
                     </div>
-                    <div className="mb-2">QTY: {med.quantity}</div>
+
+                    <div className="mb-2">
+                      QTY: {med.prescribedQuantity}
+                    </div>
+                    <div className="mb-2">
+                      Frequency: {getFrequencyLabel(med.frequency)}
+                    </div>
 
                     <div className="bg-yellow-50 border border-yellow-300 rounded p-3">
-                      <div className="font-semibold">DIRECTIONS:</div>
-                      <div>{med.instructions}</div>
+                      <div className="font-semibold">
+                        DIRECTIONS:
+                      </div>
+                      <div>{med.instruction}</div>
                     </div>
                   </div>
 
                   {/* Warnings */}
                   <div className="border-t-2 border-gray-300 pt-4">
-                    <div className="font-semibold mb-2">⚠ WARNINGS</div>
+                    <div className="font-semibold mb-2">
+                      ⚠ WARNINGS
+                    </div>
                     <ul className="space-y-1">
                       <li>• Take as directed by physician</li>
                       <li>• Do not share this medication</li>
@@ -205,7 +270,9 @@ export default function LabelGeneration() {
                   <div className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-300">
                     Pharmacist: Dr. Jane Smith • License: PH-12345
                   </div>
+
                 </div>
+
               ))}
           </div>
         </div>

@@ -7,7 +7,7 @@ import { lazy, Suspense } from "react";
 const LoginPage = lazy(() => import("@auth/LoginPage"));
 const PharmacistDashboard = lazy(() => import("@auth/PharmacistDashboard"));
 
-const PrescriptionValidationQueue = lazy(() => import("@prescription/PrescriptionValidationQueue")); // ✅ new
+const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionValidationQueue")); // ✅ new
 const PrescriptionValidationPage = lazy(() => import("@validation/PrescriptionValidationPage"));   // details
 
 const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntry"));
