@@ -19,72 +19,25 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-import type { RootState } from '../../store';
+import type { RootState, AppDispatch } from '../../store';
 import {
   searchPrescriptionsThunk,
   fetchAllPrescriptions,
   fetchPrescriptionDetails
 } from '../../store/prescription/prescriptionSlice';
-
-/* -------------------- Types -------------------- */
-
-interface PrescriptionMedicine {
-  prescriptionMedicineId: string;
-  productId: string;
-  name: string;
-  strength: string;
-  prescribedQuantity: number;
-  dispensedQuantity: number;
-  totalRefillsAuthorized: number;
-  refillsRemaining: number;
-  frequency: string;
-  daysSupply: number;
-  endDate: string;
-  instruction: string;
-}
-
-interface PrescriptionSummary {
-  id: string;
-  patientId: string;
-  patientName: string;
-  prescriberName?: string;
-  status: string;
-  createdAt: string;
-  expiresAt: string;
-  medicineCount: number;
-}
-
-interface PrescriptionDetails {
-  id: string;
-  patientId: string;
-  patientName: string;
-  prescriber: {
-    id: string;
-    name: string;
-  };
-  status: string;
-  createdAt: string;
-  expiresAt: string;
-  medicines: PrescriptionMedicine[];
-  isRefillable: boolean;
-}
-
-interface Patient {
-  id: string;
-  name: string;
-}
-
-/* -------------------- Constants -------------------- */
+import type {
+  PrescriptionSummaryDto
+}  from '@api/prescription.types';
+import type { PrescriptionDetailsDto } from '@api/prescription.types';
+import type { PrescriptionMedicineDto } from '@api/prescription.types';
+import type {Patient } from '../../store/patient/patienttype';
 
 const PAGE_SIZE = 10;
 
-/* -------------------- Component -------------------- */
-
 export default function PrescriptionHistory() {
-  const dispatch = useDispatch();
-
+  const dispatch = useDispatch<AppDispatch>();
+  
   /* ---------- Redux State ---------- */
-
   const {
     items: prescriptions = [],
     continuationToken = null,
@@ -99,15 +52,15 @@ export default function PrescriptionHistory() {
   ) as Patient[];
 
   /* ---------- Local State ---------- */
-
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // Pagination
+  // 🔧 FIXED: Better pagination state management
   const [currentPage, setCurrentPage] = useState(1);
+  const [visitedPages, setVisitedPages] = useState<Set<number>>(new Set([1]));
   const [tokensByPage, setTokensByPage] = useState<Record<number, string | null>>({
     1: null
   });
@@ -116,7 +69,6 @@ export default function PrescriptionHistory() {
   const hasFetchedRef = useRef(false);
 
   /* -------------------- Initial Load -------------------- */
-
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
@@ -128,19 +80,19 @@ export default function PrescriptionHistory() {
       pageSize: PAGE_SIZE,
       continuationToken: null,
       reset: true
-    }) as any);
+    }));
 
     setCurrentPage(1);
+    setVisitedPages(new Set([1]));
     setTokensByPage({ 1: null });
   }, [dispatch]);
 
   /* -------------------- Prescription Details -------------------- */
-
   const loadPrescriptionDetails = useCallback(
     async (id: string) => {
       setLoadingDetails(true);
       try {
-        await dispatch(fetchPrescriptionDetails(id) as any);
+        await dispatch(fetchPrescriptionDetails(id));
       } finally {
         setLoadingDetails(false);
       }
@@ -149,12 +101,13 @@ export default function PrescriptionHistory() {
   );
 
   /* -------------------- Search -------------------- */
-
   const executeSearch = useCallback(
     async (term: string) => {
       const trimmed = term.trim();
 
+      // Reset pagination
       setCurrentPage(1);
+      setVisitedPages(new Set([1]));
       setTokensByPage({ 1: null });
 
       if (!trimmed) {
@@ -163,7 +116,7 @@ export default function PrescriptionHistory() {
           pageSize: PAGE_SIZE,
           continuationToken: null,
           reset: true
-        }) as any);
+        }));
         return;
       }
 
@@ -174,7 +127,7 @@ export default function PrescriptionHistory() {
           pageSize: PAGE_SIZE,
           continuationToken: null,
           reset: true
-        }) as any);
+        }));
       } finally {
         setIsSearching(false);
       }
@@ -192,10 +145,10 @@ export default function PrescriptionHistory() {
   }, [searchTerm, executeSearch]);
 
   /* -------------------- Status Filter -------------------- */
-
   const handleStatusChange = (newStatus: string) => {
     setStatusFilter(newStatus);
     setCurrentPage(1);
+    setVisitedPages(new Set([1]));
     setTokensByPage({ 1: null });
 
     if (!searchTerm.trim()) {
@@ -204,85 +157,93 @@ export default function PrescriptionHistory() {
         pageSize: PAGE_SIZE,
         continuationToken: null,
         reset: true
-      }) as any);
+      }));
     }
   };
 
-  /* -------------------- Pagination -------------------- */
-
-  const goToPage = (page: number) => {
+  /* -------------------- 🔧 FIXED PAGINATION -------------------- */
+  
+  // Navigate to a specific page (only if we have the token)
+  const goToPage = useCallback((page: number) => {
     if (page === currentPage || loading) return;
+    
+    // 🔧 FIX: Only allow navigation to visited pages or next page
+    if (!visitedPages.has(page)) {
+      console.warn(`Cannot jump to unvisited page ${page}`);
+      return;
+    }
 
     const token = tokensByPage[page];
-    if (!token && page !== 1) return; // safety: no token and not page 1
-
+    
     if (searchTerm.trim()) {
       dispatch(searchPrescriptionsThunk({
         searchTerm: searchTerm.trim(),
         pageSize: PAGE_SIZE,
         continuationToken: token || null,
         reset: true
-      }) as any);
+      }));
     } else {
       dispatch(fetchAllPrescriptions({
         status: statusFilter === 'All' ? undefined : statusFilter,
         pageSize: PAGE_SIZE,
         continuationToken: token || null,
         reset: true
-      }) as any);
+      }));
     }
 
     setCurrentPage(page);
-  };
+  }, [currentPage, loading, visitedPages, tokensByPage, searchTerm, statusFilter, dispatch]);
 
-  const goToNextPage = () => {
+  // Go to next page
+  const goToNextPage = useCallback(() => {
     if (!continuationToken || loading) return;
 
     const nextPage = currentPage + 1;
 
-    // Store token for back navigation
+    // 🔧 FIX: Store token AND mark page as visited
     setTokensByPage(prev => ({
       ...prev,
       [nextPage]: continuationToken
     }));
+    
+    setVisitedPages(prev => new Set([...prev, nextPage]));
 
-    // 🔥 PASS TOKEN DIRECTLY — DO NOT READ FROM STATE
     if (searchTerm.trim()) {
       dispatch(searchPrescriptionsThunk({
         searchTerm: searchTerm.trim(),
         pageSize: PAGE_SIZE,
         continuationToken: continuationToken,
         reset: true
-      }) as any);
+      }));
     } else {
       dispatch(fetchAllPrescriptions({
         status: statusFilter === 'All' ? undefined : statusFilter,
         pageSize: PAGE_SIZE,
         continuationToken: continuationToken,
         reset: true
-      }) as any);
+      }));
     }
 
     setCurrentPage(nextPage);
-  };
+  }, [continuationToken, loading, currentPage, searchTerm, statusFilter, dispatch]);
 
-  const goToPrevPage = () => {
+  // Go to previous page
+  const goToPrevPage = useCallback(() => {
     if (currentPage > 1 && !loading) {
       goToPage(currentPage - 1);
     }
-  };
+  }, [currentPage, loading, goToPage]);
 
   const hasNextPage = !!continuationToken;
+  const maxVisitedPage = Math.max(...Array.from(visitedPages));
 
   /* -------------------- Derived Data -------------------- */
-
   const patientMap = useMemo(
     () => Object.fromEntries(patients.map(p => [p.id, p])),
     [patients]
   );
 
   /* -------------------- Helpers -------------------- */
-
   const formatDateTime = (date: string) => {
     try {
       return new Date(date).toLocaleString('en-US', {
@@ -342,7 +303,6 @@ export default function PrescriptionHistory() {
   };
 
   /* -------------------- Render -------------------- */
-
   if (loading && prescriptions.length === 0) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
@@ -351,7 +311,6 @@ export default function PrescriptionHistory() {
       </div>
     );
   }
-
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -424,14 +383,13 @@ export default function PrescriptionHistory() {
         ) : (
           <>
             <div className="divide-y divide-gray-200">
-              {prescriptions.map((prescription: PrescriptionSummary) => {
+              {prescriptions.map((prescription: PrescriptionSummaryDto) => {
                 const patient = patientMap[prescription.patientId];
                 const expanded = expandedId === prescription.id;
                 const doctorName = prescription.prescriberName || 'N/A';
                 
-                // Get details if this prescription is expanded and selected
                 const details = (expanded && selected?.id === prescription.id) 
-                  ? (selected as PrescriptionDetails) 
+                  ? (selected as PrescriptionDetailsDto) 
                   : null;
 
                 return (
@@ -527,7 +485,7 @@ export default function PrescriptionHistory() {
                               
                               {details.medicines && details.medicines.length > 0 ? (
                                 <div className="space-y-3">
-                                  {details.medicines.map((med: PrescriptionMedicine) => (
+                                  {details.medicines.map((med: PrescriptionMedicineDto) => (
                                     <div key={med.prescriptionMedicineId} className="bg-white rounded-lg p-4 border border-gray-200">
                                       <div className="font-semibold text-gray-900 mb-2">
                                         {med.name} {med.strength}
@@ -580,7 +538,7 @@ export default function PrescriptionHistory() {
                                   <div className="flex items-center text-blue-900">
                                     <User className="w-5 h-5 mr-2 text-blue-600" />
                                     <div>
-                                      <div className="font-semibold">{patient.name}</div>
+                                      <div className="font-semibold">{patient.fullName}</div>
                                       <div className="text-sm text-blue-700">{patient.id}</div>
                                     </div>
                                   </div>
@@ -637,7 +595,7 @@ export default function PrescriptionHistory() {
               })}
             </div>
 
-            {/* Pagination Controls */}
+            {/* 🔧 FIXED PAGINATION CONTROLS */}
             {(hasNextPage || currentPage > 1) && (
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-between">
@@ -660,20 +618,11 @@ export default function PrescriptionHistory() {
                     </button>
 
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(currentPage + 1, 5) }, (_, i) => {
-                        let pageNum;
-                        const maxPages = currentPage + 1;
-                        if (maxPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= maxPages - 2) {
-                          pageNum = maxPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-
-                        return (
+                      {/* 🔧 FIX: Show only visited pages + next page if available */}
+                      {Array.from(visitedPages)
+                        .sort((a, b) => a - b)
+                        .slice(-5) // Show last 5 visited pages
+                        .map(pageNum => (
                           <button
                             key={pageNum}
                             onClick={() => goToPage(pageNum)}
@@ -686,10 +635,9 @@ export default function PrescriptionHistory() {
                           >
                             {pageNum}
                           </button>
-                        );
-                      })}
+                        ))}
                       
-                      {hasNextPage && currentPage + 1 > 5 && (
+                      {hasNextPage && maxVisitedPage - Math.min(...Array.from(visitedPages)) >= 5 && (
                         <span className="px-2 text-gray-400">...</span>
                       )}
                     </div>
