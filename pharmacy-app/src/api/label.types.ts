@@ -10,7 +10,7 @@ export interface LabelQueuePrescription {
   createdAt: string;
   expiresAt: string;
   status: string;
-  totalMedicines: number;
+  medicineCount: number;
 }
 
 /* ======================================
