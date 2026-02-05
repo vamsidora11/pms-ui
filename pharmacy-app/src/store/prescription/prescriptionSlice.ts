@@ -3,7 +3,6 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   createPrescription as createPrescriptionApi,
   getPrescriptionDetails,
-  validatePrescription,
   searchPrescriptions,
   getAllPrescriptions,
   getPrescriptionsByPatient,
@@ -148,16 +147,16 @@ export const fetchPrescriptionsByPatient = createAsyncThunk(
 );
 
 // Validate prescription
-export const validatePrescriptionThunk = createAsyncThunk(
-  "prescriptions/validate",
-  async (id: string, { rejectWithValue }) => {
-    try {
-      return await validatePrescription(id);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message);
-    }
-  }
-);
+// export const validatePrescriptionThunk = createAsyncThunk(
+//   "prescriptions/validate",
+//   async (id: string, { rejectWithValue }) => {
+//     try {
+//       return await validatePrescription(id);
+//     } catch (error: any) {
+//       return rejectWithValue(error.response?.data?.message || error.message);
+//     }
+//   }
+// );
 
 /* ===================== STATE ===================== */
 
@@ -308,11 +307,11 @@ const slice = createSlice({
       });
 
     /* ---------- VALIDATE ---------- */
-    b.addCase(validatePrescriptionThunk.fulfilled, (s, a) => {
-      const idx = s.items.findIndex(p => p.id === a.payload.id);
-      if (idx !== -1) s.items[idx] = a.payload;
-      if (s.selected?.id === a.payload.id) s.selected = a.payload;
-    });
+    // b.addCase(validatePrescriptionThunk.fulfilled, (s, a) => {
+    //   const idx = s.items.findIndex(p => p.id === a.payload.id);
+    //   if (idx !== -1) s.items[idx] = a.payload;
+    //   if (s.selected?.id === a.payload.id) s.selected = a.payload;
+    // });
   }
 });
 

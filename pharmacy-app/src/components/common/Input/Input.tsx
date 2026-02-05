@@ -2,7 +2,7 @@ import React from "react";
 import clsx from "clsx";
 
 type InputProps = {
-  label?: string;
+  label?: React.ReactNode;
   placeholder?: string;
   value: string;
   // expose value directly for convenience

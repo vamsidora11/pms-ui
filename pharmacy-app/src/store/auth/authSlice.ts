@@ -2,7 +2,6 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {jwtDecode} from "jwt-decode";
 import { loginApi, refreshApi, logoutApi } from "@api/auth";
 import type { User, UserRole } from "./authtype";
-
 type TokenPayload = { sub: string; username: string; role: UserRole; exp: number; avatarUrl?: string };
 
 interface AuthState {
@@ -13,7 +12,6 @@ interface AuthState {
 }
 
 const initialState: AuthState = { user: null, accessToken: null, status: "idle" };
-
 // Helper to decode JWT
 const decodeToken = (token: string): User => {
   const payload = jwtDecode<TokenPayload>(token);
@@ -26,7 +24,7 @@ export const loginUser = createAsyncThunk("auth/login", async (credentials: { us
     const res = await loginApi(credentials);
     return res;
   } catch (error: any) {
-    return rejectWithValue(error.message || "Login failed");
+    return rejectWithValue("Incorrect username or password");
   }
 });
 

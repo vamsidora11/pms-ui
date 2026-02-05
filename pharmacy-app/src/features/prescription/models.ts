@@ -1,7 +1,7 @@
 /**
  * Patient data used in Prescription flow
  */
-export type Gender = 'Male' | 'Female' | 'Other';
+export type Gender = "Male" | "Female" | "Other";
 
 export interface PatientSummary {
   id: string;
@@ -32,15 +32,15 @@ export interface Drug {
  * Maps to CreatePrescriptionItemDto in backend
  */
 export interface MedicationDraft {
-  drugId?: string;              // Maps to InventoryId - REQUIRED for submission
-  drugName: string;             // Maps to MedicineName
-  strength: string;             // Maps to Strength
-  frequency: string;            // Maps to Frequency (e.g., "BID", "TID", "QID", "Once daily")
-  quantity: number;             // Maps to QuantityPrescribed
-  durationDays: number;         // Maps to DurationDays
-  refills: number;              // Maps to RemainingRefills
-  instructions: string;         // Maps to Instructions
-  price?: number;               // UI only - not submitted
+  drugId?: string; // Maps to InventoryId - REQUIRED for submission
+  drugName: string; // Maps to MedicineName
+  strength: string; // Maps to Strength
+  frequency: string; // Maps to Frequency (e.g., "BID", "TID", "QID", "Once daily")
+  quantity: number; // Maps to QuantityPrescribed
+  durationDays: number; // Maps to DurationDays
+  refills: number; // Maps to RemainingRefills
+  instructions: string; // Maps to Instructions
+  price?: number; // UI only - not submitted
 }
 
 export interface InventoryItem {
@@ -60,15 +60,15 @@ export interface InventoryItem {
  * User enters ID and Name manually
  */
 export interface DoctorDetails {
-  id: string;                   // Free text - user enters manually
-  name: string;                 // Free text - user enters manually
+  id: string; // Free text - user enters manually
+  name: string; // Free text - user enters manually
 }
 
 export interface PrescriptionDraft {
   patient: PatientDetails | null;
   doctor: DoctorDetails;
   medications: MedicationDraft[];
-  notes: string;                // Not sent to backend currently
+  notes: string; // Not sent to backend currently
 }
 
 export interface InventorySearchItem {
@@ -93,6 +93,3 @@ export const FREQUENCY_OPTIONS = [
   { value: "PRN", label: "As Needed (PRN)" },
   { value: "STAT", label: "Immediately (STAT)" },
 ] as const;
-
-
-

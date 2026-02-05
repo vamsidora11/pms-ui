@@ -10,6 +10,7 @@ import {
   BellIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../../store";
 import { toggleSidebar } from "../../../store/ui/uiSlice"; 
@@ -56,15 +57,18 @@ export default function Sidebar({ user }: SidebarProps) {
       } h-[calc(100vh-4rem)] bg-white border-r flex flex-col transition-all duration-300`}
     >
       {/* Toggle button */}
-      <div className="px-3 py-2 border-b flex justify-between items-center">
-        {!collapsed && <span className="font-semibold">Menu</span>}
-        <button
-          onClick={() => dispatch(toggleSidebar())}
-          className="flex items-center justify-center text-gray-600 hover:text-gray-900 w-10 h-8"
-        >
-          {collapsed ? "➡️" : "⬅️"}
-        </button>
-      </div>
+      
+<div className="px-3 py-2 border-b flex justify-between items-center">
+  {!collapsed && <span className="font-semibold">Menu</span>}
+
+  <button
+    onClick={() => dispatch(toggleSidebar())}
+    className="flex items-center justify-center text-gray-600 hover:text-gray-900 w-10 h-8"
+  >
+    {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+  </button>
+</div>
+
 
       {/* Role nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-1">

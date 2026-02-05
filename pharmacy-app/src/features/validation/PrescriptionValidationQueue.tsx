@@ -4,7 +4,7 @@ import { ClipboardList, AlertTriangle, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 
 import { getPendingPrescriptions } from "@api/prescription";
-import type { PrescriptionSummaryDto } from "@api/prescription.types";
+import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
 
 /* =========================
    Component

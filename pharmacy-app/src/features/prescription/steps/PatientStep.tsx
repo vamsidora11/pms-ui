@@ -1,12 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, AlertTriangle } from "lucide-react";
-import { searchPatients } from "@api/patientSearch";
+import { searchPatients as defaultSearchPatients } from "@api/patientSearch";
 import type { PatientSummary, PatientDetails } from "../models";
+import { useDebouncedValue } from "@utils/hooks/useDebouncedValue";
 
 interface Props {
   patient: PatientDetails | null;
-  onChange: (patient: PatientSummary) => void;
+  onChange: (patient: PatientSummary) => void | Promise<void>;
+
+  /** DIP-friendly: allows mocking/search swap later; defaults to API */
+  searchFn?: (q: string) => Promise<PatientSummary[] | undefined>;
+
+  debounceMs?: number;
+  minChars?: number;
 }
+
 function calculateAge(dob: string): number | null {
   if (!dob) return null;
 
@@ -18,54 +26,67 @@ function calculateAge(dob: string): number | null {
 
   const monthDiff = today.getMonth() - birthDate.getMonth();
   const dayDiff = today.getDate() - birthDate.getDate();
-
-  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-    age--;
-  }
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age--;
 
   return age;
 }
 
-export default function PatientStep({ patient, onChange }: Props) {
+export default function PatientStep({
+  patient,
+  onChange,
+  searchFn = defaultSearchPatients,
+  debounceMs = 300,
+  minChars = 2,
+}: Props) {
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, debounceMs);
+
   const [results, setResults] = useState<PatientSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  /* ---------------- SEARCH (DEBOUNCED) ---------------- */
+  // latest-request-wins
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    if (!query.trim()) return;
+    const q = (debouncedQuery ?? "").trim();
 
-    const timeout = setTimeout(async () => {
+    if (!q || q.length < minChars) {
+      setLoading(false);
+      setError(null);
+      setResults([]);
+      return;
+    }
+
+    const requestId = ++requestIdRef.current;
+
+    const run = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        const data = await searchPatients(query);
-        if (!data) {
-          setResults([]);
-          return;
-        }
-
-setResults(data);
-
+        const data = await searchFn(q);
+        if (requestId !== requestIdRef.current) return; // stale response
+        setResults(Array.isArray(data) ? data : []);
+      } catch (e: any) {
+        if (requestId !== requestIdRef.current) return;
+        console.error("Patient search failed:", e);
+        setError(e?.message || "Failed to search patients");
+        setResults([]);
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current) setLoading(false);
       }
-    }, 300);
+    };
 
-    return () => clearTimeout(timeout);
-  }, [query]);
+    run();
+  }, [debouncedQuery, minChars, searchFn]);
 
   const onQueryChange = (value: string) => {
     setQuery(value);
     setShowResults(true);
-
-    if (!value.trim()) {
-      setResults([]);
-    }
+    if (!value.trim()) setResults([]);
   };
-
-  /* ---------------- RENDER ---------------- */
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -99,26 +120,30 @@ setResults(data);
               </div>
             )}
 
-            {!loading && results.length === 0 && query && (
+            {!loading && error && (
+              <div className="p-4 text-center text-red-600">{error}</div>
+            )}
+
+            {!loading && !error && results.length === 0 && query.trim() && (
               <div className="p-4 text-center text-gray-500">
                 No patients found
               </div>
             )}
 
             {!loading &&
+              !error &&
               results.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => {
-                    onChange(p); // emits summary
+                    onChange(p);
                     setQuery("");
+                    setResults([]);
                     setShowResults(false);
                   }}
                   className="w-full p-4 text-left hover:bg-gray-50 border-b last:border-b-0"
                 >
-                  <div className="text-gray-900 font-medium">
-                    {p.fullName}
-                  </div>
+                  <div className="text-gray-900 font-medium">{p.fullName}</div>
                   <div className="text-gray-500 text-sm">
                     {p.id} • {p.phone}
                   </div>
@@ -135,15 +160,11 @@ setResults(data);
                 <div className="text-blue-900 font-medium">
                   Selected Patient
                 </div>
-                <div className="text-blue-800 mt-1">
-                  {patient.fullName}
-                </div>
+                <div className="text-blue-800 mt-1">{patient.fullName}</div>
               </div>
 
               <button
-                onClick={() => {
-                  setShowResults(true);
-                }}
+                onClick={() => setShowResults(true)}
                 className="text-blue-600 text-sm hover:underline"
               >
                 Change
@@ -169,17 +190,18 @@ setResults(data);
                 <div className="text-gray-900">{patient.phone}</div>
               </div>
             </div>
-            {/* Allergy Warning */}
-            {patient.allergies.length > 0 && (
+
+            {/* Allergy Warning (safe for optional allergies) */}
+            {(patient.allergies?.length ?? 0) > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-red-800 font-medium mb-2">
                   <AlertTriangle className="w-4 h-4" />
                   Known Allergies
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {patient.allergies.map((allergy) => (
+                  {(patient.allergies ?? []).map((allergy, idx) => (
                     <span
-                      key={allergy}
+                      key={`${allergy}-${idx}`}
                       className="px-3 py-1 bg-red-100 text-red-700 rounded-md text-sm"
                     >
                       {allergy}

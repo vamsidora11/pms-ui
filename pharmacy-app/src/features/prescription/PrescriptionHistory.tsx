@@ -24,13 +24,13 @@ import {
   searchPrescriptionsThunk,
   fetchAllPrescriptions,
   fetchPrescriptionDetails
-} from '../../store/prescription/prescriptionSlice';
+} from '@store/prescription/prescriptionSlice';
 import type {
   PrescriptionSummaryDto
-}  from '@api/prescription.types';
-import type { PrescriptionDetailsDto } from '@api/prescription.types';
-import type { PrescriptionMedicineDto } from '@api/prescription.types';
-import type {Patient } from '../../store/patient/patienttype';
+}  from '@prescription/prescription.types';
+import type { PrescriptionDetailsDto } from '@prescription/prescription.types';
+import type { PrescriptionMedicineDto } from '@prescription/prescription.types';
+import type {Patient } from '@store/patient/patienttype';
 
 const PAGE_SIZE = 10;
 

@@ -60,7 +60,7 @@ export default function DoctorStep({ doctor, onChange }: DoctorStepProps) {
         </div>
 
         {/* Info Box */}
-       {/*  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        {/*  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
             <div className="text-blue-600 text-xl">ℹ️</div>
             <div className="flex-1">
@@ -78,15 +78,21 @@ export default function DoctorStep({ doctor, onChange }: DoctorStepProps) {
         {/* Preview */}
         {doctor.id && doctor.name && (
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Preview</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Preview
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-xs text-gray-600 mb-1">Doctor ID</div>
-                <div className="text-sm font-medium text-gray-900">{doctor.id}</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {doctor.id}
+                </div>
               </div>
               <div>
                 <div className="text-xs text-gray-600 mb-1">Doctor Name</div>
-                <div className="text-sm font-medium text-gray-900">{doctor.name}</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {doctor.name}
+                </div>
               </div>
             </div>
           </div>

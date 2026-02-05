@@ -8,7 +8,7 @@ import type {
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
   ReviewPrescriptionRequest,
-} from "./prescription.types";
+} from "@prescription/prescription.types";
 
 // ================== CREATE PRESCRIPTION ==================
 
