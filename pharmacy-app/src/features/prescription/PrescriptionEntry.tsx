@@ -5,7 +5,7 @@ import {
   type CreatePrescriptionRequest,
   type CreatePrescriptionMedicineRequest,
   type PrescriberDto,
-} from "@api/prescription.types";
+} from "@prescription/prescription.types";
 import { getPatientById } from "@api/patientSearch";
 import type { PatientSummary } from "@prescription/models";
 import { useToast } from "@components/common/Toast/useToast";
@@ -18,6 +18,7 @@ import {
   validatePatientStep,
   validateDoctorStep,
   validateMedicationStep,
+  validatePrescriptionDraft,
 } from "@prescription/validation";
 
 /* ---------------- INITIAL STATE ---------------- */
@@ -96,21 +97,11 @@ export default function PrescriptionEntry() {
   /* ---------------- SUBMIT ---------------- */
 
   const handleSubmit = async () => {
-    if (!draft.patient) {
-      toast.error("Validation Error", "Patient information is missing");
-      return;
-    }
-
-    if (!draft.doctor.id || !draft.doctor.name) {
-      toast.error("Validation Error", "Doctor information is incomplete");
-      return;
-    }
-
-    const invalidMeds = draft.medications.filter((m) => !m.drugId);
-    if (invalidMeds.length > 0) {
+    const validation = validatePrescriptionDraft(draft);
+    if (!validation.valid) {
       toast.error(
         "Validation Error",
-        "Please select valid drugs for all medications",
+        validation.errors[0] || "Please fix the issues before submitting.",
       );
       return;
     }
@@ -118,33 +109,22 @@ export default function PrescriptionEntry() {
     setIsSubmitting(true);
 
     try {
-      // Map UI draft → backend DTO
       const payload = mapDraftToCreatePrescriptionRequest(draft);
+      const response = await createPrescription(payload);
 
-      console.log(
-        "Submitting prescription payload:",
-        JSON.stringify(payload, null, 2),
+      toast.success(
+        "Prescription Created Successfully",
+        `Prescription ID: ${response.id} | Status: ${response.status}`,
       );
-
-      try {
-        const response = await createPrescription(payload);
-
-        toast.success(
-          "Prescription Created Successfully",
-          `Prescription ID: ${response.id} | Status: ${response.status}`,
-        );
-      } catch (error) {
-        toast.error("Failed to create prescription");
-      }
 
       setDraft(INITIAL_DRAFT);
       setCurrentStep(1);
-    } catch (error) {
-      toast.error(
-        "Prescription Submission Failed",
-        "Unable to submit prescription. Please try again.",
-      );
+    } catch (error: any) {
       console.error("Create prescription failed:", error);
+      toast.error(
+        "Failed to create prescription",
+        error?.message || "Server error",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -167,9 +147,10 @@ export default function PrescriptionEntry() {
               return;
             }
 
+            // Normalize allergies to array to avoid optional issues across UI
             setDraft((d) => ({
               ...d,
-              patient: details,
+              patient: { ...details, allergies: details.allergies ?? [] },
             }));
           }}
         />

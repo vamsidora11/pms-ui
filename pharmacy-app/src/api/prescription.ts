@@ -1,3 +1,4 @@
+// prescription.ts - MERGED VERSION
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
 import { logger } from "@utils/logger/logger";
@@ -7,9 +8,9 @@ import type {
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
   ReviewPrescriptionRequest,
-} from "./prescription.types";
+} from "@prescription/prescription.types";
 
-// ================== API FUNCTIONS ==================
+// ================== CREATE PRESCRIPTION ==================
 
 export async function createPrescription(
   payload: CreatePrescriptionRequest
@@ -24,26 +25,11 @@ export async function createPrescription(
     return res.data;
   } catch (error) {
     logger.error("Create prescription failed", { payload, error });
-    throw error; 
-  }
-}
-
-export async function getPrescriptionsByPatient(
-  patientId: string
-): Promise<PrescriptionSummaryDto[]> {
-  try {
-    const res = await api.get<PrescriptionSummaryDto[]>(
-      `${ENDPOINTS.prescriptions}/patient/${patientId}`
-    );
-    return res.data;
-  } catch (error) {
-    logger.error("Fetching prescriptions by patient failed", {
-      patientId,
-      error,
-    });
     throw error;
   }
 }
+
+// ================== GET PRESCRIPTION DETAILS ==================
 
 export async function getPrescriptionById(
   prescriptionId: string
@@ -62,12 +48,114 @@ export async function getPrescriptionById(
   }
 }
 
+// Alias for backward compatibility with your code
+export const getPrescriptionDetails = getPrescriptionById;
+
+// ================== PAGINATED: GET BY PATIENT ==================
+
+export async function getPrescriptionsByPatient(
+  patientId: string,
+  pageSize = 10,
+  continuationToken?: string | null
+): Promise<{ items: PrescriptionSummaryDto[]; continuationToken: string | null }> {
+  try {
+    const params: any = { pageSize };
+    if (continuationToken) {
+      params.continuationToken = continuationToken;
+    }
+
+    const res = await api.get(
+      `${ENDPOINTS.prescriptions}/patient/${patientId}`,
+      { params }
+    );
+    
+    return res.data; // { items, continuationToken }
+  } catch (error) {
+    logger.error("Fetching prescriptions by patient failed", {
+      patientId,
+      error,
+    });
+    throw error;
+  }
+}
+
+// ================== PAGINATED: SEARCH ==================
+
+export async function searchPrescriptions(
+  searchTerm: string,
+  pageSize = 10,
+  continuationToken?: string | null
+): Promise<{ items: PrescriptionSummaryDto[]; continuationToken: string | null }> {
+  try {
+    const params: any = {
+      searchTerm,
+      pageSize
+    };
+
+    if (continuationToken) {
+      params.continuationToken = continuationToken;
+    }
+
+    const res = await api.get(`${ENDPOINTS.prescriptions}/search`, { params });
+    return res.data; // { items, continuationToken }
+  } catch (error) {
+    logger.error("Searching prescriptions failed", {
+      searchTerm,
+      error,
+    });
+    throw error;
+  }
+}
+
+// ================== PAGINATED: GET ALL ==================
+
+export async function getAllPrescriptions(
+  status?: string,
+  pageSize = 10,
+  continuationToken?: string | null
+): Promise<{ items: PrescriptionSummaryDto[]; continuationToken: string | null }> {
+  try {
+    const params: any = { pageSize };
+
+    if (status && status !== 'All') {
+      params.status = status;
+    }
+
+    if (continuationToken) {
+      params.continuationToken = continuationToken;
+    }
+
+    console.log('[API] getAllPrescriptions', {
+      status: status ?? 'All',
+      pageSize,
+      continuationToken: continuationToken ?? null,
+      finalParams: params
+    });
+
+    const res = await api.get(ENDPOINTS.prescriptions, { params });
+
+    return res.data;
+  } catch (error) {
+    logger.error("Fetching all prescriptions failed", {
+      status,
+      continuationToken,
+      error,
+    });
+    throw error;
+  }
+}
+
+
+// ================== CANCEL PRESCRIPTION ==================
+
 export async function cancelPrescription(
-  prescriptionId: string
+  prescriptionId: string,
+  reason?: string
 ): Promise<void> {
   try {
     await api.post(
-      `${ENDPOINTS.prescriptions}/${prescriptionId}/cancel`
+      `${ENDPOINTS.prescriptions}/${prescriptionId}/cancel`,
+      reason ? { reason } : undefined
     );
   } catch (error) {
     logger.error("Cancel prescription failed", {

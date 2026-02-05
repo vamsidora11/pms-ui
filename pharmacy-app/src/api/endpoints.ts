@@ -1,16 +1,21 @@
+// endpoints.ts - MERGED VERSION
 export const API_BASE = "http://localhost:5287";
 
 export const ENDPOINTS = {
+  // Auth
   login: "/api/auth/login",
   refresh: "/api/auth/refresh",
   logout: "/api/auth/logout",
 
+  // Patients
   patients: "/api/patients",
   patientDetails: "/api/patients",
   patientSearch: "/api/patients/search",
 
+  // Allergies
   ALLERGY_SEARCH_ENDPOINT: "/api/catalogs/allergies/search",
 
+  // Products
   products: "/api/products/search",
   
   prescriptions: "/api/prescriptions",        

@@ -22,7 +22,7 @@ export const searchPatients = async (
   }
 ): Promise<PatientSummaryDto[]> => {
   const q = (query ?? "").trim();
-  const minChars = opts?.minChars ?? 1;
+  const minChars = opts?.minChars ?? 2;
   const returnAllOnEmpty = opts?.returnAllOnEmpty ?? false;
 
   try {

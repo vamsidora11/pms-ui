@@ -4,7 +4,7 @@ import { ENDPOINTS } from "./endpoints";
 import type {
   LabelQueuePrescription,
   LabelPrescriptionDetails,
-} from "./label.types";
+} from "@labels/label.types";
 
 /* ======================================
    GET LABEL QUEUE

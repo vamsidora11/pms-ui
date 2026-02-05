@@ -14,7 +14,7 @@ import type {
   PrescriptionDetailsDto,
   PrescriptionMedicineDto,
   AllergyValidationItemDto,
-} from "@api/prescription.types";
+} from "@prescription/prescription.types";
 
 /* =========================
    Types

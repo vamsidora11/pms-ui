@@ -1,10 +1,8 @@
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef } from "ag-grid-community";
-import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
 
 interface DataGridProps<T> {
   columns: ColDef<T>[];
@@ -18,23 +16,30 @@ export default function DataGrid<T>({
   onRowClicked,
 }: DataGridProps<T>) {
   return (
-    <div className="ag-theme-quartz ag-modern-grid w-full h-full">
+    <div className="ag-theme-alpine w-full rounded-xl overflow-hidden border border-gray-200">
       <AgGridReact<T>
         rowData={data}
         columnDefs={columns}
+
+        /* PAGINATION (Community ✅) */
         pagination
         paginationPageSize={5}
-        paginationPageSizeSelector={[5, 10, 20]}
-        suppressPaginationPanel={false}
+        paginationPageSizeSelector={false}
+
+        domLayout="autoHeight"
+        headerHeight={44}
+        rowHeight={56}
+
         suppressCellFocus
         animateRows
         domLayout="normal"
         rowHeight={60}
         headerHeight={48}
         rowSelection="single"
-        onRowClicked={(e) => e.data && onRowClicked?.(e.data)}
+
         defaultColDef={{
           sortable: true,
+          filter: true,
           resizable: false,
           filter: true,
           flex: 1,
