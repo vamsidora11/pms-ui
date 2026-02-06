@@ -26,22 +26,18 @@ export default function DataGrid<T>({
         paginationPageSize={5}
         paginationPageSizeSelector={false}
 
-        domLayout="autoHeight"
-        headerHeight={44}
-        rowHeight={56}
+        domLayout="normal"
+        headerHeight={48}
+        rowHeight={60}
 
         suppressCellFocus
         animateRows
-        domLayout="normal"
-        rowHeight={60}
-        headerHeight={48}
         rowSelection="single"
 
         defaultColDef={{
           sortable: true,
           filter: true,
           resizable: false,
-          filter: true,
           flex: 1,
           minWidth: 140,
         }}

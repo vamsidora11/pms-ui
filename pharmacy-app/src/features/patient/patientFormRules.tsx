@@ -29,7 +29,7 @@ export const patientRules: Record<
     sanitize: (raw) => {
       const cleaned = raw.replace(/[^A-Za-z\s]/g, "").replace(/\s{2,}/g, " ");
       const warning =
-        cleaned !== raw ? "Only alphabets and spaces are allowed." : "";
+        cleaned !== raw ? "Only alphabets and spaces are allowed" : "";
       return { value: cleaned, warning };
     },
     validate: (value) => {
@@ -116,7 +116,7 @@ export const patientRules: Record<
   address: {
     sanitize: (raw) => {
       const warning =
-        raw.length > 50 ? "Address cannot exceed 50 characters." : "";
+        raw.length > 50 ? "Address cannot exceed 50 characters" : "";
       return { value: raw.slice(0, 50), warning };
     },
     validate: (value) => {

@@ -335,6 +335,6 @@ export default function LabelGenerationPage() {
           onDownload={handleDownload}
         />
       </div>
-    </>
+    </div>
   );
 }
