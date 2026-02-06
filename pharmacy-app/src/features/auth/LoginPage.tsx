@@ -3,31 +3,55 @@
 // import { useNavigate } from "react-router-dom";
 // import { loginUser } from "@store/auth/authSlice";
 // import type { AppDispatch, RootState } from "store";
+// import { jwtDecode } from "jwt-decode";
 
 // import Input from "@components/common/Input/Input";
 // import Button from "@components/common/Button/Button";
 // import LoginImage from "@assets/Login.png";
+// import { useToast } from "@components/common/Toast/useToast";
+
+// type TokenPayload = {
+//   role: "manager" | "pharmacist" | "technician";
+// };
 
 // export default function LoginPage() {
 //   const dispatch = useDispatch<AppDispatch>();
 //   const navigate = useNavigate();
-//   const { status, error, user } = useSelector((s: RootState) => s.auth);
+//   const toast = useToast(); // ✅ this is an object with success/error methods
+
+//   const { status } = useSelector((s: RootState) => s.auth);
 
 //   const [username, setUsername] = useState("");
 //   const [password, setPassword] = useState("");
 
 //   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 //     e.preventDefault();
-//     const result = await dispatch(loginUser({ username, password }));
-//     if (loginUser.fulfilled.match(result)) {
-//       const role = user?.role;
+
+//     try {
+//       // ✅ unwrap returns payload or throws rejectWithValue
+//       const res = await dispatch(loginUser({ username, password })).unwrap();
+
+//       toast.success("Login successful", `Welcome ${username}`);
+
+//       // ✅ decode token to get role immediately (no stale selector issue)
+//       const payload = jwtDecode<TokenPayload>(res.accessToken);
+//       const role = payload.role;
+
 //       const to =
 //         role === "manager"
 //           ? "/manager/dashboard"
 //           : role === "pharmacist"
 //           ? "/pharmacist/dashboard"
 //           : "/technician/dashboard";
+
 //       navigate(to);
+//     } catch (err: any) {
+//       const msg =
+//         typeof err === "string"
+//           ? err
+//           : "Incorrect username or password";
+
+//       toast.error("Login failed", msg);
 //     }
 //   };
 
@@ -35,7 +59,6 @@
 //     <div className="flex w-screen h-screen">
 //       {/* LEFT SECTION */}
 //       <div className="w-[50%] bg-gray-200 border-r-2 border-blue-500 flex justify-center items-center">
-//         {/* CARD */}
 //         <form
 //           onSubmit={handleSubmit}
 //           className="bg-white shadow-lg rounded-xl p-10 w-[65%]"
@@ -68,10 +91,6 @@
 //             >
 //               {status === "loading" ? "Signing in..." : "Sign In"}
 //             </Button>
-
-//             {error && (
-//               <p className="text-red-600 text-sm mt-2 text-center">{error}</p>
-//             )}
 //           </div>
 //         </form>
 //       </div>
@@ -87,61 +106,31 @@
 //     </div>
 //   );
 // }
-import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { loginUser } from "@store/auth/authSlice";
-import type { AppDispatch, RootState } from "store";
-import { jwtDecode } from "jwt-decode";
 
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+
+import type { RootState } from "store";
 import Input from "@components/common/Input/Input";
 import Button from "@components/common/Button/Button";
 import LoginImage from "@assets/Login.png";
-import { useToast } from "@components/common/Toast/useToast";
 
-type TokenPayload = {
-  role: "manager" | "pharmacist" | "technician";
-};
+import { useLoginFlow } from "@auth/hooks/useLoginFlow";
 
 export default function LoginPage() {
-  const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
-  const toast = useToast(); // ✅ this is an object with success/error methods
-
   const { status } = useSelector((s: RootState) => s.auth);
+  const { login } = useLoginFlow();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const isLoading = status === "loading";
+
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isLoading) return; // ✅ prevents double-submit spam
 
-    try {
-      // ✅ unwrap returns payload or throws rejectWithValue
-      const res = await dispatch(loginUser({ username, password })).unwrap();
-
-      toast.success("Login successful", `Welcome ${username}`);
-
-      // ✅ decode token to get role immediately (no stale selector issue)
-      const payload = jwtDecode<TokenPayload>(res.accessToken);
-      const role = payload.role;
-
-      const to =
-        role === "manager"
-          ? "/manager/dashboard"
-          : role === "pharmacist"
-          ? "/pharmacist/dashboard"
-          : "/technician/dashboard";
-
-      navigate(to);
-    } catch (err: any) {
-      const msg =
-        typeof err === "string"
-          ? err
-          : "Incorrect username or password";
-
-      toast.error("Login failed", msg);
-    }
+    await login(username.trim(), password);
   };
 
   return (
@@ -175,10 +164,10 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={status === "loading"}
+              disabled={isLoading}
               className="w-full justify-center mt-4"
             >
-              {status === "loading" ? "Signing in..." : "Sign In"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </div>
         </form>
