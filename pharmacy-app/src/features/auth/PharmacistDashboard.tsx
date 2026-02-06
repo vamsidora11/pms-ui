@@ -13,20 +13,6 @@ import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
 import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import { TableSkeleton } from "@components/common/SkeletonLoader/SkeletonLoader";
 
-/*
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid
-} from "recharts";
-*/
-
 /* ---------------------------------- */
 /* Types */
 /* ---------------------------------- */

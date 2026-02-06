@@ -1,7 +1,7 @@
 import {
   useState,
   useMemo,
-  ReactNode,
+  type ReactNode,
   Fragment
 } from "react";
 

@@ -4,10 +4,6 @@ export type Severity = "High" | "Moderate" | "Low" | "None";
 export type InteractionLevel = "None" | "Minor" | "Moderate" | "Major";
 export type ValidationResult = "Blocked" | "Partial" | "OK";
 
-export function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString();
-}
-
 export function pillToneBySeverity(
   s: string | null | undefined
 ): "red" | "amber" | "yellow" | "green" {

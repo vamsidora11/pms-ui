@@ -104,7 +104,7 @@ export function usePatientForm({
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
-      setFormError("Please fix the errors below before saving.");
+      setFormError("Please fix the errors below before submitting details.");
       return;
     }
 
