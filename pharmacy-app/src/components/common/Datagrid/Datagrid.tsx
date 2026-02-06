@@ -7,9 +7,14 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 interface DataGridProps<T> {
   columns: ColDef<T>[];
   data: T[];
+  onRowClicked?: (data: T) => void;
 }
 
-export default function DataGrid<T>({ columns, data }: DataGridProps<T>) {
+export default function DataGrid<T>({
+  columns,
+  data,
+  onRowClicked,
+}: DataGridProps<T>) {
   return (
     <div className="ag-theme-alpine w-full rounded-xl overflow-hidden border border-gray-200">
       <AgGridReact<T>
@@ -21,17 +26,20 @@ export default function DataGrid<T>({ columns, data }: DataGridProps<T>) {
         paginationPageSize={5}
         paginationPageSizeSelector={false}
 
-        domLayout="autoHeight"
-        headerHeight={44}
-        rowHeight={56}
+        domLayout="normal"
+        headerHeight={48}
+        rowHeight={60}
 
         suppressCellFocus
+        animateRows
         rowSelection="single"
 
         defaultColDef={{
           sortable: true,
           filter: true,
           resizable: false,
+          flex: 1,
+          minWidth: 140,
         }}
       />
     </div>

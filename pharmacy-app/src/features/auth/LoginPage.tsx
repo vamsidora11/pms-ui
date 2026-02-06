@@ -107,79 +107,161 @@
 //   );
 // }
 
+
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { jwtDecode } from "jwt-decode";
 
-import type { RootState } from "store";
-import Input from "@components/common/Input/Input";
-import Button from "@components/common/Button/Button";
-import LoginImage from "@assets/Login.png";
+import { loginUser } from "@store/auth/authSlice";
+import type { AppDispatch, RootState } from "store";
+import { useToast } from "@components/common/Toast/useToast";
 
-import { useLoginFlow } from "@auth/hooks/useLoginFlow";
+/* ================= TYPES ================= */
+
+interface TokenPayload {
+  sub: string;
+  email: string;
+  role: string;
+  exp: number;
+}
+
+/* ================= COMPONENT ================= */
 
 export default function LoginPage() {
-  const { status } = useSelector((s: RootState) => s.auth);
-  const { login } = useLoginFlow();
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { status, error } = useSelector((s: RootState) => s.auth);
+  const { success, error: showError } = useToast();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const isLoading = status === "loading";
+  /* ================= LOGIN ================= */
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return; // ✅ prevents double-submit spam
 
-    await login(username.trim(), password);
-  };
+      // unwrap gives payload or throws
+      const res = await dispatch(
+        loginUser({ username, password })
+      ).unwrap();
+
+      const payload = jwtDecode<TokenPayload>(res.accessToken);
+      const role = payload.role;
+
+       success("Successfully logged in");
+
+      const to =
+        role === "manager"
+          ? "/manager/dashboard"
+          : role === "pharmacist"
+          ? "/pharmacist/dashboard"
+          : "/technician/dashboard";
+
+      navigate(to);
+  }
+
+  /* ================= UI ================= */
 
   return (
-    <div className="flex w-screen h-screen">
-      {/* LEFT SECTION */}
-      <div className="w-[50%] bg-gray-200 border-r-2 border-blue-500 flex justify-center items-center">
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white shadow-lg rounded-xl p-10 w-[65%]"
-        >
-          <h1 className="text-3xl font-semibold text-center mb-8">Login</h1>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8">
 
-          <div className="space-y-6">
-            <Input
-              label="Username"
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={setUsername}
-              required
-            />
+          {/* Logo */}
+          <div className="text-center mb-5">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full mb-6 shadow-lg">
+              <svg
+                className="w-12 h-12 text-white"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M4.22 11.29l2.54-2.82c.42-.46 1.14-.48 1.58-.06l1.72 1.64c.44.42 1.15.4 1.58-.06l5.58-6.2c.42-.46 1.14-.48 1.58-.06.44.42.46 1.11.04 1.57l-6.28 6.98c-.42.46-1.14.48-1.58.06l-1.72-1.64c-.44-.42-1.15-.4-1.58.06l-3.24 3.6c-.42.46-1.14.48-1.58.06-.44-.43-.46-1.12-.04-1.57z" transform="rotate(45 12 12)" />
+                <rect x="6" y="10" width="12" height="8" rx="2" transform="rotate(45 12 14)" />
+              </svg>
+            </div>
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={setPassword}
-              required
-            />
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full justify-center mt-4"
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
+            <h1 className="text-3xl font-semibold text-blue-600 mb-2">
+              MediFlow
+            </h1>
+            <p className="text-sm text-gray-500">
+              Pharmacy Management System
+            </p>
           </div>
-        </form>
-      </div>
 
-      {/* RIGHT SECTION WITH IMAGE */}
-      <div className="w-[50%] bg-white flex justify-center items-center overflow-hidden">
-        <img
-          src={LoginImage}
-          alt="Login Illustration"
-          className="w-full h-full object-cover"
-        />
+          {/* FORM */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your email"
+                  required
+                  disabled={status === "loading"}
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-12 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your password"
+                  required
+                  disabled={status === "loading"}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Backend Error */}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            {/* Button */}
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-xl hover:from-blue-700 hover:to-teal-600 transition shadow-md"
+            >
+              {status === "loading" ? "Signing in..." : "Sign In"}
+            </button>
+
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -29,6 +29,7 @@
 //   return FREQUENCY_LABEL_MAP[code] ?? code;
 // }
 
+/* ================= COMPONENT ================= */
 
 // export default function LabelGeneration() {
 

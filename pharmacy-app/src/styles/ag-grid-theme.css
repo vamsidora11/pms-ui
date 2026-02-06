@@ -1,261 +1,98 @@
-/* Tailwind-style AG Grid */
+/* ============================= */
+/* MODERN AG GRID THEME          */
+/* ============================= */
 
-.ag-theme-alpine {
-  --ag-font-family: Inter, system-ui, sans-serif;
-  --ag-font-size: 14px;
+.ag-modern-grid {
   --ag-background-color: #ffffff;
-  --ag-header-background-color: #ffffff;
   --ag-foreground-color: #111827;
-  --ag-border-color: transparent;
-  --ag-row-border-color: #f1f5f9;
-  --ag-row-hover-color: #f9fafb;
-  --ag-selected-row-background-color: #eff6ff;
-  --ag-header-height: 44px;
-  --ag-row-height: 56px;
-  --ag-cell-horizontal-padding: 16px;
-}
 
-/* Remove grid borders */
-.ag-theme-alpine .ag-root-wrapper,
-.ag-theme-alpine .ag-header,
-.ag-theme-alpine .ag-header-row,
-.ag-theme-alpine .ag-row {
-  border: none !important;
+  --ag-header-background-color: #f9fafb;
+  --ag-header-foreground-color: #374151;
+  --ag-header-height: 48px;
+
+  --ag-row-hover-color: #f9fafb;
+  --ag-selected-row-background-color: #eef2ff;
+
+  --ag-border-color: #e5e7eb;
+  --ag-font-size: 14px;
+  --ag-font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
 }
 
 /* Header */
-.ag-theme-alpine .ag-header-cell-label {
-  font-size: 13px;
+.ag-modern-grid .ag-header {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ag-modern-grid .ag-header-cell {
+  font-size: 12px;
   font-weight: 600;
-  color: #374151;
-}
-
-.ag-theme-alpine .ag-header-icon {
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
-}
-
-.ag-theme-alpine .ag-header-cell:hover .ag-header-icon {
-  opacity: 1;
-}
-
-.ag-theme-alpine .ag-icon-filter {
+  text-transform: uppercase;
+  letter-spacing: .04em;
   color: #6b7280;
-}
-
-.ag-theme-alpine .ag-header-cell-menu-button,
-.ag-theme-alpine .ag-header-cell-resize {
-  display: none;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 /* Rows */
-.ag-theme-alpine .ag-row {
+.ag-modern-grid .ag-row {
   border-bottom: 1px solid #f1f5f9;
 }
 
-.ag-theme-alpine .ag-cell {
-  display: flex;
-  align-items: center;
-  color: #111827;
+.ag-modern-grid .ag-row:hover {
+  background: #f9fafb;
 }
 
-/* Pagination */
-.ag-theme-alpine .ag-paging-panel {
-  border-top: 1px solid #f1f5f9;
-  font-size: 13px;
+/* Cells */
+.ag-modern-grid .ag-cell {
+  padding-left: 16px;
+  padding-right: 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* Pagination Bar */
+.ag-modern-grid .ag-paging-panel {
+  border-top: 1px solid #e5e7eb;
+  padding: 10px 16px;
+  background: #ffffff;
+}
+
+/* Pagination Buttons */
+.ag-modern-grid .ag-paging-button {
   color: #6b7280;
 }
 
-/* Filter Popup */
-.ag-theme-alpine .ag-popup {
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  background: #ffffff;
+.ag-modern-grid .ag-paging-button:hover {
+  color: #2563eb;
 }
 
-.ag-theme-alpine .ag-filter {
-  background-color: #ffffff;
-  border: none;
-  padding: 16px;
-  min-width: 250px;
-}
-
-/* Remove all icons from filter */
-.ag-theme-alpine .ag-filter .ag-icon,
-.ag-theme-alpine .ag-filter .ag-input-field-icon,
-.ag-theme-alpine .ag-picker-field-icon {
+/* Hide First/Last Pagination Buttons - Try multiple selectors */
+.ag-modern-grid button[aria-label="First Page"],
+.ag-modern-grid button[aria-label="Last Page"],
+.ag-modern-grid .ag-paging-button:first-child,
+.ag-modern-grid .ag-paging-button:last-child {
   display: none !important;
 }
 
-/* Filter wrapper spacing */
-.ag-theme-alpine .ag-filter-body-wrapper {
-  padding: 0;
+/* Page Numbers */
+.ag-modern-grid .ag-paging-number {
+  border-radius: 6px;
 }
 
-.ag-theme-alpine .ag-paging-panel {
-  display: flex !important;
-  justify-content: center !important;   /* CENTER IT */
-  align-items: center !important;
-  gap: 12px;
-  padding: 12px 0;
-}
-
-/* Remove left/right spacers AG Grid adds */
-.ag-theme-alpine .ag-paging-panel > * {
- 
-  margin-top: 0px;     /* GAP FROM TABLE */
-  padding-top: 0px;
-}
-
-
-
-/* Ensure page info text is centered */
-.ag-theme-alpine .ag-paging-page-summary-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-/* Optional: make buttons tighter & cleaner */
-.ag-theme-alpine .ag-paging-button {
-  padding: 4px 8px;
-}
-
-/* Filter inputs - clean design */
-.ag-theme-alpine .ag-filter .ag-input-field-input,
-.ag-theme-alpine .ag-filter .ag-text-field-input,
-.ag-theme-alpine .ag-filter input[type="text"] {
-  border: 1px solid #d1d5db !important;
-  border-radius: 0.375rem;
-  padding: 8px 12px !important;
-  font-size: 14px;
-  color: #111827;
-  height: 36px;
-  width: 100%;
-  box-sizing: border-box;
-  background: #ffffff;
-}
-
-.ag-theme-alpine .ag-filter .ag-input-field-input:focus,
-.ag-theme-alpine .ag-filter .ag-text-field-input:focus,
-.ag-theme-alpine .ag-filter input[type="text"]:focus {
+/* Remove focus borders */
+.ag-modern-grid .ag-cell:focus,
+.ag-modern-grid .ag-header-cell:focus {
   outline: none;
-  border-color: #3b82f6 !important;
-  ring: 2px;
-  ring-color: rgba(59, 130, 246, 0.2);
-}
-
-/* Input wrapper - ensure proper layout */
-.ag-theme-alpine .ag-filter .ag-input-field,
-.ag-theme-alpine .ag-filter .ag-text-field {
-  margin-bottom: 12px;
-}
-
-/* Filter dropdowns */
-.ag-theme-alpine .ag-filter .ag-picker-field-wrapper {
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  background: #ffffff;
-  height: 36px;
-}
-
-/* Mini filter (search box in set filter) */
-.ag-theme-alpine .ag-mini-filter {
-  margin-bottom: 12px;
-}
-
-.ag-theme-alpine .ag-mini-filter input {
-  border: 1px solid #d1d5db !important;
-  border-radius: 0.375rem;
-  padding: 8px 12px !important;
-  font-size: 13px;
-  width: 100%;
-  height: 36px;
-  box-sizing: border-box;
-}
-
-.ag-theme-alpine .ag-mini-filter input:focus {
-  outline: none;
-  border-color: #3b82f6 !important;
-}
-
-/* Filter Buttons */
-.ag-theme-alpine .ag-filter-apply-panel {
-  padding: 12px;
-  background-color: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.ag-theme-alpine .ag-standard-button {
-  border-radius: 0.5rem;
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid #d1d5db;
-  background-color: #ffffff;
-  color: #374151;
-}
-
-.ag-theme-alpine .ag-standard-button:hover {
-  background-color: #f9fafb;
-}
-
-.ag-theme-alpine .ag-standard-button[ref="applyFilterButton"] {
-  background-color: #3b82f6;
-  color: #ffffff;
-  border-color: #3b82f6;
-}
-
-.ag-theme-alpine .ag-standard-button[ref="applyFilterButton"]:hover {
-  background-color: #2563eb;
-}
-
-/* Set Filter (Checkboxes) */
-.ag-theme-alpine .ag-set-filter-list {
-  padding: 8px;
-}
-
-.ag-theme-alpine .ag-set-filter-item {
-  padding: 6px 8px;
-  border-radius: 0.375rem;
-}
-
-.ag-theme-alpine .ag-set-filter-item:hover {
-  background-color: #f3f4f6;
-}
-
-.ag-theme-alpine .ag-checkbox-input-wrapper {
-  width: 18px;
-  height: 18px;
-  border-radius: 0.25rem;
-  border: 1px solid #d1d5db;
-}
-
-.ag-theme-alpine .ag-checkbox-input-wrapper.ag-checked {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
+  box-shadow: none;
 }
 
 /* Scrollbar */
-.ag-theme-alpine .ag-set-filter-list::-webkit-scrollbar {
+.ag-modern-grid ::-webkit-scrollbar {
+  height: 8px;
   width: 8px;
 }
 
-.ag-theme-alpine .ag-set-filter-list::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 4px;
-}
-
-.ag-theme-alpine .ag-set-filter-list::-webkit-scrollbar-thumb {
+.ag-modern-grid ::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 4px;
-}
-
-.ag-theme-alpine .ag-set-filter-list::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
