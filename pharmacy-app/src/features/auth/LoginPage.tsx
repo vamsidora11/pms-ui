@@ -114,7 +114,7 @@ export default function LoginPage() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { status, error } = useSelector((s: RootState) => s.auth);
-  const { success, error: showError } = useToast();
+  const { success} = useToast();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
