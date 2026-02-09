@@ -12,21 +12,7 @@ import type { Column } from "@components/common/Table/Table";
 import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
 import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import { TableSkeleton } from "@components/common/SkeletonLoader/SkeletonLoader";
-
-/*
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid
-} from "recharts";
-*/
-
+import { formatDateTime } from "@prescription/prescriptionHistoryUtils";
 /* ---------------------------------- */
 /* Types */
 /* ---------------------------------- */
@@ -204,29 +190,44 @@ export default function PharmacistDashboard() {
         filterable: true
       },
       {
+        // key: "createdAt",
+        // header: "Date & Time",
+        // sortable: true,
+        // render: value => {
+        //   const d = value as Date;
+        //   return (
+        //     <div>
+        //       <div className="font-medium">
+        //         {d.toLocaleDateString("en-US", {
+        //           month: "short",
+        //           day: "numeric",
+        //           year: "numeric"
+        //         })}
+        //       </div>
+        //       <div className="text-xs text-gray-500">
+        //         {d.toLocaleTimeString("en-US", {
+        //           hour: "2-digit",
+        //           minute: "2-digit"
+        //         })}
+        //       </div>
+        //     </div>
+        //   );
+        // }
         key: "createdAt",
-        header: "Date & Time",
-        sortable: true,
-        render: value => {
-          const d = value as Date;
-          return (
-            <div>
-              <div className="font-medium">
-                {d.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric"
-                })}
-              </div>
-              <div className="text-xs text-gray-500">
-                {d.toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit"
-                })}
-              </div>
-            </div>
-          );
-        }
+                header: "Date",
+                sortable: true,
+                filterable: true,
+                filterType: "date",
+                width: 180,
+                render: (v) => {
+                  const { date, time } = formatDateTime(v as string);
+                  return (
+                    <div>
+                      <div className="font-medium">{date}</div>
+                      <div className="text-xs text-gray-500">{time}</div>
+                    </div>
+                  );
+                },
       },
       {
         key: "status",

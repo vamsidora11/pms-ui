@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { Search, AlertTriangle } from "lucide-react";
-import { searchPatients as defaultSearchPatients } from "@api/patientSearch";
+import { AlertTriangle, Search } from "lucide-react";
 import type { PatientSummary, PatientDetails } from "../models";
-import { useDebouncedValue } from "@utils/hooks/useDebouncedValue";
+import { usePatientSearch } from "../hooks/usePatientSearch";
 
 interface Props {
   patient: PatientDetails | null;
@@ -17,7 +15,6 @@ interface Props {
 
 function calculateAge(dob: string): number | null {
   if (!dob) return null;
-
   const birthDate = new Date(dob);
   if (Number.isNaN(birthDate.getTime())) return null;
 
@@ -34,59 +31,20 @@ function calculateAge(dob: string): number | null {
 export default function PatientStep({
   patient,
   onChange,
-  searchFn = defaultSearchPatients,
+  searchFn,
   debounceMs = 300,
   minChars = 2,
 }: Props) {
-  const [query, setQuery] = useState("");
-  const debouncedQuery = useDebouncedValue(query, debounceMs);
-
-  const [results, setResults] = useState<PatientSummary[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // latest-request-wins
-  const requestIdRef = useRef(0);
-
-  useEffect(() => {
-    const q = (debouncedQuery ?? "").trim();
-
-    if (!q || q.length < minChars) {
-      setLoading(false);
-      setError(null);
-      setResults([]);
-      return;
-    }
-
-    const requestId = ++requestIdRef.current;
-
-    const run = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await searchFn(q);
-        if (requestId !== requestIdRef.current) return; // stale response
-        setResults(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        if (requestId !== requestIdRef.current) return;
-        console.error("Patient search failed:", e);
-        setError(e?.message || "Failed to search patients");
-        setResults([]);
-      } finally {
-        if (requestId === requestIdRef.current) setLoading(false);
-      }
-    };
-
-    run();
-  }, [debouncedQuery, minChars, searchFn]);
-
-  const onQueryChange = (value: string) => {
-    setQuery(value);
-    setShowResults(true);
-    if (!value.trim()) setResults([]);
-  };
+  const {
+    query,
+    results,
+    loading,
+    error,
+    showResults,
+    onQueryChange,
+    selectPatient,
+    openResults,
+  } = usePatientSearch({ searchFn, debounceMs, minChars });
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -125,9 +83,7 @@ export default function PatientStep({
             )}
 
             {!loading && !error && results.length === 0 && query.trim() && (
-              <div className="p-4 text-center text-gray-500">
-                No patients found
-              </div>
+              <div className="p-4 text-center text-gray-500">No patients found</div>
             )}
 
             {!loading &&
@@ -135,12 +91,7 @@ export default function PatientStep({
               results.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => {
-                    onChange(p);
-                    setQuery("");
-                    setResults([]);
-                    setShowResults(false);
-                  }}
+                  onClick={() => selectPatient(p, onChange)}
                   className="w-full p-4 text-left hover:bg-gray-50 border-b last:border-b-0"
                 >
                   <div className="text-gray-900 font-medium">{p.fullName}</div>
@@ -157,14 +108,12 @@ export default function PatientStep({
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-4">
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-blue-900 font-medium">
-                  Selected Patient
-                </div>
+                <div className="text-blue-900 font-medium">Selected Patient</div>
                 <div className="text-blue-800 mt-1">{patient.fullName}</div>
               </div>
 
               <button
-                onClick={() => setShowResults(true)}
+                onClick={openResults}
                 className="text-blue-600 text-sm hover:underline"
               >
                 Change
@@ -191,7 +140,7 @@ export default function PatientStep({
               </div>
             </div>
 
-            {/* Allergy Warning (safe for optional allergies) */}
+            {/* Allergy Warning */}
             {(patient.allergies?.length ?? 0) > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-red-800 font-medium mb-2">
