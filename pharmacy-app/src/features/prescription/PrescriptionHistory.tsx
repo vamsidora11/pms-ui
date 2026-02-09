@@ -1,15 +1,15 @@
 import React, { useCallback, useMemo } from "react";
-
+ 
 import DataTable from "@components/common/Table/Table";
 import type { Column } from "@components/common/Table/Table";
 import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
-
+ 
 import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
-
+ 
 import { usePrescriptionHistoryData } from "./hooks/usePrescriptionHistoryData";
 import PrescriptionExpandedDetails from "./components/PrescriptionExpandedDetails";
 import { formatDateTime, statusStyle } from "./prescriptionHistoryUtils";
-
+ 
 export default function PrescriptionHistory() {
   const {
     prescriptions,
@@ -20,7 +20,7 @@ export default function PrescriptionHistory() {
     toggleRow,
     isRowExpanded,
   } = usePrescriptionHistoryData({ pageSize: 100 });
-
+ 
   const columns: Column<PrescriptionSummaryDto>[] = useMemo(
     () => [
       {
@@ -29,7 +29,11 @@ export default function PrescriptionHistory() {
         sortable: true,
         filterable: true,
         width: 180,
-        render: (v) => <span className="font-semibold text-gray-900">{v}</span>,
+        render: (v) => (
+          <span className="font-semibold text-gray-900">
+            {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+          </span>
+        ),
       },
       {
         key: "patientName",
@@ -53,8 +57,10 @@ export default function PrescriptionHistory() {
       },
       {
         key: "createdAt",
-        header: "Date & Time",
+        header: "Date",
         sortable: true,
+        filterable: true,
+        filterType: "date",
         width: 180,
         render: (v) => {
           const { date, time } = formatDateTime(v as string);
@@ -72,20 +78,25 @@ export default function PrescriptionHistory() {
         sortable: true,
         filterable: true,
         width: 160,
-        render: (v) => (
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(v as string)}`}>
-            {v}
-          </span>
-        ),
+        render: (v) => {
+          const statusValue = typeof v === 'object' ? 'Unknown' : String(v);
+          return (
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(statusValue)}`}
+            >
+              {statusValue}
+            </span>
+          );
+        },
       },
     ],
     []
   );
-
+ 
   const renderExpandedRow = useCallback(
     (row: PrescriptionSummaryDto) => {
       if (expandedRowId !== row.id) return null;
-
+ 
       return (
         <PrescriptionExpandedDetails
           row={row}
@@ -97,23 +108,23 @@ export default function PrescriptionHistory() {
     },
     [expandedRowId, expandedDetails, expandedPatient, expandedPatientLoading]
   );
-
+ 
   const handleRowClick = useCallback(
     (row: PrescriptionSummaryDto) => toggleRow(row.id),
     [toggleRow]
   );
-
+ 
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: "Prescription History" }]} />
-
+ 
       <div>
         <h1 className="text-2xl font-bold">Prescription History</h1>
         <p className="text-sm text-gray-500">
           View and track all prescriptions • {prescriptions.length}
         </p>
       </div>
-
+ 
       <DataTable
         data={prescriptions}
         columns={columns}
@@ -130,3 +141,4 @@ export default function PrescriptionHistory() {
     </div>
   );
 }
+ 

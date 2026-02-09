@@ -1,24 +1,24 @@
 /* ============================
    Pure helpers (SRP)
 ============================ */
-
+ 
 export function calculateAgeFromDob(dob?: string): number | null {
   if (!dob) return null;
-
+ 
   const birthDate = new Date(dob);
   if (Number.isNaN(birthDate.getTime())) return null;
-
+ 
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
-
+ 
   const monthDiff = today.getMonth() - birthDate.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-
+ 
   return age;
 }
-
+ 
 export function statusStyle(status: string) {
   switch (status) {
     case "Created":
@@ -40,13 +40,13 @@ export function statusStyle(status: string) {
       return "bg-slate-100 text-slate-700 border border-slate-300";
   }
 }
-
+ 
 export function formatDateTime(value?: string) {
   if (!value) return { date: "—", time: "—" };
-
+ 
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return { date: "—", time: "—" };
-
+ 
   return {
     date: d.toLocaleDateString("en-US", {
       month: "short",

@@ -24,6 +24,7 @@
     "libphonenumber-js": "^1.12.36",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",
+    "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
     "react-phone-number-input": "^3.4.14",
