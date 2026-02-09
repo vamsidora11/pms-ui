@@ -1,26 +1,39 @@
-import React, { useCallback, useMemo } from "react";
- 
+import { useCallback, useMemo } from "react";
+import { useDispatch } from "react-redux";
+
 import DataTable from "@components/common/Table/Table";
-import type { Column } from "@components/common/Table/Table";
+import type { Column, ServerTableQuery } from "@components/common/Table/Table";
 import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
- 
+import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
+import type { AppDispatch } from "../../store";
+
 import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
- 
+
 import { usePrescriptionHistoryData } from "./hooks/usePrescriptionHistoryData";
 import PrescriptionExpandedDetails from "./components/PrescriptionExpandedDetails";
-import { formatDateTime, statusStyle } from "./prescriptionHistoryUtils";
- 
+import {
+  buildHistoryQueryParams,
+  formatDateTime,
+  statusStyle,
+} from "./prescriptionHistoryUtils";
+
 export default function PrescriptionHistory() {
+  const dispatch = useDispatch<AppDispatch>();
+
   const {
     prescriptions,
+    requestStatus,
+    totalCount,
+    pageNumber,
+    pageSize,
     expandedRowId,
     expandedDetails,
     expandedPatient,
     expandedPatientLoading,
     toggleRow,
     isRowExpanded,
-  } = usePrescriptionHistoryData({ pageSize: 100 });
- 
+  } = usePrescriptionHistoryData({ pageSize: 10, skipInitialFetch: true });
+
   const columns: Column<PrescriptionSummaryDto>[] = useMemo(
     () => [
       {
@@ -29,11 +42,7 @@ export default function PrescriptionHistory() {
         sortable: true,
         filterable: true,
         width: 180,
-        render: (v) => (
-          <span className="font-semibold text-gray-900">
-            {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-          </span>
-        ),
+        render: (v) => <span className="font-semibold text-gray-900">{String(v)}</span>,
       },
       {
         key: "patientName",
@@ -77,9 +86,18 @@ export default function PrescriptionHistory() {
         header: "Status",
         sortable: true,
         filterable: true,
+        filterType: "select",
+        filterOptions: [
+          { label: "Created", value: "Created" },
+          { label: "Reviewed", value: "Reviewed" },
+          { label: "Active", value: "Active" },
+          { label: "Completed", value: "Completed" },
+          { label: "Cancelled", value: "Cancelled" },
+          { label: "Expired", value: "Expired" },
+        ],
         width: 160,
         render: (v) => {
-          const statusValue = typeof v === 'object' ? 'Unknown' : String(v);
+          const statusValue = String(v);
           return (
             <span
               className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(statusValue)}`}
@@ -92,11 +110,11 @@ export default function PrescriptionHistory() {
     ],
     []
   );
- 
+
   const renderExpandedRow = useCallback(
     (row: PrescriptionSummaryDto) => {
       if (expandedRowId !== row.id) return null;
- 
+
       return (
         <PrescriptionExpandedDetails
           row={row}
@@ -108,37 +126,58 @@ export default function PrescriptionHistory() {
     },
     [expandedRowId, expandedDetails, expandedPatient, expandedPatientLoading]
   );
- 
+
   const handleRowClick = useCallback(
     (row: PrescriptionSummaryDto) => toggleRow(row.id),
     [toggleRow]
   );
- 
+
+  const handleServerQueryChange = useCallback(
+    (tableQuery: ServerTableQuery) => {
+      const apiQuery = buildHistoryQueryParams({
+        pageNumber: tableQuery.pageNumber,
+        pageSize: tableQuery.pageSize,
+        searchTerm: tableQuery.searchTerm,
+        sortBy: tableQuery.sortBy,
+        sortDirection: tableQuery.sortDirection,
+        columnFilters: tableQuery.columnFilters,
+      });
+
+      dispatch(fetchAllPrescriptions(apiQuery));
+    },
+    [dispatch]
+  );
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: "Prescription History" }]} />
- 
+
       <div>
         <h1 className="text-2xl font-bold">Prescription History</h1>
-        <p className="text-sm text-gray-500">
-          View and track all prescriptions • {prescriptions.length}
-        </p>
+        <p className="text-sm text-gray-500">View and track all prescriptions - {totalCount}</p>
       </div>
- 
+
       <DataTable
         data={prescriptions}
         columns={columns}
         pageSize={10}
         pageSizeOptions={[5, 10, 20]}
-        searchPlaceholder="Search prescription, patient, doctor..."
+        searchPlaceholder="Search patient name..."
         exportFileName="prescription-history"
         height={650}
         expandable
         renderExpandedRow={renderExpandedRow}
         isRowExpanded={isRowExpanded}
         onRowClick={handleRowClick}
+        serverSide
+        loading={requestStatus === "loading"}
+        totalItems={totalCount}
+        initialServerQuery={{
+          pageNumber,
+          pageSize,
+        }}
+        onServerQueryChange={handleServerQueryChange}
       />
     </div>
   );
 }
- 

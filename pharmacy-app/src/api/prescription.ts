@@ -1,4 +1,3 @@
-// prescription.ts - MERGED VERSION
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
 import { logger } from "@utils/logger/logger";
@@ -10,6 +9,105 @@ import type {
   ReviewPrescriptionRequest,
 } from "@prescription/prescription.types";
 
+type SortDirection = "asc" | "desc";
+
+export interface PrescriptionHistoryQueryParams {
+  prescriptionId?: string;
+  patientName?: string;
+  prescriberName?: string;
+  createdAt?: string;
+  status?: string;
+  pageSize?: number;
+  sortBy?: string;
+  sortDirection?: SortDirection;
+  pageNumber?: number;
+}
+
+export interface PrescriptionHistoryPageResult {
+  items: PrescriptionSummaryDto[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+interface LegacyPrescriptionPageResponse {
+  items?: PrescriptionSummaryDto[];
+  continuationToken?: string | null;
+  totalCount?: number;
+  totalPages?: number;
+  pageNumber?: number;
+  pageSize?: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function getNumeric(value: unknown): number | null {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return null;
+  }
+  return value;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function parseHistoryResponse(
+  data: unknown,
+  requestedPageNumber: number,
+  requestedPageSize: number
+): PrescriptionHistoryPageResult {
+  const root = asRecord(data);
+
+  const items = Array.isArray(root?.items)
+    ? (root.items as PrescriptionSummaryDto[])
+    : Array.isArray(data)
+      ? (data as PrescriptionSummaryDto[])
+      : [];
+
+  const totalCount =
+    getNumeric(root?.totalCount) ??
+    getNumeric(root?.count) ??
+    getNumeric(root?.totalItems) ??
+    items.length;
+
+  const pageSize = getNumeric(root?.pageSize) ?? requestedPageSize;
+  const pageNumber = getNumeric(root?.pageNumber) ?? requestedPageNumber;
+  const totalPages =
+    getNumeric(root?.totalPages) ??
+    Math.max(1, Math.ceil(totalCount / Math.max(1, pageSize)));
+
+  const hasNextPage =
+    typeof root?.hasNextPage === "boolean"
+      ? root.hasNextPage
+      : pageNumber < totalPages;
+
+  const hasPreviousPage =
+    typeof root?.hasPreviousPage === "boolean"
+      ? root.hasPreviousPage
+      : pageNumber > 1;
+
+  return {
+    items,
+    pageNumber,
+    pageSize,
+    totalCount,
+    totalPages,
+    hasNextPage,
+    hasPreviousPage,
+  };
+}
+
 // ================== CREATE PRESCRIPTION ==================
 
 export async function createPrescription(
@@ -20,8 +118,6 @@ export async function createPrescription(
       ENDPOINTS.prescriptions,
       payload
     );
-    console.log("Submitting prescription payload:", JSON.stringify(payload, null, 2));
-    console.log("Create prescription API response:", res.data);
     return res.data;
   } catch (error) {
     logger.error("Create prescription failed", { payload, error });
@@ -48,7 +144,7 @@ export async function getPrescriptionById(
   }
 }
 
-// Alias for backward compatibility with your code
+// Alias for backward compatibility
 export const getPrescriptionDetails = getPrescriptionById;
 
 // ================== PAGINATED: GET BY PATIENT ==================
@@ -59,7 +155,7 @@ export async function getPrescriptionsByPatient(
   continuationToken?: string | null
 ): Promise<{ items: PrescriptionSummaryDto[]; continuationToken: string | null }> {
   try {
-    const params: any = { pageSize };
+    const params: Record<string, string | number> = { pageSize };
     if (continuationToken) {
       params.continuationToken = continuationToken;
     }
@@ -68,8 +164,13 @@ export async function getPrescriptionsByPatient(
       `${ENDPOINTS.prescriptions}/patient/${patientId}`,
       { params }
     );
-    
-    return res.data; // { items, continuationToken }
+
+    const data = (res.data ?? {}) as LegacyPrescriptionPageResponse;
+
+    return {
+      items: data.items ?? [],
+      continuationToken: data.continuationToken ?? null,
+    };
   } catch (error) {
     logger.error("Fetching prescriptions by patient failed", {
       patientId,
@@ -87,9 +188,9 @@ export async function searchPrescriptions(
   continuationToken?: string | null
 ): Promise<{ items: PrescriptionSummaryDto[]; continuationToken: string | null }> {
   try {
-    const params: any = {
+    const params: Record<string, string | number> = {
       searchTerm,
-      pageSize
+      pageSize,
     };
 
     if (continuationToken) {
@@ -97,7 +198,12 @@ export async function searchPrescriptions(
     }
 
     const res = await api.get(`${ENDPOINTS.prescriptions}/search`, { params });
-    return res.data; // { items, continuationToken }
+    const data = (res.data ?? {}) as LegacyPrescriptionPageResponse;
+
+    return {
+      items: data.items ?? [],
+      continuationToken: data.continuationToken ?? null,
+    };
   } catch (error) {
     logger.error("Searching prescriptions failed", {
       searchTerm,
@@ -107,44 +213,49 @@ export async function searchPrescriptions(
   }
 }
 
-// ================== PAGINATED: GET ALL ==================
+// ================== PAGINATED: GET ALL (SERVER FILTER/SORT/PAGE) ==================
 
 export async function getAllPrescriptions(
-  status?: string,
-  pageSize = 10,
-  continuationToken?: string | null
-): Promise<{ items: PrescriptionSummaryDto[]; continuationToken: string | null }> {
+  query: PrescriptionHistoryQueryParams = {}
+): Promise<PrescriptionHistoryPageResult> {
+  const pageNumber = query.pageNumber ?? 1;
+  const pageSize = query.pageSize ?? 10;
+
+  const params: Record<string, string | number> = {
+    pageNumber,
+    pageSize,
+  };
+
+  if (isNonEmptyString(query.prescriptionId)) {
+    params.prescriptionId = query.prescriptionId.trim();
+  }
+  if (isNonEmptyString(query.patientName)) {
+    params.patientName = query.patientName.trim();
+  }
+  if (isNonEmptyString(query.prescriberName)) {
+    params.prescriberName = query.prescriberName.trim();
+  }
+  if (isNonEmptyString(query.createdAt)) {
+    params.createdAt = query.createdAt.trim();
+  }
+  if (isNonEmptyString(query.status) && query.status !== "All") {
+    params.status = query.status.trim();
+  }
+  if (isNonEmptyString(query.sortBy)) {
+    params.sortBy = query.sortBy.trim();
+  }
+  if (query.sortDirection) {
+    params.sortDirection = query.sortDirection;
+  }
+
   try {
-    const params: any = { pageSize };
-
-    if (status && status !== 'All') {
-      params.status = status;
-    }
-
-    if (continuationToken) {
-      params.continuationToken = continuationToken;
-    }
-
-    console.log('[API] getAllPrescriptions', {
-      status: status ?? 'All',
-      pageSize,
-      continuationToken: continuationToken ?? null,
-      finalParams: params
-    });
-
     const res = await api.get(ENDPOINTS.prescriptions, { params });
-
-    return res.data;
+    return parseHistoryResponse(res.data, pageNumber, pageSize);
   } catch (error) {
-    logger.error("Fetching all prescriptions failed", {
-      status,
-      continuationToken,
-      error,
-    });
+    logger.error("Fetching all prescriptions failed", { query, error });
     throw error;
   }
 }
-
 
 // ================== CANCEL PRESCRIPTION ==================
 
@@ -173,10 +284,7 @@ export async function reviewPrescription(
   payload: ReviewPrescriptionRequest
 ): Promise<void> {
   try {
-    await api.put(
-      `${ENDPOINTS.prescriptions}/${prescriptionId}/review`,
-      payload
-    );
+    await api.put(`${ENDPOINTS.prescriptions}/${prescriptionId}/review`, payload);
     logger.info("Prescription reviewed successfully", { prescriptionId });
   } catch (error) {
     logger.error("Review prescription failed", {
@@ -192,14 +300,12 @@ export async function reviewPrescription(
 
 export async function getPendingPrescriptions(): Promise<PrescriptionSummaryDto[]> {
   try {
-    const res = await api.get(ENDPOINTS.prescriptions, {
-      params: {
-        status: "Created",
-        pageSize: 20,
-      },
+    const result = await getAllPrescriptions({
+      status: "Created",
+      pageSize: 20,
+      pageNumber: 1,
     });
-
-    return res.data.items; // PagedResultDto -> items
+    return result.items;
   } catch (error) {
     logger.error("Get pending prescriptions failed", { error });
     throw error;

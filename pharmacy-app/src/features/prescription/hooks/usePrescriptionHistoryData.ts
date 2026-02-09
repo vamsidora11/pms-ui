@@ -12,13 +12,13 @@ import type {
 import type { PatientDetails } from "@prescription/models";
 import { getPatientById } from "@api/patientSearch";
  
-type Options = { pageSize?: number };
+type Options = { pageSize?: number; skipInitialFetch?: boolean };
  
 export function usePrescriptionHistoryData(options?: Options) {
   const dispatch = useDispatch<AppDispatch>();
-  const prescriptions =
-    useSelector((s: RootState) => s.prescriptions.items) || [];
-  const selected = useSelector((s: RootState) => s.prescriptions.selected);
+  const prescriptionState = useSelector((s: RootState) => s.prescriptions);
+  const prescriptions = prescriptionState.items || [];
+  const selected = prescriptionState.selected;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
  
   // UI state
@@ -30,19 +30,20 @@ export function usePrescriptionHistoryData(options?: Options) {
   // refs (no re-renders)
   const inFlightRef = useRef<Record<string, boolean>>({});
  
-  const pageSize = options?.pageSize ?? 100;
+  const pageSize = options?.pageSize ?? 10;
+  const skipInitialFetch = options?.skipInitialFetch ?? false;
  
   /* ---------------- Initial load ---------------- */
   useEffect(() => {
+    if (skipInitialFetch) return;
+
     dispatch(
       fetchAllPrescriptions({
-        status: undefined,
+        pageNumber: 1,
         pageSize,
-        continuationToken: null,
-        reset: true,
       })
     );
-  }, [dispatch, pageSize]);
+  }, [dispatch, pageSize, skipInitialFetch]);
  
   /* ---------------- Expanded row ---------------- */
   const expandedRow = useMemo(() => {
@@ -110,6 +111,12 @@ export function usePrescriptionHistoryData(options?: Options) {
  
   return {
     prescriptions,
+    requestStatus: prescriptionState.status,
+    requestError: prescriptionState.error,
+    totalCount: prescriptionState.totalCount,
+    pageNumber: prescriptionState.pageNumber,
+    pageSize: prescriptionState.pageSize,
+    totalPages: prescriptionState.totalPages,
     expandedRowId,
     expandedRow,
     expandedDetails,
