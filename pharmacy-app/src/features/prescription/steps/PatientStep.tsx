@@ -63,7 +63,7 @@ export default function PatientStep({
           <input
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search by patient name or ID..."
+            placeholder="Search by patient name, phone no. or ID..."
             className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg
                        focus:outline-none focus:ring-2 focus:ring-blue-500"
           />

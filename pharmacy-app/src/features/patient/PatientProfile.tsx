@@ -5,23 +5,21 @@ import AddPatientModal from "./addpatient";
 import UpdatePatientModal from "./updatePatient";
 
 import { createPatient, getPatientDetails, searchPatients } from "@api/patient";
-import type { PatientDetailsDto } from "@store/patient/patienttype";
+import { getPrescriptionsByPatient } from "@api/prescription";
+
+import type {
+  PatientDetailsDto
+} from "@store/patient/patienttype";
+import type {
+  PrescriptionSummaryDto
+} from "@prescription/prescription.types";
 
 import { usePatientDirectory } from "./hooks/usePatientDirectory";
 import { usePatientDetails } from "./hooks/usePatientDetails";
+import { usePatientPrescriptions } from "./hooks/usePatientPrescriptions";
 
 import PatientDirectoryPanel from "./components/PatientDirectoryPanel";
 import PatientDetailsPanel from "./components/PatientDetailsPanel";
-
-/* =========================
-   Types
-========================= */
-interface Prescription {
-  id: string;
-  patientId: string;
-  medicationsCount: number;
-  status: "Pending" | "Rejected" | "Approved";
-}
 
 export default function PatientProfiles() {
   const directory = usePatientDirectory({
@@ -36,8 +34,12 @@ export default function PatientProfiles() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
 
-  // Prescriptions (kept as-is; to be wired later)
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  // ✅ Prescriptions (loads automatically when selected patient changes)
+  const prescriptionsState = usePatientPrescriptions<PrescriptionSummaryDto>(
+    getPrescriptionsByPatient as any,
+    details.selectedPatient?.id ?? null,
+    10,
+  );
 
   // ✅ Auto-select whenever there is no selection
   useEffect(() => {
@@ -46,19 +48,19 @@ export default function PatientProfiles() {
     // If selection exists but isn't in current list, clear it
     if (selectedId && !directory.patients.some((p) => p.id === selectedId)) {
       details.setSelectedPatient(null);
-      setPrescriptions([]);
+      prescriptionsState.reset();
     }
 
     // If no selection, auto-select first result
     if (!details.selectedPatient && directory.patients.length > 0) {
       details.selectPatient(directory.patients[0].id);
-      setPrescriptions([]); // placeholder until wired
+      // prescriptions hook will auto-load after selection resolves
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [directory.patients]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 min-h-screen pb-12 md:pb-16">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -79,7 +81,8 @@ export default function PatientProfiles() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-3 gap-6"> */}
+      <div className="grid grid-cols-3 gap-6 items-stretch h-[calc(100vh-220px)]">
         {/* Left panel */}
         <PatientDirectoryPanel
           patients={directory.patients}
@@ -90,7 +93,7 @@ export default function PatientProfiles() {
           selectedPatientId={details.selectedPatient?.id}
           onSelectPatient={async (id) => {
             await details.selectPatient(id);
-            setPrescriptions([]); // placeholder
+            // prescriptions auto-load via hook
           }}
         />
 
@@ -99,12 +102,17 @@ export default function PatientProfiles() {
           selectedPatient={details.selectedPatient}
           detailsLoading={details.detailsLoading}
           detailsError={details.detailsError}
-          prescriptions={prescriptions}
+          prescriptions={prescriptionsState.prescriptions}
+          prescriptionsLoading={prescriptionsState.prescriptionsLoading}
+          prescriptionsError={prescriptionsState.prescriptionsError}
+          prescriptionsHasMore={prescriptionsState.hasMore}
+          onLoadMorePrescriptions={prescriptionsState.loadMore}
+          prescriptionsLoadingMore={prescriptionsState.prescriptionsLoadingMore}
           onClickUpdate={() => setShowUpdateModal(true)}
         />
       </div>
 
-      {/* Add Patient Modal (wrapper stays) */}
+      {/* Add Patient Modal */}
       {showAddModal && (
         <AddPatientModal
           onClose={() => setShowAddModal(false)}
@@ -117,8 +125,6 @@ export default function PatientProfiles() {
               directory.setPatients(refreshed);
 
               await details.selectPatient(patientId);
-              setPrescriptions([]);
-
               setShowAddModal(false);
             } catch (err) {
               console.error("Failed to add patient", err);
@@ -128,7 +134,7 @@ export default function PatientProfiles() {
         />
       )}
 
-      {/* Update Patient Modal (wrapper stays) */}
+      {/* Update Patient Modal */}
       {showUpdateModal && details.selectedPatient && (
         <UpdatePatientModal
           patient={details.selectedPatient}

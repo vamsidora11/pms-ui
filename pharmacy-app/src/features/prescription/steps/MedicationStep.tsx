@@ -60,7 +60,7 @@ export default function MedicationStep({
       {/* Rows */}
       <div className="p-6 space-y-4">
         {rows.map((row) => (
-          <div key={row.uid} className="border rounded-xl p-6 bg-gray-50 relative">
+          <div key={row.uid} className="border rounded-xl p-6 bg-gray-50 relative ">
             <div className="flex justify-between mb-4">
               <span className="text-gray-900">Medication</span>
 
@@ -98,7 +98,8 @@ export default function MedicationStep({
                   onClick={() => {
                     if (!row.isSearching) startSearchMode(row.uid);
                   }}
-                  className={`w-full ${row.isSearching ? "pl-10" : "pl-4"} pr-4 py-2 border rounded-lg ${
+                  className={`w-full ${row.isSearching ? "pl-10" : "pl-4"} pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     row.isSearching ? "bg-white" : "bg-gray-100 cursor-pointer"
                   }`}
                   placeholder="Search inventory..."
@@ -141,7 +142,8 @@ export default function MedicationStep({
                 <select
                   value={row.frequency}
                   onChange={(e) => updateField(row.uid, "frequency", e.target.value)}
-                  className="w-full border px-3 py-2 rounded-lg"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {FREQUENCY_OPTIONS.map((freq) => (
                     <option key={freq.value} value={freq.value}>
@@ -160,7 +162,8 @@ export default function MedicationStep({
                   min={1}
                   value={row.quantity}
                   onChange={(e) => updateField(row.uid, "quantity", Number(e.target.value))}
-                  className="w-full border px-3 py-2 rounded-lg"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -178,7 +181,8 @@ export default function MedicationStep({
                   onChange={(e) =>
                     updateField(row.uid, "durationDays", Number(e.target.value))
                   }
-                  className="w-full border px-3 py-2 rounded-lg"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -189,7 +193,8 @@ export default function MedicationStep({
                   min={0}
                   value={row.refills}
                   onChange={(e) => updateField(row.uid, "refills", Number(e.target.value))}
-                  className="w-full border px-3 py-2 rounded-lg"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -201,7 +206,8 @@ export default function MedicationStep({
                 placeholder="e.g., Take after meals"
                 value={row.instructions}
                 onChange={(e) => updateField(row.uid, "instructions", e.target.value)}
-                className="w-full border px-3 py-2 rounded-lg"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
