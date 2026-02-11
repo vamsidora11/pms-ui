@@ -12,7 +12,7 @@ import {
 import DataTable from "@components/common/Table/Table";
 import type { Column } from "@components/common/Table/Table";
 import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
-import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
+// import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import { formatDateTime, statusStyle } from "@prescription/prescriptionHistoryUtils";
 import type { AppDispatch } from "../../store";
 import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
@@ -180,7 +180,8 @@ export default function PharmacistDashboard() {
     <div className="space-y-6">
 
       {/* Breadcrumbs */}
-      <Breadcrumbs
+      
+      {/* <Breadcrumbs
         items={[
           {
             label: "Dashboard",
@@ -188,7 +189,7 @@ export default function PharmacistDashboard() {
             icon: <Activity className="w-4 h-4" />
           }
         ]}
-      />
+      /> */}
 
       {/* Header */}
       <div>

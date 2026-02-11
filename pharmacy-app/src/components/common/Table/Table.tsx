@@ -10,6 +10,7 @@ import {
   ChevronsRight,
   ChevronLeft,
   ChevronRight,
+  Filter,
 } from "lucide-react";
 
 import DatePicker from "react-datepicker";
@@ -390,7 +391,7 @@ export default function DataTable<T extends object>({
 
         <button
           onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
         >
           <Download size={16} />
           Export
@@ -403,104 +404,122 @@ export default function DataTable<T extends object>({
           <table className="w-full">
             <thead className="bg-gray-50 sticky top-0 z-10 border-b">
               <tr>
-                {columns.map((col) => (
-                  <th
-                    key={String(col.key)}
-                    style={{ width: col.width }}
-                    className="px-5 py-4 text-left select-none"
-                  >
-                    <div className="flex items-center justify-between text-xs font-bold uppercase text-gray-700">
-                      <div
-                        className="flex-1 cursor-pointer hover:text-blue-600"
-                        onClick={() => {
-                          if (!col.filterable) return;
-                          setActiveFilterKeys((prev) => {
-                            const next = new Set(prev);
-                            const key = String(col.key);
-                            if (next.has(key)) {
-                              next.delete(key);
-                            } else {
-                              next.add(key);
-                            }
-                            return next;
-                          });
-                        }}
-                      >
-                        {col.header}
+                {columns.map((col) => {
+                  const colKey = String(col.key);
+                  const hasActiveFilter = columnFilters[colKey] && columnFilters[colKey].trim().length > 0;
+                  
+                  return (
+                    <th
+                      key={colKey}
+                      style={{ width: col.width }}
+                      className="px-5 py-4 text-left select-none"
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold uppercase text-gray-700">
+                        <div className="flex-1">
+                          {col.header}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {/* Filter Icon */}
+                          {col.filterable && (
+                            <div
+                              className={`p-1 rounded cursor-pointer hover:bg-gray-200 transition-colors ${
+                                hasActiveFilter ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveFilterKeys((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(colKey)) {
+                                    next.delete(colKey);
+                                  } else {
+                                    next.add(colKey);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              title="Toggle filter"
+                            >
+                              <Filter className="w-4 h-4" />
+                            </div>
+                          )}
+
+                          {/* Sort Icon */}
+                          {col.sortable && (
+                            <div
+                              className="p-1 rounded cursor-pointer hover:bg-gray-200 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSort(col.key);
+                              }}
+                              title="Sort column"
+                            >
+                              {getSortIcon(col.key)}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {col.sortable && (
-                        <div
-                          className="ml-2 cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSort(col.key);
-                          }}
-                        >
-                          {getSortIcon(col.key)}
-                        </div>
-                      )}
-                    </div>
-
-                    {col.filterable &&
-                      activeFilterKeys.has(String(col.key)) &&
-                      (col.filterType === "date" ? (
-                        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                          <DatePicker
-                            selected={
-                              parseFilterDate(columnFilters[String(col.key)])
-                            }
-                            onChange={(date: Date | null) => {
+                      {/* Filter Input/Dropdown */}
+                      {col.filterable &&
+                        activeFilterKeys.has(colKey) &&
+                        (col.filterType === "date" ? (
+                          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                            <DatePicker
+                              selected={parseFilterDate(columnFilters[colKey])}
+                              onChange={(date: Date | null) => {
+                                setCurrentPage(1);
+                                setColumnFilters((prev) => ({
+                                  ...prev,
+                                  [colKey]: date ? toFilterDateString(date) : "",
+                                }));
+                              }}
+                              isClearable
+                              className="w-full px-2 py-1 border rounded text-xs"
+                              placeholderText="Select date"
+                            />
+                          </div>
+                        ) : col.filterType === "select" ? (
+                          <select
+                            className="mt-2 w-full px-2 py-1 border rounded text-xs bg-white"
+                            value={columnFilters[colKey] || ""}
+                            onChange={(e) => {
                               setCurrentPage(1);
                               setColumnFilters((prev) => ({
                                 ...prev,
-                                [String(col.key)]: date ? toFilterDateString(date) : "",
+                                [colKey]: e.target.value,
                               }));
                             }}
-                            isClearable
-                            className="w-full px-2 py-1 border rounded text-xs"
-                            placeholderText="Select date"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <option value="">All</option>
+                            {(col.filterOptions ?? []).map((option) => {
+                              const normalized = normalizeFilterOption(option);
+                              return (
+                                <option key={normalized.value} value={normalized.value}>
+                                  {normalized.label}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        ) : (
+                          <input
+                            className="mt-2 w-full px-2 py-1 border rounded text-xs"
+                            placeholder="Filter..."
+                            value={columnFilters[colKey] || ""}
+                            onChange={(e) => {
+                              setCurrentPage(1);
+                              setColumnFilters((prev) => ({
+                                ...prev,
+                                [colKey]: e.target.value,
+                              }));
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                           />
-                        </div>
-                      ) : col.filterType === "select" ? (
-                        <select
-                          className="mt-2 w-full px-2 py-1 border rounded text-xs bg-white"
-                          value={columnFilters[String(col.key)] || ""}
-                          onChange={(e) => {
-                            setCurrentPage(1);
-                            setColumnFilters((prev) => ({
-                              ...prev,
-                              [String(col.key)]: e.target.value,
-                            }));
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <option value="">All</option>
-                          {(col.filterOptions ?? []).map((option) => {
-                            const normalized = normalizeFilterOption(option);
-                            return (
-                              <option key={normalized.value} value={normalized.value}>
-                                {normalized.label}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      ) : (
-                        <input
-                          className="mt-2 w-full px-2 py-1 border rounded text-xs"
-                          placeholder="Filter..."
-                          value={columnFilters[String(col.key)] || ""}
-                          onChange={(e) => {
-                            setCurrentPage(1);
-                            setColumnFilters((prev) => ({
-                              ...prev,
-                              [String(col.key)]: e.target.value,
-                            }));
-                          }}
-                        />
-                      ))}
-                  </th>
-                ))}
+                        ))}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
 
@@ -588,7 +607,7 @@ export default function DataTable<T extends object>({
               title="First page"
               disabled={safeCurrentPage <= 1}
               onClick={() => setCurrentPage(1)}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors"
             >
               <ChevronsLeft size={16} />
             </button>
@@ -597,7 +616,7 @@ export default function DataTable<T extends object>({
               title="Previous page"
               disabled={safeCurrentPage <= 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
@@ -610,7 +629,7 @@ export default function DataTable<T extends object>({
               title="Next page"
               disabled={safeCurrentPage >= totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors"
             >
               <ChevronRight size={16} />
             </button>
@@ -619,7 +638,7 @@ export default function DataTable<T extends object>({
               title="Last page"
               disabled={safeCurrentPage >= totalPages}
               onClick={() => setCurrentPage(totalPages)}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md border bg-white text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors"
             >
               <ChevronsRight size={16} />
             </button>
