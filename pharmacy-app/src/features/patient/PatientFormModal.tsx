@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import clsx from "clsx";
 
 import Input from "@components/common/Input/Input";
-import Select from "@components/common/Select/Select";
+import Dropdown from "@components/common/Dropdown/Dropdown";
 import AppPhoneInput from "@components/common/PhoneInput/PhoneInput";
 
 import { searchAllergies } from "@api/catalogs";
@@ -110,7 +110,7 @@ export default function PatientFormModal({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Select
+            <Dropdown
               label="Gender"
               value={form.gender}
               onChange={(v) => updateField("gender", v)}

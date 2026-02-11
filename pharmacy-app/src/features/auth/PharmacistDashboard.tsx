@@ -1,4 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
+// PharmacistDashboard.tsx
+import { useMemo, useCallback, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import {
   FileText,
   Clock,
@@ -11,148 +13,85 @@ import DataTable from "@components/common/Table/Table";
 import type { Column } from "@components/common/Table/Table";
 import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
 import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
-import { TableSkeleton } from "@components/common/SkeletonLoader/SkeletonLoader";
-import { formatDateTime } from "@prescription/prescriptionHistoryUtils";
+import { formatDateTime, statusStyle } from "@prescription/prescriptionHistoryUtils";
+import type { AppDispatch } from "../../store";
+import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+
+import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
+import { useDashboardData } from "./hooks/useDashboardData";
+
 /* ---------------------------------- */
-/* Types */
+/* Helper Functions */
 /* ---------------------------------- */
 
-export type PrescriptionStatus =
-  | "Created"
-  | "Validated"
-  | "Payment Processed"
-  | "Dispensed";
-
-export interface Prescription {
-  id: string;
-  patientName: string;
-  patientId: string;
-  doctorName: string;
-  createdAt: Date;
-  status: PrescriptionStatus;
-  alerts?: string[];
+function isSameDay(date1: Date | string, date2: Date): boolean {
+  const d1 = new Date(date1);
+  return (
+    d1.getFullYear() === date2.getFullYear() &&
+    d1.getMonth() === date2.getMonth() &&
+    d1.getDate() === date2.getDate()
+  );
 }
-
-/* ---------------------------------- */
-/* Mock Data */
-/* ---------------------------------- */
-
-const MOCK_PRESCRIPTIONS: Prescription[] = [
-  {
-    id: "RX-1001",
-    patientName: "Sarah Johnson",
-    patientId: "PT-001",
-    doctorName: "Dr. Michael Chen",
-    createdAt: new Date(),
-    status: "Created",
-    alerts: []
-  },
-  {
-    id: "RX-1002",
-    patientName: "Maria Garcia",
-    patientId: "PT-002",
-    doctorName: "Dr. Emily Rodriguez",
-    createdAt: new Date(Date.now() - 3600000),
-    status: "Validated",
-    alerts: ["Drug Interaction"]
-  },
-  {
-    id: "RX-1003",
-    patientName: "James Chen",
-    patientId: "PT-003",
-    doctorName: "Dr. Sarah Martinez",
-    createdAt: new Date(Date.now() - 7200000),
-    status: "Payment Processed",
-    alerts: []
-  },
-  {
-    id: "RX-1004",
-    patientName: "Robert Williams",
-    patientId: "PT-004",
-    doctorName: "Dr. Michael Chen",
-    createdAt: new Date(Date.now() - 86400000),
-    status: "Dispensed",
-    alerts: []
-  }
-];
 
 /* ---------------------------------- */
 /* Component */
 /* ---------------------------------- */
 
 export default function PharmacistDashboard() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [prescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
+  const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+  const {
+    prescriptions: allPrescriptions,
+    requestStatus,
+  } = useDashboardData({ pageSize: 100 }); // Fetch more to ensure we get all of today's
 
   /* ---------------------------------- */
-  /* Stats */
+  /* Filter Today's Prescriptions */
   /* ---------------------------------- */
 
-  const today = new Date().toDateString();
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  const todaysPrescriptions = useMemo(() => {
+    const today = new Date();
+    return allPrescriptions.filter(p => isSameDay(p.createdAt, today));
+  }, [allPrescriptions]);
 
-  const stats = {
-    pending: prescriptions.filter(p => p.status === "Created").length,
-    readyForPickup: prescriptions.filter(
-      p => p.status === "Payment Processed"
-    ).length,
-    alerts: prescriptions.filter(p => p.alerts?.length).length,
-    todayTotal: prescriptions.filter(
-      p => p.createdAt.toDateString() === today
-    ).length
-  };
+  /* ---------------------------------- */
+  /* Stats Calculation */
+  /* ---------------------------------- */
 
-  const yesterdayStats = {
-    pending: prescriptions.filter(
-      p =>
-        p.status === "Created" &&
-        p.createdAt.toDateString() === yesterday
+  const stats = useMemo(() => ({
+    pending: todaysPrescriptions.filter(p => p.status === "Created").length,
+    readyForPickup: todaysPrescriptions.filter(
+      p => p.status === "Active" || p.status === "Reviewed"
     ).length,
-    todayTotal: prescriptions.filter(
-      p => p.createdAt.toDateString() === yesterday
-    ).length
-  };
+    alerts: todaysPrescriptions.filter(p => p.alerts && p.alerts.length > 0).length,
+    todayTotal: todaysPrescriptions.length
+  }), [todaysPrescriptions]);
 
   const trends = {
-    pending:
-      yesterdayStats.pending > 0
-        ? Math.round(
-            ((stats.pending - yesterdayStats.pending) /
-              yesterdayStats.pending) *
-              100
-          )
-        : 0,
-
-    todayTotal:
-      yesterdayStats.todayTotal > 0
-        ? Math.round(
-            ((stats.todayTotal - yesterdayStats.todayTotal) /
-              yesterdayStats.todayTotal) *
-              100
-          )
-        : 0
+    pending: 0,
+    todayTotal: 0
   };
 
   /* ---------------------------------- */
-  /* Charts */
+  /* Initial Data Fetch */
   /* ---------------------------------- */
 
-  const recentPrescriptions = useMemo(() => {
-    return [...prescriptions]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, 10);
-  }, [prescriptions]);
+  useEffect(() => {
+    // Fetch all recent prescriptions without date filter
+    // The backend will return recent ones and we filter client-side
+    dispatch(fetchAllPrescriptions({
+      pageNumber: 1,
+      pageSize: 100, // Get enough to cover today's prescriptions
+      sortBy: "createdAt",
+      sortDirection: "desc",
+    }));
+  }, [dispatch]);
 
   /* ---------------------------------- */
-  /* Columns */
+  /* Table Columns */
   /* ---------------------------------- */
 
-  const columns: Column<Prescription>[] = useMemo(
+  const columns: Column<PrescriptionSummaryDto>[] = useMemo(
     () => [
       {
         key: "id",
@@ -184,73 +123,47 @@ export default function PharmacistDashboard() {
         )
       },
       {
-        key: "doctorName",
+        key: "prescriberName",
         header: "Doctor",
         sortable: true,
         filterable: true
       },
       {
-        // key: "createdAt",
-        // header: "Date & Time",
-        // sortable: true,
-        // render: value => {
-        //   const d = value as Date;
-        //   return (
-        //     <div>
-        //       <div className="font-medium">
-        //         {d.toLocaleDateString("en-US", {
-        //           month: "short",
-        //           day: "numeric",
-        //           year: "numeric"
-        //         })}
-        //       </div>
-        //       <div className="text-xs text-gray-500">
-        //         {d.toLocaleTimeString("en-US", {
-        //           hour: "2-digit",
-        //           minute: "2-digit"
-        //         })}
-        //       </div>
-        //     </div>
-        //   );
-        // }
         key: "createdAt",
-                header: "Date",
-                sortable: true,
-                filterable: true,
-                filterType: "date",
-                width: 180,
-                render: (v) => {
-                  const { date, time } = formatDateTime(v as string);
-                  return (
-                    <div>
-                      <div className="font-medium">{date}</div>
-                      <div className="text-xs text-gray-500">{time}</div>
-                    </div>
-                  );
-                },
+        header: "Date & Time",
+        sortable: true,
+        width: 180,
+        render: (v) => {
+          const { date, time } = formatDateTime(v as string);
+          return (
+            <div>
+              <div className="font-medium">{date}</div>
+              <div className="text-xs text-gray-500">{time}</div>
+            </div>
+          );
+        },
       },
       {
         key: "status",
         header: "Status",
         sortable: true,
         filterable: true,
+        filterType: "select",
+        filterOptions: [
+          { label: "Created", value: "Created" },
+          { label: "Reviewed", value: "Reviewed" },
+          { label: "Active", value: "Active" },
+          { label: "Completed", value: "Completed" },
+          { label: "Cancelled", value: "Cancelled" },
+          { label: "Expired", value: "Expired" },
+        ],
         render: value => {
-          const map: Record<string, string> = {
-            Created: "bg-yellow-50 text-yellow-700 border-yellow-200",
-            Validated: "bg-blue-50 text-blue-700 border-blue-200",
-            "Payment Processed":
-              "bg-purple-50 text-purple-700 border-purple-200",
-            Dispensed:
-              "bg-green-50 text-green-700 border-green-200"
-          };
-
+          const statusValue = String(value);
           return (
             <span
-              className={`px-2.5 py-1 rounded-full border text-xs font-medium ${
-                map[value as string]
-              }`}
+              className={`px-2.5 py-1 rounded-full border text-xs font-medium ${statusStyle(statusValue)}`}
             >
-              {value}
+              {statusValue}
             </span>
           );
         }
@@ -260,10 +173,8 @@ export default function PharmacistDashboard() {
   );
 
   /* ---------------------------------- */
-
-  if (isLoading) {
-    return <TableSkeleton rows={10} columns={5} />;
-  }
+  /* Render */
+  /* ---------------------------------- */
 
   return (
     <div className="space-y-6">
@@ -285,11 +196,11 @@ export default function PharmacistDashboard() {
           Pharmacist Dashboard
         </h1>
         <p className="text-sm text-gray-500">
-          Monitor daily activities • {prescriptions.length} total
+          Monitor today's activities • {stats.todayTotal} total prescriptions
         </p>
       </div>
 
-      {/* KPI */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <Kpi
@@ -324,77 +235,46 @@ export default function PharmacistDashboard() {
 
       </div>
 
-      {/* Charts (commented out) */}
-      {/*
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <div className="bg-white rounded-xl border p-6">
-          <h3 className="font-bold mb-4">
-            Weekly Prescription Volume
-          </h3>
-
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={weeklyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                dataKey="prescriptions"
-                stroke="#14b8a6"
-                strokeWidth={3}
-              />
-              <Line
-                dataKey="validated"
-                stroke="#3b82f6"
-                strokeWidth={3}
-                strokeDasharray="5 5"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="bg-white rounded-xl border p-6">
-          <h3 className="font-bold mb-4">
-            Status Distribution
-          </h3>
-
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={statusData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="status" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#14b8a6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-      </div>
-      */}
-
-      {/* Table */}
+      {/* Prescriptions Table */}
       <div className="bg-white rounded-xl border shadow-sm">
 
         <div className="px-6 py-4 border-b">
           <h2 className="text-lg font-bold">
-            Recent Prescriptions
+            Today's Prescriptions
           </h2>
           <p className="text-xs text-gray-500">
-            Latest 10 prescription orders
+            {stats.todayTotal > 0 
+              ? `${stats.todayTotal} prescriptions created today`
+              : "No prescriptions created today"}
           </p>
         </div>
 
         <div className="p-4">
-          <DataTable
-            data={recentPrescriptions}
-            columns={columns}
-            pageSize={10}
-            pageSizeOptions={[5, 10, 20]}
-            searchPlaceholder="Search prescriptions..."
-            exportFileName="recent-prescriptions"
-            height={400}
-          />
+          {requestStatus === "loading" ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-500">Loading...</div>
+            </div>
+          ) : stats.todayTotal === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <FileText className="w-16 h-16 text-gray-300 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Prescriptions Today
+              </h3>
+              <p className="text-sm text-gray-500">
+                There are no prescriptions created today yet.
+              </p>
+            </div>
+          ) : (
+            <DataTable
+              data={todaysPrescriptions}
+              columns={columns}
+              pageSize={10}
+              pageSizeOptions={[5, 10, 20]}
+              searchPlaceholder="Search prescriptions..."
+              exportFileName="today-prescriptions"
+              height={400}
+            />
+          )}
         </div>
 
       </div>
@@ -404,7 +284,7 @@ export default function PharmacistDashboard() {
 }
 
 /* ---------------------------------- */
-/* KPI Card */
+/* KPI Card Component */
 /* ---------------------------------- */
 
 function Kpi({

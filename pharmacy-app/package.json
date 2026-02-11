@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "sonar": "npx @sonar/scan"
   },
   "dependencies": {
     "@ag-grid-enterprise/server-side-row-model": "^32.3.9",

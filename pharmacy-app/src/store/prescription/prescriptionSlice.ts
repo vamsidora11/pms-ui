@@ -1,4 +1,3 @@
-// prescriptionSlice.ts - FIXED VERSION (No More Duplicates!)
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   createPrescription as createPrescriptionApi,
@@ -6,12 +5,12 @@ import {
   searchPrescriptions,
   getAllPrescriptions,
   getPrescriptionsByPatient,
-  cancelPrescription as cancelPrescriptionApi
+  cancelPrescription as cancelPrescriptionApi,
 } from "@api/prescription";
+import type { PrescriptionHistoryQueryParams } from "@api/prescription";
 
 /* ===================== THUNKS ===================== */
 
-// Create prescription
 export const createPrescription = createAsyncThunk(
   "prescriptions/create",
   async (prescriptionData: any, { rejectWithValue }) => {
@@ -23,7 +22,6 @@ export const createPrescription = createAsyncThunk(
   }
 );
 
-// Get prescription details
 export const fetchPrescriptionDetails = createAsyncThunk(
   "prescriptions/details",
   async (id: string, { rejectWithValue }) => {
@@ -35,7 +33,6 @@ export const fetchPrescriptionDetails = createAsyncThunk(
   }
 );
 
-// Cancel prescription
 export const cancelPrescription = createAsyncThunk(
   "prescriptions/cancel",
   async ({ id, reason }: { id: string; reason?: string }, { rejectWithValue }) => {
@@ -48,45 +45,17 @@ export const cancelPrescription = createAsyncThunk(
   }
 );
 
-// ---------------- PAGINATED THUNKS ----------------
-
-// Fetch all prescriptions (paginated)
 export const fetchAllPrescriptions = createAsyncThunk(
   "prescriptions/fetchAll",
-  async (
-    {
-      status,
-      pageSize = 10,
-      continuationToken = null,
-      reset = true
-    }: {
-      status?: string;
-      pageSize?: number;
-      continuationToken?: string | null;
-      reset?: boolean;
-    },
-    { rejectWithValue }
-  ) => {
+  async (query: PrescriptionHistoryQueryParams = {}, { rejectWithValue }) => {
     try {
-      console.log('🔵 Fetching prescriptions:', { status, pageSize, continuationToken, reset });
-      const result = await getAllPrescriptions(status, pageSize, continuationToken);
-      console.log('✅ API returned:', { 
-        itemsCount: result.items?.length, 
-        hasToken: !!result.continuationToken,
-        firstId: result.items?.[0]?.id 
-      });
-      return {
-        items: result.items || [],
-        continuationToken: result.continuationToken || null,
-        reset
-      };
+      return await getAllPrescriptions(query);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
 
-// Search prescriptions (paginated)
 export const searchPrescriptionsThunk = createAsyncThunk(
   "prescriptions/search",
   async (
@@ -94,7 +63,7 @@ export const searchPrescriptionsThunk = createAsyncThunk(
       searchTerm,
       pageSize = 10,
       continuationToken = null,
-      reset = true
+      reset = true,
     }: {
       searchTerm: string;
       pageSize?: number;
@@ -108,7 +77,7 @@ export const searchPrescriptionsThunk = createAsyncThunk(
       return {
         items: result.items || [],
         continuationToken: result.continuationToken || null,
-        reset
+        reset,
       };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -116,7 +85,6 @@ export const searchPrescriptionsThunk = createAsyncThunk(
   }
 );
 
-// Fetch prescriptions by patient (paginated)
 export const fetchPrescriptionsByPatient = createAsyncThunk(
   "prescriptions/byPatient",
   async (
@@ -124,7 +92,7 @@ export const fetchPrescriptionsByPatient = createAsyncThunk(
       patientId,
       pageSize = 10,
       continuationToken = null,
-      reset = true
+      reset = true,
     }: {
       patientId: string;
       pageSize?: number;
@@ -138,7 +106,7 @@ export const fetchPrescriptionsByPatient = createAsyncThunk(
       return {
         items: result.items || [],
         continuationToken: result.continuationToken || null,
-        reset
+        reset,
       };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -146,24 +114,16 @@ export const fetchPrescriptionsByPatient = createAsyncThunk(
   }
 );
 
-// Validate prescription
-// export const validatePrescriptionThunk = createAsyncThunk(
-//   "prescriptions/validate",
-//   async (id: string, { rejectWithValue }) => {
-//     try {
-//       return await validatePrescription(id);
-//     } catch (error: any) {
-//       return rejectWithValue(error.response?.data?.message || error.message);
-//     }
-//   }
-// );
-
 /* ===================== STATE ===================== */
 
 interface PrescriptionState {
   items: any[];
   selected?: any;
   continuationToken: string | null;
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
   status: "idle" | "loading" | "succeeded" | "failed";
   error?: string;
 }
@@ -171,7 +131,11 @@ interface PrescriptionState {
 const initialState: PrescriptionState = {
   items: [],
   continuationToken: null,
-  status: "idle"
+  pageNumber: 1,
+  pageSize: 10,
+  totalCount: 0,
+  totalPages: 1,
+  status: "idle",
 };
 
 /* ===================== SLICE ===================== */
@@ -183,15 +147,18 @@ const slice = createSlice({
     clearPrescriptions: (state) => {
       state.items = [];
       state.continuationToken = null;
+      state.pageNumber = 1;
+      state.pageSize = 10;
+      state.totalCount = 0;
+      state.totalPages = 1;
       state.status = "idle";
       state.error = undefined;
     },
     clearSelected: (state) => {
       state.selected = undefined;
-    }
+    },
   },
   extraReducers: (b) => {
-    /* ---------- CREATE ---------- */
     b.addCase(createPrescription.pending, (s) => {
       s.status = "loading";
       s.error = undefined;
@@ -202,10 +169,9 @@ const slice = createSlice({
       })
       .addCase(createPrescription.rejected, (s, a) => {
         s.status = "failed";
-        s.error = a.payload as string || a.error.message;
+        s.error = (a.payload as string) || a.error.message;
       });
 
-    /* ---------- DETAILS ---------- */
     b.addCase(fetchPrescriptionDetails.pending, (s) => {
       s.status = "loading";
       s.error = undefined;
@@ -213,56 +179,37 @@ const slice = createSlice({
       .addCase(fetchPrescriptionDetails.fulfilled, (s, a) => {
         s.status = "succeeded";
         s.selected = a.payload;
-        console.log('✅ Selected prescription loaded:', a.payload);
       })
       .addCase(fetchPrescriptionDetails.rejected, (s, a) => {
         s.status = "failed";
-        s.error = a.payload as string || a.error.message;
+        s.error = (a.payload as string) || a.error.message;
       });
 
-    /* ---------- CANCEL ---------- */
     b.addCase(cancelPrescription.fulfilled, (s, a) => {
-      s.items = s.items.filter(p => p.id !== a.payload);
+      s.items = s.items.filter((p) => p.id !== a.payload);
       if (s.selected?.id === a.payload) {
         s.selected = undefined;
       }
     });
 
-    /* ---------- FETCH ALL (PAGINATED) ---------- */
     b.addCase(fetchAllPrescriptions.pending, (s) => {
       s.status = "loading";
       s.error = undefined;
     })
       .addCase(fetchAllPrescriptions.fulfilled, (s, a) => {
-        const { items, continuationToken, reset } = a.payload;
-
-        console.log('📦 Redux updating:', { 
-          reset, 
-          newItemsCount: items.length,
-          oldItemsCount: s.items.length,
-          firstNewId: items[0]?.id,
-          firstOldId: s.items[0]?.id
-        });
-
-        // ⭐ KEY FIX: ALWAYS REPLACE when reset is true
-        if (reset) {
-          s.items = items;
-          console.log('✅ REPLACED items');
-        } else {
-          // Only append if explicitly told not to reset
-          s.items = [...s.items, ...items];
-          console.log('✅ APPENDED items');
-        }
-
-        s.continuationToken = continuationToken;
+        s.items = a.payload.items;
+        s.continuationToken = null;
+        s.pageNumber = a.payload.pageNumber;
+        s.pageSize = a.payload.pageSize;
+        s.totalCount = a.payload.totalCount;
+        s.totalPages = a.payload.totalPages;
         s.status = "succeeded";
       })
       .addCase(fetchAllPrescriptions.rejected, (s, a) => {
         s.status = "failed";
-        s.error = a.payload as string || a.error.message;
+        s.error = (a.payload as string) || a.error.message;
       });
 
-    /* ---------- SEARCH (PAGINATED) ---------- */
     b.addCase(searchPrescriptionsThunk.pending, (s) => {
       s.status = "loading";
       s.error = undefined;
@@ -277,14 +224,16 @@ const slice = createSlice({
         }
 
         s.continuationToken = continuationToken;
+        s.pageNumber = 1;
+        s.totalCount = s.items.length;
+        s.totalPages = 1;
         s.status = "succeeded";
       })
       .addCase(searchPrescriptionsThunk.rejected, (s, a) => {
         s.status = "failed";
-        s.error = a.payload as string || a.error.message;
+        s.error = (a.payload as string) || a.error.message;
       });
 
-    /* ---------- BY PATIENT (PAGINATED) ---------- */
     b.addCase(fetchPrescriptionsByPatient.pending, (s) => {
       s.status = "loading";
       s.error = undefined;
@@ -299,20 +248,16 @@ const slice = createSlice({
         }
 
         s.continuationToken = continuationToken;
+        s.pageNumber = 1;
+        s.totalCount = s.items.length;
+        s.totalPages = 1;
         s.status = "succeeded";
       })
       .addCase(fetchPrescriptionsByPatient.rejected, (s, a) => {
         s.status = "failed";
-        s.error = a.payload as string || a.error.message;
+        s.error = (a.payload as string) || a.error.message;
       });
-
-    /* ---------- VALIDATE ---------- */
-    // b.addCase(validatePrescriptionThunk.fulfilled, (s, a) => {
-    //   const idx = s.items.findIndex(p => p.id === a.payload.id);
-    //   if (idx !== -1) s.items[idx] = a.payload;
-    //   if (s.selected?.id === a.payload.id) s.selected = a.payload;
-    // });
-  }
+  },
 });
 
 export const { clearPrescriptions, clearSelected } = slice.actions;

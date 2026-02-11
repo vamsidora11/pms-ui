@@ -51,6 +51,7 @@ export interface PrescriptionDetailsDto {
 }
 
 export interface PrescriptionSummaryDto {
+  alerts: boolean;
   id: string;
   patientId: string;
   patientName: string;
