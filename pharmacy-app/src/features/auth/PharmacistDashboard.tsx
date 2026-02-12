@@ -180,7 +180,7 @@ export default function PharmacistDashboard() {
     <div className="space-y-6">
 
       {/* Breadcrumbs */}
-      
+
       {/* <Breadcrumbs
         items={[
           {
@@ -292,12 +292,12 @@ function Kpi({
   title,
   value,
   icon,
-  trend
+  
 }: {
   title: string;
   value: number;
   icon: React.ReactNode;
-  trend?: React.ReactNode;
+  
 }) {
   return (
     <div className="bg-white rounded-xl border p-5 shadow-sm hover:shadow-lg transition-all">
@@ -305,7 +305,7 @@ function Kpi({
         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
           {icon}
         </div>
-        {trend}
+        
       </div>
 
       <div className="text-2xl font-bold">

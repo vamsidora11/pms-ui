@@ -48,7 +48,7 @@ export default function TopNavBar({
             <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
           </button>
 
-          <Settings className="h-5 w-5 text-gray-600 cursor-pointer" />
+          {/* <Settings className="h-5 w-5 text-gray-600 cursor-pointer" /> */}
 
           <div className="flex items-center gap-3 pl-4 border-l">
             <div className="text-right">
@@ -64,7 +64,7 @@ export default function TopNavBar({
               alt={userName}
             />
 
-            <ChevronDown className="h-4 w-4 text-gray-500" />
+            {/* <ChevronDown className="h-4 w-4 text-gray-500" /> */}
           </div>
         </div>
       </div>
