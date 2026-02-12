@@ -112,12 +112,12 @@ export default function PatientStep({
                 <div className="text-blue-800 mt-1">{patient.fullName}</div>
               </div>
 
-              <button
+              {/* <button
                 onClick={openResults}
                 className="text-blue-600 text-sm hover:underline"
               >
                 Change
-              </button>
+              </button> */}
             </div>
 
             {/* Patient Meta */}

@@ -219,7 +219,7 @@ export async function getAllPrescriptions(
   query: PrescriptionHistoryQueryParams = {}
 ): Promise<PrescriptionHistoryPageResult> {
   const pageNumber = query.pageNumber ?? 1;
-  const pageSize = query.pageSize ?? 10;
+  const pageSize = query.pageSize ?? 5;
 
   const params: Record<string, string | number> = {
     pageNumber,

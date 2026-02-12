@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { applyPatientRule, validatePatientForm } from "../patientFormRules";
+import { applyPatientRule, validatePatientForm } from "../utils/patientFormRules";
 
 export type PatientFormValues = {
   fullName: string;

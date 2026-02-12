@@ -4,7 +4,7 @@ import type {
 } from "@store/patient/patienttype";
 import { updatePatient, getPatientDetails } from "@api/patient";
 import PatientFormModal from "./PatientFormModal";
-import type { PatientFormValues } from "./hooks/usePatientForm";
+import type { PatientFormValues } from "../hooks/usePatientForm";
 
 interface UpdatePatientModalProps {
   patient: PatientDetailsDto;

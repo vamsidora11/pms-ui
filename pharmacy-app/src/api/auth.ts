@@ -25,6 +25,7 @@ export async function refreshApi() {
 export async function logoutApi() {
   try {
     await api.post(ENDPOINTS.logout);
+    return {};
   } catch (error: any) {
     console.error("Logout failed:", error);
     throw error;
