@@ -1,77 +1,65 @@
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import TopNavBar from "./TopNavBar";
-import { vi } from "vitest";
 import React from "react";
 
-// ---------------- ICON MOCKS ----------------
-
 vi.mock("lucide-react", () => ({
-  Bell: () => <svg data-testid="bell-icon" />,
-  Settings: () => <svg data-testid="settings-icon" />,
-  ChevronDown: () => <svg data-testid="chevron-icon" />,
+  Bell: (props: any) => <svg data-testid="bell-icon" {...props} />,
+  Settings: (props: any) => <svg data-testid="settings-icon" {...props} />,
+  ChevronDown: (props: any) => <svg data-testid="chevron-icon" {...props} />,
 }));
 
-// ---------------- TESTS ----------------
+describe("TopNavBar Component", () => {
+  const defaultProps = {
+    userName: "John Doe",
+    userRole: "pharmacist" as const,  // ✔️ FIXED
+    avatar: undefined,
+  };
 
-describe("TopNavBar", () => {
-  test("renders branding, icons, and user info", () => {
-    render(
-      <TopNavBar
-        userName="Vamsi"
-        userRole="Pharmacist"
-        avatar="avatar.png"
-      />
-    );
+  it("renders branding with MediFlow and subtitle", () => {
+    render(<TopNavBar {...defaultProps} />);
 
     expect(screen.getByText("MediFlow")).toBeInTheDocument();
-    expect(screen.getByText("Pharmacy Management System")).toBeInTheDocument();
+    expect(
+      screen.getByText("Pharmacy Management System")
+    ).toBeInTheDocument();
+  });
 
-    expect(screen.getByText("Vamsi")).toBeInTheDocument();
-    expect(screen.getByText("Pharmacist")).toBeInTheDocument();
+  it("renders user name and role badge", () => {
+    render(<TopNavBar {...defaultProps} />);
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
+    expect(screen.getByText("pharmacist")).toBeInTheDocument();
+  });
 
+  it("renders bell icon with notification dot", () => {
+    render(<TopNavBar {...defaultProps} />);
     expect(screen.getByTestId("bell-icon")).toBeInTheDocument();
-    expect(screen.getByTestId("settings-icon")).toBeInTheDocument();
-    expect(screen.getByTestId("chevron-icon")).toBeInTheDocument();
+    expect(document.querySelector("span.bg-red-500")).toBeInTheDocument();
   });
 
-  test("uses provided avatar when avatar prop exists", () => {
+  it("renders fallback avatar when avatar not provided", () => {
+    render(<TopNavBar {...defaultProps} />);
+    const img = screen.getByRole("img");
+    expect(img).toHaveAttribute(
+      "src",
+      "https://ui-avatars.com/api/?name=John Doe"
+    );
+  });
+
+  it("renders provided avatar", () => {
     render(
       <TopNavBar
-        userName="Vamsi"
-        userRole="Technician"
-        avatar="custom-avatar.png"
+        {...defaultProps}
+        avatar="https://example.com/avatar.png"
       />
     );
 
-    const img = screen.getByAltText("Vamsi") as HTMLImageElement;
-    expect(img.src).toContain("custom-avatar.png");
+    const img = screen.getByRole("img");
+    expect(img).toHaveAttribute("src", "https://example.com/avatar.png");
   });
 
-  test("uses fallback avatar when avatar prop is not provided", () => {
-    render(
-      <TopNavBar
-        userName="Vamsi"
-        userRole="Manager"
-      />
-    );
-
-    const img = screen.getByAltText("Vamsi") as HTMLImageElement;
-    expect(img.src).toContain("https://ui-avatars.com/api/?name=Vamsi");
-  });
-
-  test("renders notification indicator dot and avatar", () => {
-    const { container } = render(
-      <TopNavBar
-        userName="Alex"
-        userRole="Manager"
-        avatar="alex.png"
-      />
-    );
-
-    const dot = container.querySelector(".bg-red-500");
-    expect(dot).toBeInTheDocument();
-
-    expect(screen.getByAltText("Alex")).toBeInTheDocument();
-    expect(screen.getByTestId("chevron-icon")).toBeInTheDocument();
+  it("renders header element", () => {
+    render(<TopNavBar {...defaultProps} />);
+    expect(screen.getByRole("banner")).toBeInTheDocument();
   });
 });

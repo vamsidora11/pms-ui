@@ -5,6 +5,9 @@ import clsx from "clsx";
 import Input from "@components/common/Input/Input";
 import Dropdown from "@components/common/Dropdown/Dropdown";
 import AppPhoneInput from "@components/common/PhoneInput/PhoneInput";
+import DatePicker from "react-datepicker";
+import { format, parseISO } from "date-fns";
+import "react-datepicker/dist/react-datepicker.css";
 
 import { searchAllergies } from "@api/catalogs";
 
