@@ -1,4 +1,4 @@
-type LogLevel = "info" | "warn" | "error" | "debug";
+// type LogLevel = "info" | "warn" | "error" | "debug";
 
 class Logger {
   private isProd = import.meta.env.MODE === "production";

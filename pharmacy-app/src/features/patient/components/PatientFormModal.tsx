@@ -6,9 +6,8 @@ import Input from "@components/common/Input/Input";
 import Dropdown from "@components/common/Dropdown/Dropdown";
 import AppPhoneInput from "@components/common/PhoneInput/PhoneInput";
 import DatePicker from "react-datepicker";
-import { format, parseISO } from "date-fns";
 import "react-datepicker/dist/react-datepicker.css";
-
+import "../../../styles/datepicker.css";
 import { searchAllergies } from "@api/catalogs";
 
 import { usePatientForm, type PatientFormValues } from "../hooks/usePatientForm";
@@ -67,6 +66,22 @@ export default function PatientFormModal({
     };
   }, [onClose]);
 
+  // Parse DOB string to Date object for DatePicker
+  const parseDobToDate = (dob: string): Date | null => {
+    if (!dob) return null;
+    const parsed = new Date(dob);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  // Format Date object to YYYY-MM-DD string for form state
+  const formatDateToString = (date: Date | null): string => {
+    if (!date) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -102,13 +117,49 @@ export default function PatientFormModal({
             </div>
 
             <div>
-              <Input
-                label={<RequiredLabel text="Date of Birth" />}
-                type="date"
-                value={form.dob}
-                onChange={(v) => updateField("dob", v)}
-                error={errors.dob}
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <RequiredLabel text="Date of Birth" />
+              </label>
+              <DatePicker
+                selected={parseDobToDate(form.dob)}
+                onChange={(date: Date | null) => {
+                  updateField("dob", formatDateToString(date));
+                }}
+                dateFormat="yyyy-MM-dd"
+                showYearDropdown
+                showMonthDropdown
+                dropdownMode="select"
+                yearDropdownItemNumber={100}
+                scrollableYearDropdown
+                maxDate={new Date()}
+                placeholderText="Select date of birth"
+                autoComplete="off"
+                onKeyDown={(e) => {
+                  // Prevent typing letters, only allow numbers, backspace, delete, tab, and arrow keys
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "Delete" &&
+                    e.key !== "Tab" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight" &&
+                    e.key !== "-" &&
+                    e.key !== "/"
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                className={clsx(
+                  "w-full px-3 py-2 border rounded-lg text-sm",
+                  errors.dob
+                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                )}
+                wrapperClassName="w-full"
               />
+              {errors.dob && (
+                <p className="mt-1 text-xs text-red-600">{errors.dob}</p>
+              )}
             </div>
           </div>
 
