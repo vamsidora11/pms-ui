@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "sonar": "npx @sonar/scan"
   },
   "dependencies": {
     "@ag-grid-enterprise/server-side-row-model": "^32.3.9",
@@ -20,6 +21,8 @@
     "ag-grid-react": "^32.3.9",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.1.0",
     "jwt-decode": "^4.0.0",
     "libphonenumber-js": "^1.12.36",
     "lucide-react": "^0.556.0",

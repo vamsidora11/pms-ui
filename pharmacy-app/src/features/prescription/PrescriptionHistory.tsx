@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 
 import DataTable from "@components/common/Table/Table";
 import type { Column, ServerTableQuery } from "@components/common/Table/Table";
-import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
+// import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
 import type { AppDispatch } from "../../store";
 
@@ -150,7 +150,7 @@ export default function PrescriptionHistory() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[{ label: "Prescription History" }]} />
+      
 
       <div>
         <h1 className="text-2xl font-bold">Prescription History</h1>

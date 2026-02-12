@@ -34,7 +34,7 @@ const roleNavItems: Record<
     { key: "validation", label: "Prescription Validation", to: "/pharmacist/validation", icon: CheckBadgeIcon },
     { key: "profiles", label: "Patient Profiles", to: "/pharmacist/profiles", icon: UserCircleIcon },
     { key: "labels", label: "Label Generator", to: "/pharmacist/labels", icon: TagIcon },
-    { key: "refills", label: "Refill Management", to: "/pharmacist/refills", icon: ArrowPathIcon },
+    // { key: "refills", label: "Refill Management", to: "/pharmacist/refills", icon: ArrowPathIcon },
     { key: "history", label: "Prescription History", to: "/pharmacist/history", icon: UserCircleIcon },
   ],
   technician: [
