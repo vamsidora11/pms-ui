@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LabelQueueList } from "../components/LabelQueueList";
-import type { LabelQueuePrescription } from "@labels/label.types";
+import type { LabelQueuePrescription } from "@labels/types/label.types";
 
 /**
  * Factory function to create fully valid mock prescriptions.

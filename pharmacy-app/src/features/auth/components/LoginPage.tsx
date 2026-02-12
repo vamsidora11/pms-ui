@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 import type { RootState } from "store";
-import { useLoginFlow } from "./hooks/useLoginFlow"; // adjust path
+import { useLoginFlow } from "../hooks/useLoginFlow"; // adjust path
 
 export default function LoginPage() {
   const { status } = useSelector((s: RootState) => s.auth);

@@ -1,6 +1,6 @@
 // src/features/labels/components/LabelPreview.tsx
 import { Download, Printer } from "lucide-react";
-import type { LabelPrescriptionDetails } from "@labels/label.types";
+import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 import { MedicationLabelCard } from "./MedicationLabelCard";
 
 type Props = {

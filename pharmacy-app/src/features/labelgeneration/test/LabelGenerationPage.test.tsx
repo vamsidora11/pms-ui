@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import LabelGenerationPage from "../LabelGeneration";
-import type { LabelPrescriptionDetails } from "@labels/label.types";
+import LabelGenerationPage from "../components/LabelGeneration";
+import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 
 /* ---------------- MOCK CHILD COMPONENTS ---------------- */
 

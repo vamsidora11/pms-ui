@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useLabelPrescriptionDetails } from "../hooks/useLabelPrescriptionDetails";
 import { getPrescriptionForLabels } from "@api/label";
-import type { LabelPrescriptionDetails } from "@labels/label.types";
+import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 
 vi.mock("@api/label", () => ({
   getPrescriptionForLabels: vi.fn(),

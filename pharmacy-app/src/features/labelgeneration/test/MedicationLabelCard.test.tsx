@@ -4,7 +4,7 @@ import { MedicationLabelCard } from "../components/MedicationLabelCard";
 import type {
   LabelPrescriptionDetails,
   LabelMedicine,
-} from "@labels/label.types";
+} from "@labels/types/label.types";
 
 // Mock external dependencies
 vi.mock("@utils/format", () => ({

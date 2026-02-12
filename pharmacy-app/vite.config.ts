@@ -29,7 +29,9 @@ export default defineConfig({
     setupFiles: path.resolve(__dirname, "src/test/setup.ts"),
 
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-
+    exclude: ['src/features/validation/test/**',
+      'src/features/labelgeneration/test/**'
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

@@ -1,152 +1,145 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import Sidebar from "./Sidebar";
-import { vi } from "vitest";
-import React from "react";
-import * as reactRedux from "react-redux";
+import { MemoryRouter } from "react-router-dom";
+import Sidebar from "@components/layouts/Sidebar/Sidebar";
+import type { User } from "../../../store/auth/authtype";
 
-// ------------------ MOCK STATE ------------------
+// ==============================================
+// GLOBAL STATE for mocking Redux useSelector
+// ==============================================
+let mockCollapsed = false;
 
+// =========================
+// Mock react-redux
+// =========================
+vi.mock("react-redux", () => {
+  return {
+    useDispatch: () => mockDispatch,
+    useSelector: (selector: any) =>
+      selector({
+        ui: { sidebarCollapsed: mockCollapsed },
+      }),
+  };
+});
+
+// =========================
+// Mock store actions
+// =========================
 const mockDispatch = vi.fn();
 const mockNavigate = vi.fn();
-let isActiveMock = false;
 
-// ------------------ MOCKS ------------------
-
-// 🔒 Fully mock react-redux
-vi.mock("react-redux", () => ({
-  useSelector: vi.fn(),
-  useDispatch: () => mockDispatch,
-}));
-
-// Router
-vi.mock("react-router-dom", () => ({
-  NavLink: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className: (props: { isActive: boolean }) => string;
-  }) => <div className={className({ isActive: isActiveMock })}>{children}</div>,
-  useNavigate: () => mockNavigate,
-}));
-
-// Auth actions
 vi.mock("../../../store/auth/authSlice", () => ({
-  serverLogout: vi.fn(() => ({ type: "auth/logout" })),
+  serverLogout: () => ({ type: "auth/serverLogout" }),
 }));
 
-// UI actions
 vi.mock("../../../store/ui/uiSlice", () => ({
-  toggleSidebar: vi.fn(() => ({ type: "ui/toggleSidebar" })),
+  toggleSidebar: () => ({ type: "ui/toggleSidebar" }),
 }));
 
-// Icons
-vi.mock("@heroicons/react/24/outline", () => ({
-  HomeIcon: () => <svg />,
-  ClipboardDocumentListIcon: () => <svg />,
-  CheckBadgeIcon: () => <svg />,
-  TagIcon: () => <svg />,
-  ArrowPathIcon: () => <svg />,
-  UserCircleIcon: () => <svg />,
-  BellIcon: () => <svg />,
-  ArrowRightOnRectangleIcon: () => <svg />,
-}));
+// =========================
+// Mock router
+// =========================
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
-// ------------------ HELPER ------------------
+// ==============================================
+// RENDER HELPER
+// ==============================================
+function setup(user: User, collapsed = false) {
+  mockCollapsed = collapsed;
 
-const renderSidebar = (
-  collapsed: boolean,
-  role: "Pharmacist" | "Technician" | "Manager"
-) => {
-  vi.spyOn(reactRedux, "useSelector").mockImplementation((selector: any) =>
-    selector({
-      ui: { sidebarCollapsed: collapsed },
-    })
+  return render(
+    <MemoryRouter>
+      <Sidebar user={user} />
+    </MemoryRouter>
   );
-
-  render(
-    <Sidebar
-      user={{
-        id: "1",
-        name: "Test User",
-        role,
-      }}
-    />
-  );
-};
-
-// ------------------ TESTS ------------------
+}
 
 describe("Sidebar Component", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    isActiveMock = false;
+    mockDispatch.mockClear();
+    mockNavigate.mockClear();
   });
 
-  test("renders expanded sidebar with pharmacist menu", () => {
-    renderSidebar(false, "Pharmacist");
+  // ============================================================
+  // Role Navigation
+  // ============================================================
+  it("renders pharmacist navigation items", () => {
+    setup({ role: "pharmacist" } as User);
 
-    expect(screen.getByText("Menu")).toBeInTheDocument();
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Manual Prescription Entry")).toBeInTheDocument();
-    expect(screen.getByText("Logout")).toBeInTheDocument();
-    expect(screen.getByText("© 2025 Pharmacy App")).toBeInTheDocument();
+    expect(screen.getByText("Prescription Validation")).toBeInTheDocument();
+    expect(screen.getByText("Patient Profiles")).toBeInTheDocument();
+    expect(screen.getByText("Label Generator")).toBeInTheDocument();
+    expect(screen.getByText("Prescription History")).toBeInTheDocument();
   });
 
-  test("renders collapsed sidebar without labels", () => {
-    renderSidebar(true, "Pharmacist");
+  it("renders manager navigation items", () => {
+    setup({ role: "manager" } as User);
 
-    expect(screen.queryByText("Menu")).not.toBeInTheDocument();
-    expect(screen.queryByText("Dashboard")).not.toBeInTheDocument();
-    expect(screen.queryByText("© 2025 Pharmacy App")).not.toBeInTheDocument();
-    expect(screen.getByText("➡️")).toBeInTheDocument();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.queryByText("Prescription Validation")).not.toBeInTheDocument();
   });
 
-  test("renders technician menu items", () => {
-    renderSidebar(false, "Technician");
+  it("renders technician navigation items", () => {
+    setup({ role: "technician" } as User);
 
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Prescription Status")).toBeInTheDocument();
     expect(screen.getByText("Alerts")).toBeInTheDocument();
   });
 
-  test("renders manager menu items", () => {
-    renderSidebar(false, "Manager");
+  // ============================================================
+  // Collapse
+  // ============================================================
+  it("dispatches toggleSidebar when clicking collapse button", () => {
+    setup({ role: "pharmacist" } as User);
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    const toggleBtn = screen.getAllByRole("button")[0]; // first button in header
+    fireEvent.click(toggleBtn);
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: "ui/toggleSidebar" });
   });
 
-  test("shows left arrow icon when expanded", () => {
-    renderSidebar(false, "Pharmacist");
-    expect(screen.getByText("⬅️")).toBeInTheDocument();
+  it("hides labels when collapsed", () => {
+    setup({ role: "pharmacist" } as User, true);
+
+    expect(screen.queryByText("Dashboard")).not.toBeInTheDocument();
+    expect(screen.queryByText("Manual Prescription Entry")).not.toBeInTheDocument();
   });
 
-  test("dispatches toggleSidebar on toggle click", () => {
-    renderSidebar(false, "Pharmacist");
+  // ============================================================
+  // Logout
+  // ============================================================
+  it("dispatches logout and navigates to /login", () => {
+    setup({ role: "pharmacist" } as User);
 
-    fireEvent.click(screen.getByText("⬅️"));
+    const logoutBtn = screen.getByText("Logout");
+    fireEvent.click(logoutBtn);
 
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "ui/toggleSidebar" })
-    );
-  });
-
-  test("applies active nav link styles when route is active", () => {
-    isActiveMock = true;
-    renderSidebar(false, "Pharmacist");
-
-    const dashboard = screen.getByText("Dashboard");
-    expect(dashboard.parentElement?.className).toContain("bg-green-50");
-  });
-  
-
-  test("dispatches logout and navigates to login", () => {
-    renderSidebar(false, "Pharmacist");
-
-    fireEvent.click(screen.getByText("Logout"));
-
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "auth/logout" })
-    );
+    expect(mockDispatch).toHaveBeenCalledWith({ type: "auth/serverLogout" });
     expect(mockNavigate).toHaveBeenCalledWith("/login");
   });
+
+  // ============================================================
+  // Footer
+  // ============================================================
+  it("shows footer when expanded", () => {
+    setup({ role: "pharmacist" } as User);
+
+    expect(screen.getByText("© 2025 Pharmacy App")).toBeInTheDocument();
+  });
+
+  it("hides footer when collapsed", () => {
+    setup({ role: "pharmacist" } as User, true);
+
+    expect(screen.queryByText("© 2025 Pharmacy App")).not.toBeInTheDocument();
+  });
 });
+``

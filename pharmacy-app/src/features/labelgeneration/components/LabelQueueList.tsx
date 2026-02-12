@@ -1,5 +1,5 @@
 // src/features/labels/components/LabelQueueList.tsx
-import type { LabelQueuePrescription } from "@labels/label.types";
+import type { LabelQueuePrescription } from "@labels/types/label.types";
 
 type Props = {
   prescriptions: LabelQueuePrescription[];
