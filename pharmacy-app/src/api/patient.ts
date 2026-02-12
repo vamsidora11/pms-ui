@@ -5,7 +5,7 @@ import type {
   UpdatePatientRequest,
   PatientDetailsDto,
   PatientSummaryDto,
-} from "@store/patient/patienttype";
+} from "@patient/types/patienttype";
 
 /**
  * Server-side patient search.

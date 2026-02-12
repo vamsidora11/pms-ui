@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPendingPrescriptions } from "@api/prescription";
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 
 type Options = { refreshOnFocus?: boolean };
 

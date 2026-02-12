@@ -1,4 +1,4 @@
-import type { PrescriptionDraft, MedicationDraft } from "./models";
+import type { PrescriptionDraft, MedicationDraft } from "../types/models";
 
 export interface ValidationResult {
   valid: boolean;

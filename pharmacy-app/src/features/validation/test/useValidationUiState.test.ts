@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { useValidationUiState } from "../hooks/useValidationUiState";
-import type { PrescriptionDetailsDto } from "@prescription/prescription.types";
+import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
 import type { AllergyAlert } from "../types/validation.types";
 
 /* ---------- Test Data Factory ---------- */

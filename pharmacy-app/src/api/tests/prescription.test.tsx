@@ -47,7 +47,7 @@ import type {
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
   ReviewPrescriptionRequest,
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 describe("prescription API", () => {
   const apiGet = api.get as unknown as ReturnType<typeof vi.fn>;

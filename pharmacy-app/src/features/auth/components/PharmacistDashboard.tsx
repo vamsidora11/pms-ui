@@ -13,9 +13,9 @@ import DataTable from "@components/common/Table/Table";
 import type { Column } from "@components/common/Table/Table";
 import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
 // import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
-import { formatDateTime, statusStyle } from "@prescription/prescriptionHistoryUtils";
+import { formatDateTime, statusStyle } from "@prescription/utils/prescriptionHistoryUtils";
 import type { AppDispatch } from "../../../store";
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
 import { useDashboardData } from "../hooks/useDashboardData";
@@ -43,7 +43,7 @@ export default function PharmacistDashboard() {
   const {
     prescriptions: allPrescriptions,
     requestStatus,
-  } = useDashboardData({ pageSize: 100 }); // Fetch more to ensure we get all of today's
+  } = useDashboardData({ pageSize: 10 });
 
   /* ---------------------------------- */
   /* Filter Today's Prescriptions */
@@ -81,7 +81,7 @@ export default function PharmacistDashboard() {
     // The backend will return recent ones and we filter client-side
     dispatch(fetchAllPrescriptions({
       pageNumber: 1,
-      pageSize: 100, // Get enough to cover today's prescriptions
+      pageSize: 10, 
       sortBy: "createdAt",
       sortDirection: "desc",
     }));

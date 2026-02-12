@@ -1,7 +1,7 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
 import { logger } from "@utils/logger/logger";
-import type { PatientSummary, PatientDetails } from "@prescription/models";
+import type { PatientSummary, PatientDetails } from "@prescription/types/models";
 
 /**
  * Search patients

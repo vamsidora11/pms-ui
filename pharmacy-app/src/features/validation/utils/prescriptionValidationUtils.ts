@@ -1,4 +1,4 @@
-import type { PrescriptionMedicineDto } from "@prescription/prescription.types";
+import type { PrescriptionMedicineDto } from "@prescription/types/prescription.types";
 
 export type Severity = "High" | "Moderate" | "Low" | "None";
 export type InteractionLevel = "None" | "Minor" | "Moderate" | "Major";

@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { ROUTES } from "../../constants/routes";
 import { usePendingPrescriptions } from "@utils/hooks/usePendingPrescriptions";
 import { formatDate } from "@utils/format";
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 
 type LocationState = { refresh?: boolean } | null;
 

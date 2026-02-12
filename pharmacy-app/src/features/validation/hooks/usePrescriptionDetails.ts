@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPrescriptionById } from "@api/prescription";
-import type { PrescriptionDetailsDto } from "@prescription/prescription.types";
+import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
 
 export function usePrescriptionDetails(rxId: string) {
   const [data, setData] = useState<PrescriptionDetailsDto | null>(null);

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useReducer } from "react";
-import type { PrescriptionDetailsDto } from "@prescription/prescription.types";
+import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
 import type {
   AllergyAlert,
   LineDecision,

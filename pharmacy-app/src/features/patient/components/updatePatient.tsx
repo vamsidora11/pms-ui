@@ -1,7 +1,7 @@
 import type {
   UpdatePatientRequest,
   PatientDetailsDto,
-} from "@store/patient/patienttype";
+} from "@patient/types/patienttype";
 import { updatePatient, getPatientDetails } from "@api/patient";
 import PatientFormModal from "./PatientFormModal";
 import type { PatientFormValues } from "../hooks/usePatientForm";

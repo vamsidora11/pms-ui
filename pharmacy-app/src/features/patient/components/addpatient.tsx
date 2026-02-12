@@ -1,4 +1,4 @@
-import type { CreatePatientRequest } from "@store/patient/patienttype";
+import type { CreatePatientRequest } from "@patient/types/patienttype";
 import PatientFormModal from "./PatientFormModal";
 import type { PatientFormValues } from "../hooks/usePatientForm";
 

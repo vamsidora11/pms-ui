@@ -9,10 +9,10 @@ import { getPrescriptionsByPatient } from "@api/prescription";
 
 import type {
   PatientDetailsDto
-} from "@store/patient/patienttype";
+} from "@patient/types/patienttype";
 import type {
   PrescriptionSummaryDto
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 import { usePatientDirectory } from "../hooks/usePatientDirectory";
 import { usePatientDetails } from "../hooks/usePatientDetails";

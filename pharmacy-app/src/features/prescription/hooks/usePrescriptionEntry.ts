@@ -4,21 +4,21 @@ import { useToast } from "@components/common/Toast/useToast";
 import { createPrescription } from "@api/prescription";
 import { getPatientById } from "@api/patientSearch";
 
-import type { PatientSummary } from "@prescription/models";
-import type { PrescriptionDraft, DoctorDetails } from "../models";
+import type { PatientSummary } from "@prescription/types/models";
+import type { PrescriptionDraft, DoctorDetails } from "../types/models";
 
 import type {
   CreatePrescriptionRequest,
   CreatePrescriptionMedicineRequest,
   PrescriberDto,
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 import {
   validatePatientStep,
   validateDoctorStep,
   validateMedicationStep,
   validatePrescriptionDraft,
-} from "@prescription/validation";
+} from "@prescription/utils/validation";
 
 /* ---------------- INITIAL STATE ---------------- */
 

@@ -1,7 +1,7 @@
 // hooks/useDashboardData.ts
 import { useSelector } from "react-redux";
 import type { RootState } from "@store/prescription/prescriptionSlice";
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 
 interface UseDashboardDataResult {
   prescriptions: PrescriptionSummaryDto[];

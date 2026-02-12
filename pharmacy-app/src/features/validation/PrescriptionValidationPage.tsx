@@ -5,12 +5,12 @@ import { CheckCircle2, ChevronLeft, XCircle } from "lucide-react";
 import { ROUTES } from "../../constants/routes";
 import { useToast } from "@components/common/Toast/useToast";
 
-import type { PrescriptionDetailsDto } from "@prescription/prescription.types";
+import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
 
 import { usePrescriptionDetails } from "@validation/hooks/usePrescriptionDetails";
 import { usePrescriptionReview } from "@validation/hooks/usePrescriptionReview";
 
-import { computeValidation, type ValidationResult } from "./prescriptionValidationUtils";
+import { computeValidation, type ValidationResult } from "./utils/prescriptionValidationUtils";
 import { useValidationUiState } from "./hooks/useValidationUiState";
 import { formatDate } from "@utils/format";
 

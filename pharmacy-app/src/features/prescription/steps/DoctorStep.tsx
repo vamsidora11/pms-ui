@@ -87,7 +87,7 @@
 // }
 
 import { useMemo } from "react";
-import type { DoctorDetails } from "../models";
+import type { DoctorDetails } from "../types/models";
 
 interface DoctorStepProps {
   doctor: DoctorDetails;

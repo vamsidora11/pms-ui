@@ -9,7 +9,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import PatientDirectoryPanel from "../components/PatientDirectoryPanel";
-import type { PatientSummaryDto } from "@store/patient/patienttype";
+import type { PatientSummaryDto } from "@patient/types/patienttype";
 
 describe("PatientDirectoryPanel", () => {
   const mockPatients: PatientSummaryDto[] = [

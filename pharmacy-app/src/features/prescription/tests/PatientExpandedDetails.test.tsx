@@ -13,15 +13,15 @@ import type {
   ValidationSummaryDto,
   MedicineValidationDto,
   PharmacistReviewDto,
-} from '@prescription/prescription.types';
-import type { PatientDetails } from '@prescription/models';
+} from '@prescription/types/prescription.types';
+import type { PatientDetails } from '@prescription/types/models';
 
 // ---------- Mock utils ----------
 vi.mock('../prescriptionHistoryUtils', () => ({
   calculateAgeFromDob: vi.fn(() => 30),
 }));
 
-import { calculateAgeFromDob } from '../prescriptionHistoryUtils';
+import { calculateAgeFromDob } from '../utils/prescriptionHistoryUtils';
 
 // ---------- Mock icons ----------
 vi.mock('lucide-react', () => ({

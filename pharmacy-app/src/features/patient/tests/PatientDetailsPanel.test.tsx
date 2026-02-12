@@ -8,8 +8,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PatientDetailsPanel from "../components/PatientDetailsPanel";
-import type { PatientDetailsDto,  } from "@store/patient/patienttype";
-import type {PrescriptionSummaryDto} from "@prescription/prescription.types"
+import type { PatientDetailsDto,  } from "@patient/types/patienttype";
+import type {PrescriptionSummaryDto} from "@prescription/types/prescription.types"
 describe("PatientDetailsPanel", () => {
   const mockPatient: PatientDetailsDto = {
     id: "p1",

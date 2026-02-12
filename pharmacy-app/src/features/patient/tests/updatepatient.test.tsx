@@ -5,7 +5,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import UpdatePatientModal from "../components/updatePatient";
-import type { PatientDetailsDto } from "@store/patient/patienttype";
+import type { PatientDetailsDto } from "@patient/types/patienttype";
 import * as patientApi from "@api/patient";
 import React from "react";
 
