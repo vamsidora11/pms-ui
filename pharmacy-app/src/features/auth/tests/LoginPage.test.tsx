@@ -55,7 +55,7 @@ vi.mock("lucide-react", () => ({
 }));
 
 // SUT (import AFTER mocks)
-import LoginPage from "../LoginPage";
+import LoginPage from "../components/LoginPage";
 
 describe("LoginPage", () => {
   beforeEach(() => {

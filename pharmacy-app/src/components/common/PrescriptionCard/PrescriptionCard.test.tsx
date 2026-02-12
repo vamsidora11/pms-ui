@@ -122,4 +122,49 @@ describe("PrescriptionCard component", () => {
       screen.queryByRole("button")
     ).not.toBeInTheDocument();
   });
+
+  test("applies correct color class for Ready status", () => {
+  render(
+    <PrescriptionCard
+      {...baseProps}
+      status="Ready"
+    />
+  );
+
+  const badge = screen.getByText("Ready");
+  expect(badge.className).toContain("bg-green-100");
+  expect(badge.className).toContain("text-green-600");
+});
+
+test("applies correct color class for Collected status", () => {
+  render(
+    <PrescriptionCard
+      {...baseProps}
+      status="Collected"
+    />
+  );
+
+  const badge = screen.getByText("Collected");
+  expect(badge.className).toContain("bg-purple-100");
+  expect(badge.className).toContain("text-purple-600");
+});
+
+test("applies default gray color for In Progress status", () => {
+  render(
+    <PrescriptionCard
+      {...baseProps}
+      status="In Progress"
+    />
+  );
+
+  const badge = screen.getByText("In Progress");
+  expect(badge.className).toContain("bg-gray-100");
+  expect(badge.className).toContain("text-gray-600");
+});
+
+test("does not render status badge when status is undefined", () => {
+  render(<PrescriptionCard {...baseProps} />);
+  expect(screen.queryByText("Urgent")).not.toBeInTheDocument();
+});
+
 });

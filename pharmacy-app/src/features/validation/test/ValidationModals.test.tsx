@@ -1,39 +1,56 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { ReactNode } from "react";
+
 import ValidationModals from "../components/ValidationModals";
 import type { AllergyAlert } from "../types/validation.types";
 
-/* ---------------- MOCK CHILDREN ---------------- */
+/* =====================================================
+   MOCK Modal
+===================================================== */
 
 vi.mock("../components/Modal", () => ({
   Modal: ({
     open,
+    title,
     children,
     footer,
   }: {
     open: boolean;
-    children: React.ReactNode;
-    footer?: React.ReactNode;
+    title?: string;
+    children: ReactNode;
+    footer?: ReactNode;
   }) =>
     open ? (
       <div>
+        {title && <div>{title}</div>}
         <div data-testid="modal-body">{children}</div>
         <div data-testid="modal-footer">{footer}</div>
       </div>
     ) : null,
 }));
 
+/* =====================================================
+   MOCK Pill
+===================================================== */
+
 vi.mock("../components/Pill", () => ({
-  Pill: ({ children }: { children: React.ReactNode }) => (
+  Pill: ({ children }: { children: ReactNode }) => (
     <span>{children}</span>
   ),
 }));
+
+/* =====================================================
+   MOCK pillToneBySeverity
+===================================================== */
 
 vi.mock("../prescriptionValidationUtils", () => ({
   pillToneBySeverity: () => "red",
 }));
 
-/* ---------------- FACTORY ---------------- */
+/* =====================================================
+   FACTORY
+===================================================== */
 
 function createAllergy(): AllergyAlert {
   return {
@@ -45,9 +62,11 @@ function createAllergy(): AllergyAlert {
   };
 }
 
-/* ---------------- TESTS ---------------- */
+/* =====================================================
+   TESTS
+===================================================== */
 
-describe("ValidationModals", () => {
+describe("ValidationModals - Final Stable Version", () => {
   const baseProps = {
     allergyFor: null,
     rejectLineOpen: false,
@@ -68,7 +87,9 @@ describe("ValidationModals", () => {
     vi.clearAllMocks();
   });
 
-  it("renders allergy modal when allergyFor exists", () => {
+  /* ================= ALLERGY ================= */
+
+  it("renders allergy modal correctly", () => {
     render(
       <ValidationModals
         {...baseProps}
@@ -76,6 +97,7 @@ describe("ValidationModals", () => {
       />
     );
 
+    expect(screen.getByText("Safety Alert Details")).toBeInTheDocument();
     expect(screen.getByText("Drug-Allergy")).toBeInTheDocument();
     expect(screen.getByText("Penicillin")).toBeInTheDocument();
     expect(screen.getByText("Severe reaction")).toBeInTheDocument();
@@ -90,27 +112,30 @@ describe("ValidationModals", () => {
     );
 
     fireEvent.click(screen.getByText("Close"));
-    expect(baseProps.onCloseAllergy).toHaveBeenCalled();
+    expect(baseProps.onCloseAllergy).toHaveBeenCalledTimes(1);
   });
+
+  /* ================= REJECT LINE ================= */
 
   it("renders reject line modal", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectLineOpen
+        rejectLineOpen={true}
       />
     );
 
+    expect(screen.getByText("Reject Medication")).toBeInTheDocument();
     expect(
       screen.getByText("Please provide a reason for rejection:")
     ).toBeInTheDocument();
   });
 
-  it("reject line textarea triggers change handler", () => {
+  it("reject line textarea change triggers handler", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectLineOpen
+        rejectLineOpen={true}
       />
     );
 
@@ -128,7 +153,7 @@ describe("ValidationModals", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectLineOpen
+        rejectLineOpen={true}
         rejectLineReason=""
       />
     );
@@ -142,7 +167,7 @@ describe("ValidationModals", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectLineOpen
+        rejectLineOpen={true}
         rejectLineReason="Reason"
       />
     );
@@ -152,11 +177,26 @@ describe("ValidationModals", () => {
     ).not.toBeDisabled();
   });
 
+  it("reject line confirm calls handler", () => {
+    render(
+      <ValidationModals
+        {...baseProps}
+        rejectLineOpen={true}
+        rejectLineReason="Reason"
+      />
+    );
+
+    fireEvent.click(screen.getByText("Confirm Rejection"));
+    expect(baseProps.onConfirmRejectLine).toHaveBeenCalledTimes(1);
+  });
+
+  /* ================= REJECT ALL ================= */
+
   it("renders reject all modal", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectAllOpen
+        rejectAllOpen={true}
       />
     );
 
@@ -169,7 +209,7 @@ describe("ValidationModals", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectAllOpen
+        rejectAllOpen={true}
         rejectAllReason=""
       />
     );
@@ -179,31 +219,48 @@ describe("ValidationModals", () => {
     ).toBeDisabled();
   });
 
-  it("reject all confirm disabled when submitting", () => {
+  it("reject all shows submitting state", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectAllOpen
+        rejectAllOpen={true}
         rejectAllReason="Reason"
-        submitting
+        submitting={true}
       />
     );
 
-    expect(
-      screen.getByText("Submitting...")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Submitting...")).toBeInTheDocument();
   });
 
   it("reject all confirm calls handler", () => {
     render(
       <ValidationModals
         {...baseProps}
-        rejectAllOpen
+        rejectAllOpen={true}
         rejectAllReason="Reason"
       />
     );
 
     fireEvent.click(screen.getByText("Confirm Rejection"));
-    expect(baseProps.onConfirmRejectAll).toHaveBeenCalled();
+    expect(baseProps.onConfirmRejectAll).toHaveBeenCalledTimes(1);
+  });
+
+  /* ================= MULTIPLE MODALS ================= */
+
+  it("renders multiple modals if multiple flags true", () => {
+    render(
+      <ValidationModals
+        {...baseProps}
+        allergyFor={createAllergy()}
+        rejectLineOpen={true}
+        rejectAllOpen={true}
+      />
+    );
+
+    expect(screen.getByText("Safety Alert Details")).toBeInTheDocument();
+    expect(screen.getByText("Reject Medication")).toBeInTheDocument();
+    expect(
+      screen.getByText("Reject Entire Prescription")
+    ).toBeInTheDocument();
   });
 });

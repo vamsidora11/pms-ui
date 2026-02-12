@@ -29,21 +29,21 @@ export default defineConfig({
     setupFiles: path.resolve(__dirname, "src/test/setup.ts"),
 
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-
     coverage: {
-      provider: "v8",
-      reporter: ["text", "html"],
-      include: ["src/**/*.{ts,tsx}"],
-      exclude: [
-        "**/*.test.{ts,tsx}",
-        "**/*.spec.{ts,tsx}",
-        "**/node_modules/**",
-        "**/main.tsx",
-        "**/App.tsx",
-        "**/routes/**",
-        "**/api/**",
-        "**/*.d.ts",
-      ],
-    },
+  provider: "v8",
+  reporter: ["text", "html", "lcov"],   // ← ADD THIS
+  reportsDirectory: "coverage",        // ensure folder is correct
+  include: ["src/**/*.{ts,tsx}"],
+  exclude: [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/node_modules/**",
+    "**/main.tsx",
+    "**/App.tsx",
+    "**/routes/**",
+    "**/api/**",
+    "**/*.d.ts",
+  ],
+},
   },
 });

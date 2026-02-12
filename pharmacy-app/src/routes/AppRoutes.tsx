@@ -4,16 +4,16 @@ import AppLayout from "@components/layouts/Applayout/Applayout";
 import { ROUTES } from "../constants/routes";
 import { lazy, Suspense } from "react";
 
-const LoginPage = lazy(() => import("@auth/LoginPage"));
-const PharmacistDashboard = lazy(() => import("@auth/PharmacistDashboard"));
+const LoginPage = lazy(() => import("@auth/components/LoginPage"));
+const PharmacistDashboard = lazy(() => import("@auth/components/PharmacistDashboard"));
 
 const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionValidationQueue")); // ✅ new
 const PrescriptionValidationPage = lazy(() => import("@validation/PrescriptionValidationPage"));   // details
 
 const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntry"));
 
-const TechnicianDashboard = lazy(() => import("@auth/TechnicianDashboard"));
-const LabelGeneration = lazy(() => import("@labels/LabelGeneration"));
+const TechnicianDashboard = lazy(() => import("@auth/components/TechnicianDashboard"));
+const LabelGeneration = lazy(() => import("@labels/components/LabelGeneration"));
 const Refill = lazy(() => import ("@refill/Refill"));
 const PrescriptionHistory = lazy(() => import("@prescription/PrescriptionHistory"));
 const PatientProfile = lazy(() => import("@patient/components/PatientProfile"));

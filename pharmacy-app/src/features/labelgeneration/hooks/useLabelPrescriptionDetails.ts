@@ -1,6 +1,6 @@
 // src/features/labels/hooks/useLabelPrescriptionDetails.ts
 import { useCallback, useRef, useState } from "react";
-import type { LabelPrescriptionDetails } from "@labels/label.types";
+import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 import { getPrescriptionForLabels } from "@api/label";
 
 type UseLabelPrescriptionDetailsResult = {

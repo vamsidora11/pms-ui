@@ -3,7 +3,7 @@ import { store } from "./store";
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import { ToastProvider } from "@components/common/Toast/ToastProvider";
-import { ErrorBoundary } from "@components/common/ErrorBoundary";
+import { ErrorBoundary } from "@components/common/ErrorBoundary/ErrorBoundary";
 
 export default function App() {
   return (

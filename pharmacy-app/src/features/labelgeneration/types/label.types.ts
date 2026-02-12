@@ -1,7 +1,7 @@
 /* ======================================
    LABEL QUEUE (LEFT LIST)
 ====================================== */
- 
+
 export interface LabelQueuePrescription {
   id: string;
   patientId: string;
@@ -12,11 +12,11 @@ export interface LabelQueuePrescription {
   status: string;
   medicineCount: number;
 }
- 
+
 /* ======================================
    LABEL DETAILS (RIGHT PREVIEW)
 ====================================== */
- 
+
 export interface LabelMedicine {
   prescriptionMedicineId: string;
   name: string;
@@ -25,7 +25,7 @@ export interface LabelMedicine {
   instruction: string;
   frequency: string;
 }
- 
+
 export interface LabelPrescriptionDetails {
   id: string;
   patientId: string;
@@ -37,11 +37,11 @@ export interface LabelPrescriptionDetails {
   createdAt: string;
   medicines: LabelMedicine[];
 }
- 
+
 /* ======================================
    FREQUENCY HELPERS (Moved here)
 ====================================== */
- 
+
 export const FREQUENCY_LABEL_MAP: Record<string, string> = {
   OD: "Once Daily",
   BID: "Twice Daily",
@@ -54,9 +54,8 @@ export const FREQUENCY_LABEL_MAP: Record<string, string> = {
   PRN: "As Needed",
   STAT: "Immediately",
 };
- 
+
 export function getFrequencyLabel(code?: string): string {
   if (!code) return "";
   return FREQUENCY_LABEL_MAP[code] ?? code;
 }
- 

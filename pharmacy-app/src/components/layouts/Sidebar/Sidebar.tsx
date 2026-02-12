@@ -5,7 +5,6 @@ import {
   ClipboardDocumentListIcon,
   CheckBadgeIcon,
   TagIcon,
-  ArrowPathIcon,
   UserCircleIcon,
   BellIcon,
   ArrowRightOnRectangleIcon,

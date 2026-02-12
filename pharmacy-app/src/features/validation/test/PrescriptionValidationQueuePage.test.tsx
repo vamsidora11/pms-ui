@@ -1,32 +1,42 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import PrescriptionValidationQueuePage from "../PrescriptionValidationPage";
+import PrescriptionValidationQueuePage from "../PrescriptionValidationQueue";
 import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
 
-/* ---------------- MOCKS ---------------- */
+/* ------------------------------------------------------------------ */
+/* --------------------------- ROUTER MOCK ---------------------------- */
+/* ------------------------------------------------------------------ */
 
 const mockNavigate = vi.fn();
-const mockRefetch = vi.fn();
+let mockLocationState: { refresh?: boolean } | null = null;
 
-vi.mock("react-router-dom", () => ({
-  useNavigate: () => mockNavigate,
-  useLocation: () => ({ state: null }),
-}));
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({ state: mockLocationState }),
+  };
+});
+
+/* ------------------------------------------------------------------ */
+/* ---------------------- HOOK + FORMAT MOCKS ------------------------ */
+/* ------------------------------------------------------------------ */
+
+const mockRefetch = vi.fn();
+const mockUsePendingPrescriptions = vi.fn();
 
 vi.mock("@utils/hooks/usePendingPrescriptions", () => ({
-  usePendingPrescriptions: () => ({
-    rows: [],
-    loading: false,
-    error: null,
-    refetch: mockRefetch,
-  }),
+  usePendingPrescriptions: () => mockUsePendingPrescriptions(),
 }));
 
 vi.mock("@utils/format", () => ({
   formatDate: (v: string) => `formatted-${v}`,
 }));
 
-/* ---------------- DATA FACTORY ---------------- */
+/* ------------------------------------------------------------------ */
+/* --------------------------- DATA FACTORY --------------------------- */
+/* ------------------------------------------------------------------ */
 
 function createSummary(
   overrides?: Partial<PrescriptionSummaryDto>
@@ -39,7 +49,7 @@ function createSummary(
     prescriberName: "Dr. Smith",
     createdAt: "2024-01-01",
     expiresAt: "2024-12-31",
-    status: "Pending",
+    status: "Created",
     medicineCount: 2,
     validationSummary: {
       totalIssues: 0,
@@ -52,73 +62,95 @@ function createSummary(
   };
 }
 
-/* ---------------- TESTS ---------------- */
+/* ------------------------------------------------------------------ */
+/* ------------------------------ TESTS ------------------------------- */
+/* ------------------------------------------------------------------ */
 
 describe("PrescriptionValidationQueuePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLocationState = null;
   });
 
-  it("renders loading skeleton", () => {
-    vi.doMock("@utils/hooks/usePendingPrescriptions", () => ({
-      usePendingPrescriptions: () => ({
-        rows: [],
-        loading: true,
-        error: null,
-        refetch: mockRefetch,
-      }),
-    }));
+  /* ---------------- Loading ---------------- */
+
+  it("renders loading skeleton and header", () => {
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows: [],
+      loading: true,
+      error: null,
+      refetch: mockRefetch,
+    });
 
     render(<PrescriptionValidationQueuePage />);
-    expect(screen.getByText("Prescription Validation Queue")).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Prescription Validation Queue")
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("Pending Prescriptions")).toBeInTheDocument();
   });
+
+  /* ---------------- Error ---------------- */
 
   it("renders error state", () => {
-    vi.doMock("@utils/hooks/usePendingPrescriptions", () => ({
-      usePendingPrescriptions: () => ({
-        rows: [],
-        loading: false,
-        error: "Failed",
-        refetch: mockRefetch,
-      }),
-    }));
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: "Failed to load",
+      refetch: mockRefetch,
+    });
 
     render(<PrescriptionValidationQueuePage />);
-    expect(screen.getByText("Failed")).toBeInTheDocument();
+
+    expect(screen.getByText("Failed to load")).toBeInTheDocument();
   });
 
-  it("renders empty state", () => {
+  /* ---------------- Empty ---------------- */
+
+  it("renders empty state when no rows", () => {
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
     render(<PrescriptionValidationQueuePage />);
+
     expect(screen.getByText("No pending items")).toBeInTheDocument();
   });
 
-  it("renders sorted prescriptions", () => {
+  /* ---------------- Sorting ---------------- */
+
+  it("renders prescriptions sorted by createdAt ascending", () => {
     const rows = [
       createSummary({ id: "RX-2", createdAt: "2024-02-01" }),
       createSummary({ id: "RX-1", createdAt: "2024-01-01" }),
     ];
 
-    vi.doMock("@utils/hooks/usePendingPrescriptions", () => ({
-      usePendingPrescriptions: () => ({
-        rows,
-        loading: false,
-        error: null,
-        refetch: mockRefetch,
-      }),
-    }));
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows,
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
 
     render(<PrescriptionValidationQueuePage />);
 
-    const items = screen.getAllByText(/RX-/);
-    expect(items[0]).toHaveTextContent("RX-1");
-    expect(items[1]).toHaveTextContent("RX-2");
+    const badges = screen.getAllByText(/RX-/);
+
+    expect(badges[0]).toHaveTextContent("RX-1");
+    expect(badges[1]).toHaveTextContent("RX-2");
   });
 
-  it("shows critical badge when high severity exists", () => {
+  /* ---------------- Badge Variants ---------------- */
+
+  it("shows critical badge", () => {
     const rows = [
       createSummary({
         validationSummary: {
-          totalIssues: 1,
+          totalIssues: 2,
           highSeverityCount: 2,
           moderateCount: 0,
           lowCount: 0,
@@ -127,47 +159,111 @@ describe("PrescriptionValidationQueuePage", () => {
       }),
     ];
 
-    vi.doMock("@utils/hooks/usePendingPrescriptions", () => ({
-      usePendingPrescriptions: () => ({
-        rows,
-        loading: false,
-        error: null,
-        refetch: mockRefetch,
-      }),
-    }));
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows,
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
 
     render(<PrescriptionValidationQueuePage />);
+
     expect(screen.getByText("2 Critical")).toBeInTheDocument();
   });
 
-  it("navigates to details on Review click", () => {
+  it("shows moderate and low badges", () => {
+    const rows = [
+      createSummary({
+        validationSummary: {
+          totalIssues: 3,
+          highSeverityCount: 0,
+          moderateCount: 2,
+          lowCount: 1,
+          requiresReview: true,
+        },
+      }),
+    ];
+
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows,
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    render(<PrescriptionValidationQueuePage />);
+
+    expect(screen.getByText("2 Moderate")).toBeInTheDocument();
+    expect(screen.getByText("1 Info")).toBeInTheDocument();
+  });
+
+  it("shows No Issues badge", () => {
     const rows = [createSummary()];
 
-    vi.doMock("@utils/hooks/usePendingPrescriptions", () => ({
-      usePendingPrescriptions: () => ({
-        rows,
-        loading: false,
-        error: null,
-        refetch: mockRefetch,
-      }),
-    }));
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows,
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    render(<PrescriptionValidationQueuePage />);
+
+    expect(screen.getByText("No Issues")).toBeInTheDocument();
+  });
+
+  /* ---------------- Navigation ---------------- */
+
+  it("navigates to details page on Review click", () => {
+    const rows = [createSummary({ id: "RX-123" })];
+
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows,
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
 
     render(<PrescriptionValidationQueuePage />);
 
     fireEvent.click(screen.getByText("Review"));
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining("RX-1")
+      expect.stringContaining("RX-123")
     );
   });
 
+  /* ---------------- Refetch on refresh flag ---------------- */
+
   it("calls refetch when location.state.refresh is true", () => {
-    vi.doMock("react-router-dom", () => ({
-      useNavigate: () => mockNavigate,
-      useLocation: () => ({ state: { refresh: true } }),
-    }));
+    mockLocationState = { refresh: true };
+
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
 
     render(<PrescriptionValidationQueuePage />);
+
     expect(mockRefetch).toHaveBeenCalled();
+  });
+
+  /* ---------------- Pluralization ---------------- */
+
+  it("handles singular vs plural prescription count", () => {
+    mockUsePendingPrescriptions.mockReturnValue({
+      rows: [createSummary()],
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    render(<PrescriptionValidationQueuePage />);
+
+    expect(
+      screen.getByText("1 prescription awaiting review")
+    ).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LabelPreview } from "../components/LabelPreview";
-import type { LabelPrescriptionDetails } from "@labels/label.types";
+import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 
 // Mock child component (unit isolation)
 vi.mock("../components/MedicationLabelCard", () => ({

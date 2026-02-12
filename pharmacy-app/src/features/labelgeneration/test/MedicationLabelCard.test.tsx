@@ -4,16 +4,23 @@ import { MedicationLabelCard } from "../components/MedicationLabelCard";
 import type {
   LabelPrescriptionDetails,
   LabelMedicine,
-} from "@labels/label.types";
+} from "@labels/types/label.types";
 
-// Mock external dependencies
+/* =====================================================
+   MOCKS
+===================================================== */
+
 vi.mock("@utils/format", () => ({
   formatDate: vi.fn(() => "01-Jan-2024"),
 }));
 
-vi.mock("../label.types", () => ({
+vi.mock("../types/label.types", () => ({
   getFrequencyLabel: vi.fn(() => "Twice Daily"),
 }));
+
+/* =====================================================
+   FACTORIES
+===================================================== */
 
 function createMockPrescription(
   overrides?: Partial<LabelPrescriptionDetails>
@@ -23,8 +30,6 @@ function createMockPrescription(
     patientId: "P-001",
     patientName: "John Doe",
     createdAt: "2024-01-01T00:00:00Z",
-    // expiresAt: "2024-12-31T00:00:00Z",
-    // status: "READY",
     prescriber: {
       id: "DR-001",
       name: "Dr. Smith",
@@ -48,19 +53,20 @@ function createMockMedicine(
   };
 }
 
-describe("MedicationLabelCard", () => {
+/* =====================================================
+   TESTS
+===================================================== */
+
+describe("MedicationLabelCard - High Coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("renders pharmacy header", () => {
-    const prescription = createMockPrescription();
-    const medicine = createMockMedicine();
-
     render(
       <MedicationLabelCard
-        prescription={prescription}
-        medicine={medicine}
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
       />
     );
 
@@ -68,16 +74,14 @@ describe("MedicationLabelCard", () => {
     expect(
       screen.getByText("123 Healthcare Blvd, Springfield, IL 62701")
     ).toBeInTheDocument();
+    expect(screen.getByText("Phone: (555) 123-4567")).toBeInTheDocument();
   });
 
-  it("renders prescription details", () => {
-    const prescription = createMockPrescription();
-    const medicine = createMockMedicine();
-
+  it("renders prescription information correctly", () => {
     render(
       <MedicationLabelCard
-        prescription={prescription}
-        medicine={medicine}
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
       />
     );
 
@@ -87,56 +91,114 @@ describe("MedicationLabelCard", () => {
     expect(screen.getByText("Dr. Smith")).toBeInTheDocument();
   });
 
-  it("renders medicine details correctly", () => {
-    const prescription = createMockPrescription();
-    const medicine = createMockMedicine();
-
+  it("renders medicine name and strength", () => {
     render(
       <MedicationLabelCard
-        prescription={prescription}
-        medicine={medicine}
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
       />
     );
 
     expect(screen.getByText("Paracetamol 500mg")).toBeInTheDocument();
+  });
+
+  it("renders quantity correctly", () => {
+    render(
+      <MedicationLabelCard
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
+      />
+    );
+
     expect(screen.getByText("QTY: 10")).toBeInTheDocument();
+  });
+
+  it("renders frequency using getFrequencyLabel", () => {
+    render(
+      <MedicationLabelCard
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
+      />
+    );
+
     expect(screen.getByText("Frequency: Twice Daily")).toBeInTheDocument();
+  });
+
+  it("renders directions section", () => {
+    render(
+      <MedicationLabelCard
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
+      />
+    );
+
+    expect(screen.getByText("DIRECTIONS:")).toBeInTheDocument();
     expect(screen.getByText("Take after meals")).toBeInTheDocument();
   });
 
-  it("renders warning section", () => {
-    const prescription = createMockPrescription();
-    const medicine = createMockMedicine();
-
+  it("renders warning section with all warnings", () => {
     render(
       <MedicationLabelCard
-        prescription={prescription}
-        medicine={medicine}
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
       />
     );
 
     expect(screen.getByText("⚠ WARNINGS")).toBeInTheDocument();
+
+    // Use regex to ignore bullet character
     expect(
-      screen.getByText("Take as directed by physician")
+      screen.getByText(/Take as directed by physician/i)
     ).toBeInTheDocument();
+
     expect(
-      screen.getByText("Do not share this medication")
+      screen.getByText(/Do not share this medication/i)
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/Store at room temperature/i)
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/Keep out of reach of children/i)
     ).toBeInTheDocument();
   });
 
-  it("renders footer information", () => {
-    const prescription = createMockPrescription();
-    const medicine = createMockMedicine();
-
+  it("renders footer correctly", () => {
     render(
       <MedicationLabelCard
-        prescription={prescription}
-        medicine={medicine}
+        prescription={createMockPrescription()}
+        medicine={createMockMedicine()}
       />
     );
 
     expect(
       screen.getByText(/Pharmacist: Dr\. Jane Smith/i)
     ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/License: PH-12345/i)
+    ).toBeInTheDocument();
+  });
+
+  it("renders correctly with different medicine data", () => {
+    render(
+      <MedicationLabelCard
+        prescription={createMockPrescription({
+          patientName: "Alice Johnson",
+        })}
+        medicine={createMockMedicine({
+          name: "Ibuprofen",
+          strength: "200mg",
+          prescribedQuantity: 20,
+          instruction: "After food",
+        })}
+      />
+    );
+
+    expect(screen.getByText("Alice Johnson")).toBeInTheDocument();
+    expect(screen.getByText("Ibuprofen 200mg")).toBeInTheDocument();
+    expect(screen.getByText("QTY: 20")).toBeInTheDocument();
+    expect(screen.getByText("After food")).toBeInTheDocument();
   });
 });

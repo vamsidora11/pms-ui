@@ -14,11 +14,11 @@ import type { Column } from "@components/common/Table/Table";
 import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
 // import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import { formatDateTime, statusStyle } from "@prescription/prescriptionHistoryUtils";
-import type { AppDispatch } from "../../store";
+import type { AppDispatch } from "../../../store";
 import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
 
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
-import { useDashboardData } from "./hooks/useDashboardData";
+import { useDashboardData } from "../hooks/useDashboardData";
 
 /* ---------------------------------- */
 /* Helper Functions */
