@@ -14,12 +14,12 @@ import type {
   PrescriptionSummaryDto
 } from "@prescription/prescription.types";
 
-import { usePatientDirectory } from "./hooks/usePatientDirectory";
-import { usePatientDetails } from "./hooks/usePatientDetails";
-import { usePatientPrescriptions } from "./hooks/usePatientPrescriptions";
+import { usePatientDirectory } from "../hooks/usePatientDirectory";
+import { usePatientDetails } from "../hooks/usePatientDetails";
+import { usePatientPrescriptions } from "../hooks/usePatientPrescriptions";
 
-import PatientDirectoryPanel from "./components/PatientDirectoryPanel";
-import PatientDetailsPanel from "./components/PatientDetailsPanel";
+import PatientDirectoryPanel from "./PatientDirectoryPanel";
+import PatientDetailsPanel from "./PatientDetailsPanel";
 
 export default function PatientProfiles() {
   const directory = usePatientDirectory({

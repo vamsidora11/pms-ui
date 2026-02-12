@@ -16,7 +16,7 @@ const TechnicianDashboard = lazy(() => import("@auth/TechnicianDashboard"));
 const LabelGeneration = lazy(() => import("@labels/LabelGeneration"));
 const Refill = lazy(() => import ("@refill/Refill"));
 const PrescriptionHistory = lazy(() => import("@prescription/PrescriptionHistory"));
-const PatientProfile = lazy(() => import("@patient/PatientProfile"));
+const PatientProfile = lazy(() => import("@patient/components/PatientProfile"));
 
 export default function AppRoutes() {
   return (

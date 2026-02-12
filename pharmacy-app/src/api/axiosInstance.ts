@@ -2,8 +2,11 @@
 import axios, { AxiosHeaders } from "axios";
 import { store } from "../store";
 import { refreshAccess, logout } from "@store/auth/authSlice";
+import type { InternalAxiosRequestConfig } from "axios";
 
-type RetriableConfig = any & { _retry?: boolean };
+type RetriableConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -33,7 +36,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest: RetriableConfig = error.config || {};
     const status = error.response?.status;
-    const url = (originalRequest?.url ?? "") as string;
+    const url = originalRequest?.url ?? "";
 
     const isAuthCall = url.includes("/auth/login") || url.includes("/auth/refresh");
 
@@ -45,7 +48,8 @@ api.interceptors.response.use(
       const refreshResult = await store.dispatch(refreshAccess());
 
       if (refreshAccess.fulfilled.match(refreshResult)) {
-        const newToken = refreshResult.payload.accessToken as string;
+        const newToken = refreshResult.payload.accessToken;
+
 
         // Update axios defaults for future requests
         (api.defaults.headers as any).common = {
@@ -63,7 +67,7 @@ api.interceptors.response.use(
 
       // Refresh failed – fall back to logout
       store.dispatch(logout());
-      return Promise.reject(error);
+      throw error;
     }
 
     if (status === 403) {
@@ -74,7 +78,7 @@ api.interceptors.response.use(
       console.error("Server error occurred");
     }
 
-    return Promise.reject(error);
+    throw error;
   }
 );
 

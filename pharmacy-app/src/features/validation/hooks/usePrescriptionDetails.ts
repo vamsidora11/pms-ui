@@ -39,4 +39,3 @@ export function usePrescriptionDetails(rxId: string) {
 
   return { data, loading, error };
 }
-``

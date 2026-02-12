@@ -8,8 +8,14 @@ import AppPhoneInput from "@components/common/PhoneInput/PhoneInput";
 
 import { searchAllergies } from "@api/catalogs";
 
-import { usePatientForm, type PatientFormValues } from "./hooks/usePatientForm";
-import AllergySelector from "./components/AllergySelector";
+import { usePatientForm, type PatientFormValues } from "../hooks/usePatientForm";
+import AllergySelector from "./AllergySelector";
+
+export const RequiredLabel: React.FC<{ text: string }> = ({ text }) => (
+  <span>
+    {text} <span className="text-red-600">*</span>
+  </span>
+);
 
 type Props = {
   title: string;
@@ -45,22 +51,16 @@ export default function PatientFormModal({
     setFormError,
   } = usePatientForm({ initialValues, onSubmit, onClose, closeOnSuccess });
 
-  const RequiredLabel = ({ text }: { text: string }) => (
-    <span>
-      {text} <span className="text-red-600">*</span>
-    </span>
-  );
-
   // ESC + lock body scroll (modal responsibility)
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    window.addEventListener("keydown", onEsc);
+    globalThis.addEventListener("keydown", onEsc);
     return () => {
       document.body.style.overflow = "";
-      window.removeEventListener("keydown", onEsc);
+      globalThis.removeEventListener("keydown", onEsc);
     };
   }, [onClose]);
 

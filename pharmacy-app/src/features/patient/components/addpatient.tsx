@@ -1,6 +1,6 @@
 import type { CreatePatientRequest } from "@store/patient/patienttype";
 import PatientFormModal from "./PatientFormModal";
-import type { PatientFormValues } from "./hooks/usePatientForm";
+import type { PatientFormValues } from "../hooks/usePatientForm";
 
 interface AddPatientModalProps {
   onClose: () => void;

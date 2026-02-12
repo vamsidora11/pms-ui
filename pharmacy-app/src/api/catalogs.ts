@@ -36,4 +36,4 @@ export async function searchAllergies(
     throw err;
   }
 }
-``
+
