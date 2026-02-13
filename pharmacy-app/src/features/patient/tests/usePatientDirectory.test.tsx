@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { usePatientDirectory, type SearchPatientsFn } from "../hooks/usePatientDirectory";
-import type { PatientSummaryDto } from "@store/patient/patienttype";
+import type { PatientSummaryDto } from "@patient/types/patienttype";
 
 // Mock debounce hook to avoid timing complexity
 vi.mock("@utils/hooks/useDebouncedValue", () => ({

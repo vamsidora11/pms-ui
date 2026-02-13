@@ -5,10 +5,10 @@ import type {
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
   PrescriptionMedicineDto,
-} from "@prescription/prescription.types";
-import type { PatientDetails } from "@prescription/models";
+} from "@prescription/types/prescription.types";
+import type { PatientDetails } from "@prescription/types/models";
  
-import { calculateAgeFromDob } from "../prescriptionHistoryUtils";
+import { calculateAgeFromDob } from "../utils/prescriptionHistoryUtils";
  
 type Props = {
   row: PrescriptionSummaryDto;

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import type { PatientDetailsDto } from '@store/patient/patienttype';
+import type { PatientDetailsDto } from '@patient/types/patienttype';
 import { usePatientDetails, type GetPatientDetailsFn } from '../hooks/usePatientDetails';
 
 // Helper to control async resolution deterministically

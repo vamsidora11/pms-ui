@@ -7,7 +7,7 @@ import type { Column, ServerTableQuery } from "@components/common/Table/Table";
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
 import type { AppDispatch } from "../../store";
 
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 
 import { usePrescriptionHistoryData } from "./hooks/usePrescriptionHistoryData";
 import PrescriptionExpandedDetails from "./components/PrescriptionExpandedDetails";
@@ -15,7 +15,7 @@ import {
   buildHistoryQueryParams,
   formatDateTime,
   statusStyle,
-} from "./prescriptionHistoryUtils";
+} from "./utils/prescriptionHistoryUtils";
 
 export default function PrescriptionHistory() {
   const dispatch = useDispatch<AppDispatch>();

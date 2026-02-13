@@ -2,7 +2,7 @@ import React from "react";
 import { XCircle } from "lucide-react";
 
 import type { AllergyAlert } from "../types/validation.types";
-import { pillToneBySeverity } from "../prescriptionValidationUtils";
+import { pillToneBySeverity } from "../utils/prescriptionValidationUtils";
 
 import { Modal } from "./Modal";
 import { Pill } from "./Pill";

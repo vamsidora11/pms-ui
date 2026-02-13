@@ -40,7 +40,7 @@ interface Patient {
   gender: string;
   phone: string;
   email?: string;
-  address: string;
+  address?: string;
   allergies?: string[];
   insurance?: { provider: string; memberId: string };
 }

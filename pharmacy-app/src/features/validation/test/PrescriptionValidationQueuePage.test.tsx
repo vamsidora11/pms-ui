@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import PrescriptionValidationQueuePage from "../PrescriptionValidationQueue";
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import PrescriptionValidationQueuePage from "../PrescriptionValidationPage";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 
 /* ------------------------------------------------------------------ */
 /* --------------------------- ROUTER MOCK ---------------------------- */

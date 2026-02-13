@@ -7,7 +7,7 @@ import type {
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
   ReviewPrescriptionRequest,
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 type SortDirection = "asc" | "desc";
 

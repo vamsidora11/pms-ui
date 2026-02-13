@@ -4,7 +4,7 @@ import ValidationTable from "../components/ValidationTable";
 import type {
   PrescriptionDetailsDto,
   PrescriptionMedicineDto,
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 /* ---------------- MOCKS ---------------- */
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { PatientDetailsDto } from "@store/patient/patienttype";
+import type { PatientDetailsDto } from "@patient/types/patienttype";
 
 export type GetPatientDetailsFn = (
   patientId: string,

@@ -1,5 +1,5 @@
-import type { PrescriptionDetailsDto } from "@prescription/prescription.types";
-import type { Severity } from "@validation/prescriptionValidationUtils";
+import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
+import type { Severity } from "@validation/utils/prescriptionValidationUtils";
 
 export type LineDecision = "Accepted" | "Rejected" | null;
 

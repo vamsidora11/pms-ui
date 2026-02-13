@@ -2,7 +2,7 @@ import React from "react";
 import clsx from "clsx";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 
-import type { PrescriptionDetailsDto, PrescriptionMedicineDto } from "@prescription/prescription.types";
+import type { PrescriptionDetailsDto, PrescriptionMedicineDto } from "@prescription/types/prescription.types";
 import type { AllergyAlert, LineDecision } from "../types/validation.types";
 
 import {
@@ -11,7 +11,7 @@ import {
   pillToneBySeverity,
   type Severity,
   type ValidationResult,
-} from "../prescriptionValidationUtils";
+} from "../utils/prescriptionValidationUtils";
 
 import { Pill } from "./Pill";
 

@@ -3,11 +3,11 @@ import {
   pillToneBySeverity,
   computeValidation,
   mapInteractionLevel,
-} from "../prescriptionValidationUtils";
+} from "../utils/prescriptionValidationUtils";
 import type {
   PrescriptionMedicineDto,
   MedicineValidationDto,
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 /* ---------------- Factory Helpers ---------------- */
 

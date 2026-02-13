@@ -6,7 +6,7 @@ import MedicationStep from "@prescription/steps/MedicationStep";
 import ReviewStep from "@prescription/steps/ReviewStep";
 
 import { usePrescriptionEntry } from "./hooks/usePrescriptionEntry";
-import type { DoctorDetails } from "./models";
+import type { DoctorDetails } from "./types/models";
 
 export default function PrescriptionEntry() {
   const {
@@ -24,6 +24,9 @@ export default function PrescriptionEntry() {
 
     handleSubmit,
   } = usePrescriptionEntry();
+
+  const isFirst = currentStep === 1;
+  const isLast = currentStep === 4;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -55,25 +58,28 @@ export default function PrescriptionEntry() {
         />
       )}
 
-      {currentStep < 4 && (
-        <div className="flex justify-between pt-4">
-          <button
-            disabled={currentStep === 1}
-            onClick={goPrev}
-            className="px-6 py-2 bg-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-300"
-          >
-            Previous
-          </button>
+      {/* Footer: Always show "Previous". Show "Next" only for steps 1–3. */}
+      <div className="flex justify-between pt-4">
+        <button
+          type="button"
+          disabled={isFirst}
+          onClick={goPrev}
+          className="px-6 py-2 bg-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-300"
+        >
+          Previous
+        </button>
 
+        {!isLast && (
           <button
+            type="button"
             disabled={isNextDisabled}
             onClick={goNext}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50 hover:bg-blue-700"
           >
             Next
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

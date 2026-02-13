@@ -13,8 +13,8 @@ import {
   Pill,
 } from "lucide-react";
 import type { ElementType, ReactNode } from "react";
-import type { PatientDetailsDto } from "@store/patient/patienttype";
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import type { PatientDetailsDto } from "@patient/types/patienttype";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 import { formatDate } from "../../../utils/format";
 import clsx from "clsx";
 
@@ -194,7 +194,7 @@ export default function PatientDetailsPanel({
             <Info
               icon={MapPin}
               label="Address"
-              value={selectedPatient.address}
+              value={selectedPatient.address ?? ""}
             />
             <Info icon={User} label="Gender" value={selectedPatient.gender} />
           </Section>

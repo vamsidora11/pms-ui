@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
 import clsx from "clsx";
-import type { PatientSummaryDto } from "@store/patient/patienttype";
+import type { PatientSummaryDto } from "@patient/types/patienttype";
 
 type Props = {
   patients: PatientSummaryDto[];

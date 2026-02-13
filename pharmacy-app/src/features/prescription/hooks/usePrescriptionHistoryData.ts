@@ -8,8 +8,8 @@ import {
 import type {
   PrescriptionSummaryDto,
   PrescriptionDetailsDto,
-} from "@prescription/prescription.types";
-import type { PatientDetails } from "@prescription/models";
+} from "@prescription/types/prescription.types";
+import type { PatientDetails } from "@prescription/types/models";
 import { getPatientById } from "@api/patientSearch";
  
 type Options = { pageSize?: number; skipInitialFetch?: boolean };

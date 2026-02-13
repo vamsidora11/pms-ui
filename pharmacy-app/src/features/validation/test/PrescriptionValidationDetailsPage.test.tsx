@@ -4,7 +4,7 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { ReactNode } from "react";
 
 import PrescriptionValidationDetailsPage from "../PrescriptionValidationPage";
-import type { PrescriptionDetailsDto } from "@prescription/prescription.types";
+import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
 
 /* =====================================================
    ROUTER MOCK

@@ -7,19 +7,22 @@ import UpdatePatientModal from "./updatePatient";
 import { createPatient, getPatientDetails, searchPatients } from "@api/patient";
 import { getPrescriptionsByPatient } from "@api/prescription";
 
-import type { PatientDetailsDto } from "@store/patient/patienttype";
+import type {
+  PatientDetailsDto
+} from "@patient/types/patienttype";
 import type {
   PrescriptionSummaryDto
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 import { usePatientDirectory } from "../hooks/usePatientDirectory";
 import { usePatientDetails } from "../hooks/usePatientDetails";
 import { usePatientPrescriptions } from "../hooks/usePatientPrescriptions";
-
+import { useToast } from "@components/common/Toast/useToast";
 import PatientDirectoryPanel from "./PatientDirectoryPanel";
 import PatientDetailsPanel from "./PatientDetailsPanel";
 
 export default function PatientProfiles() {
+  const toast=useToast();
   const directory = usePatientDirectory({
     searchFn: (query, opts) => searchPatients(query, opts),
     debounceMs: 250,
@@ -127,7 +130,7 @@ export default function PatientProfiles() {
               setShowAddModal(false);
             } catch (err) {
               console.error("Failed to add patient", err);
-              alert("Error adding patient");
+              toast.error("Error adding patient");
             }
           }}
         />

@@ -31,7 +31,7 @@ import { logger } from "@utils/logger/logger";
 import { searchPatients, getPatientById } from "../patientSearch";
 
 // ✅ Type-only imports for your real models (adjust alias if needed)
-import type { PatientSummary, PatientDetails } from "@prescription/models";
+import type { PatientSummary, PatientDetails } from "@prescription/types/models";
 
 describe("patient API", () => {
   const apiGet = api.get as unknown as ReturnType<typeof vi.fn>;
