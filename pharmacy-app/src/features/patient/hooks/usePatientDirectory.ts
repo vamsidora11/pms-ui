@@ -26,6 +26,11 @@ export function usePatientDirectory({
   const [listError, setListError] = useState<string | null>(null);
 
   const listAbortRef = useRef<AbortController | null>(null);
+  const searchFnRef = useRef(searchFn);
+
+  useEffect(() => {
+    searchFnRef.current = searchFn;
+  }, [searchFn]);
   const getErrorMessage = (err: unknown): string => {
     if (typeof err === "string") return err;
     if (typeof err === "object" && err !== null) {
@@ -47,7 +52,7 @@ export function usePatientDirectory({
       try {
         const q = (debouncedSearch ?? "").trim();
         const shouldQuery = q.length >= minChars;
-        const result = await searchFn(shouldQuery ? q : "", {
+        const result = await searchFnRef.current(shouldQuery ? q : "", {
           signal: controller.signal,
         });
 
@@ -67,7 +72,7 @@ export function usePatientDirectory({
 
     load();
     return () => controller.abort();
-  }, [debouncedSearch, minChars, searchFn]);
+  }, [debouncedSearch, minChars]);
 
   return {
     patients,

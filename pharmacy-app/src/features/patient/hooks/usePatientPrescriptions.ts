@@ -22,6 +22,11 @@ export function usePatientPrescriptions<T>(
 
   // prevents race conditions when switching patients quickly
   const reqIdRef = useRef(0);
+  const getFnRef = useRef(getPrescriptionsByPatient);
+
+  useEffect(() => {
+    getFnRef.current = getPrescriptionsByPatient;
+  }, [getPrescriptionsByPatient]);
 
   const reset = useCallback(() => {
     setItems([]);
@@ -42,7 +47,7 @@ export function usePatientPrescriptions<T>(
     setError(null);
 
     try {
-      const res = await getPrescriptionsByPatient(patientId, pageSize, null);
+      const res = await getFnRef.current(patientId, pageSize, null);
 
       // ignore stale responses
       if (reqId !== reqIdRef.current) return;
@@ -62,7 +67,7 @@ export function usePatientPrescriptions<T>(
     } finally {
       if (reqId === reqIdRef.current) setLoading(false);
     }
-  }, [getPrescriptionsByPatient, pageSize, patientId, reset]);
+  }, [pageSize, patientId, reset]);
 
   const loadMore = useCallback(async () => {
     if (!patientId) return;
@@ -74,7 +79,7 @@ export function usePatientPrescriptions<T>(
     setError(null);
 
     try {
-      const res = await getPrescriptionsByPatient(patientId, pageSize, token);
+      const res = await getFnRef.current(patientId, pageSize, token);
 
       if (reqId !== reqIdRef.current) return;
 
@@ -91,7 +96,7 @@ export function usePatientPrescriptions<T>(
     } finally {
       if (reqId === reqIdRef.current) setLoadingMore(false);
     }
-  }, [getPrescriptionsByPatient, loadingMore, pageSize, patientId, token]);
+  }, [loadingMore, pageSize, patientId, token]);
 
   // auto-load whenever patient changes
   useEffect(() => {

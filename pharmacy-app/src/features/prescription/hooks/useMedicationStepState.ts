@@ -93,6 +93,7 @@ export function useMedicationStepState({
   // - lastEmittedSig tracks what we last told parent
   // - if parent sends back same data, we do nothing
   const lastEmittedSigRef = useRef<string>("");
+  const lastPropsSigRef = useRef<string>(propsSig);
 
   // ✅ Emit to parent AFTER render (standard)
   useEffect(() => {
@@ -104,7 +105,14 @@ export function useMedicationStepState({
   // ✅ Sync local rows when parent changes meds externally (reset/load), without echo loop
   useEffect(() => {
     // If parent value equals what we just emitted, ignore
-    if (propsSig === lastEmittedSigRef.current) return;
+    if (propsSig === lastEmittedSigRef.current) {
+      lastPropsSigRef.current = propsSig;
+      return;
+    }
+
+    // Only react when props actually change
+    if (propsSig === lastPropsSigRef.current) return;
+    lastPropsSigRef.current = propsSig;
 
     // Parent truly changed outside (e.g., reset draft)
     setRows(medications.length > 0 ? medications.map(createRow) : [createRow()]);

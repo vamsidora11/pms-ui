@@ -78,12 +78,14 @@ export default function PharmacistDashboard() {
   useEffect(() => {
     // Fetch all recent prescriptions without date filter
     // The backend will return recent ones and we filter client-side
-    dispatch(fetchAllPrescriptions({
-      pageNumber: 1,
-      pageSize: 10, 
-      sortBy: "createdAt",
-      sortDirection: "desc",
-    }));
+    dispatch(
+      fetchAllPrescriptions({
+        pageNumber: 1,
+        pageSize: 100,
+        sortBy: "createdAt",
+        sortDirection: "desc",
+      })
+    );
   }, [dispatch]);
 
   /* ---------------------------------- */
@@ -287,7 +289,7 @@ function Kpi({
   title,
   value,
   icon,
-  trend,
+  
 }: {
   title: string;
   value: number;
@@ -300,7 +302,7 @@ function Kpi({
         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
           {icon}
         </div>
-        {trend}
+        
       </div>
 
       <div className="text-2xl font-bold">
