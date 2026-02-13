@@ -12,6 +12,14 @@ export function usePatientDetails(getDetailsFn: GetPatientDetailsFn) {
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
   const selectingRef = useRef(false);
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as { message?: string };
+      return errorObj.message || "Failed to load patient details";
+    }
+    return "Failed to load patient details";
+  };
 
   const selectPatient = async (patientId: string) => {
     if (!patientId) return;
@@ -24,9 +32,9 @@ export function usePatientDetails(getDetailsFn: GetPatientDetailsFn) {
 
       const details = await getDetailsFn(patientId);
       setSelectedPatient(details);
-    } catch (err: any) {
+    } catch (err) {
       console.error("getPatientDetails failed:", err);
-      setDetailsError(err?.message || "Failed to load patient details");
+      setDetailsError(getErrorMessage(err));
       setSelectedPatient(null);
     } finally {
       setDetailsLoading(false);

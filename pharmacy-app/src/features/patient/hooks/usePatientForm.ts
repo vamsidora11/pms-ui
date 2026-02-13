@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { applyPatientRule, validatePatientForm } from "../utils/patientFormRules";
+import {
+  applyPatientRule,
+  validatePatientForm,
+  type PatientFormLike,
+} from "../utils/patientFormRules";
 
 export type PatientFormValues = {
   fullName: string;
@@ -27,6 +31,7 @@ const VALIDATED_FIELDS = new Set<keyof PatientFormState>([
   "email",
   "address",
 ]);
+type ValidatedField = keyof PatientFormLike;
 
 export function usePatientForm({
   initialValues,
@@ -46,7 +51,7 @@ export function usePatientForm({
 
   const updateField = (field: keyof PatientFormState, raw: string) => {
     if (VALIDATED_FIELDS.has(field)) {
-      const { value, warning } = applyPatientRule(field as any, raw, {
+      const { value, warning } = applyPatientRule(field as ValidatedField, raw, {
         fullName: form.fullName,
         dob: form.dob,
         phone: form.phone,
@@ -125,8 +130,12 @@ export function usePatientForm({
       await onSubmit(payload);
 
       if (closeOnSuccess) onClose();
-    } catch (err: any) {
-      setFormError(err?.message || "Something went wrong");
+    } catch (err) {
+      const message =
+        typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message?: string }).message)
+          : "Something went wrong";
+      setFormError(message);
     } finally {
       setSubmitting(false);
     }

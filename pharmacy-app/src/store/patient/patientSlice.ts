@@ -95,7 +95,7 @@ const patientSlice = createSlice({
       })
 
       /* Create patient */
-      .addCase(createPatientThunk.fulfilled, (state, action) => {
+      .addCase(createPatientThunk.fulfilled, (state) => {
         // backend returns { patientId }
         // Optionally trigger refetch in component after creation
         // For now, just clear error/loading

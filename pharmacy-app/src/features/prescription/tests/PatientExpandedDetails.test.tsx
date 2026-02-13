@@ -1,7 +1,7 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import type { ComponentProps } from 'react';
 
 import PrescriptionExpandedDetails from '../components/PrescriptionExpandedDetails';
 
@@ -25,9 +25,9 @@ import { calculateAgeFromDob } from '../prescriptionHistoryUtils';
 
 // ---------- Mock icons ----------
 vi.mock('lucide-react', () => ({
-  User: (props: any) => <svg data-testid="icon-user" {...props} />,
-  Pill: (props: any) => <svg data-testid="icon-pill" {...props} />,
-  AlertCircle: (props: any) => <svg data-testid="icon-alert" {...props} />,
+  User: (props: ComponentProps<'svg'>) => <svg data-testid="icon-user" {...props} />,
+  Pill: (props: ComponentProps<'svg'>) => <svg data-testid="icon-pill" {...props} />,
+  AlertCircle: (props: ComponentProps<'svg'>) => <svg data-testid="icon-alert" {...props} />,
 }));
 
 // ---------- Helpers ----------
@@ -35,11 +35,6 @@ const byTextExact =
   (text: string) =>
   (_: string, el: Element | null) =>
     (el?.textContent ?? '').trim() === text;
-
-const byTextIncludes =
-  (part: string) =>
-  (_: string, el: Element | null) =>
-    (el?.textContent ?? '').toLowerCase().includes(part.toLowerCase());
 
 function randomId() {
   return Math.random().toString(36).slice(2);
@@ -313,7 +308,7 @@ expect(inC.queryByText(byTextExact('INSTRUCTIONS'))).not.toBeInTheDocument();
   });
 
   it('shows age placeholder when dob invalid', () => {
-    vi.mocked(calculateAgeFromDob).mockReturnValueOnce(undefined as any);
+    vi.mocked(calculateAgeFromDob).mockReturnValueOnce(null);
 
     const patient = makePatient({ dob: 'invalid-date' });
 

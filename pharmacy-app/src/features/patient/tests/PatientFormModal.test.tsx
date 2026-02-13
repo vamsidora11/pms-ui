@@ -36,11 +36,15 @@ vi.mock("@components/common/Input/Input", () => ({
     onChange: (v: string) => void;
     error?: string | null;
   }) => {
-    const labelText =
-      (typeof props.label === "string" && props.label) ||
-      // for <RequiredLabel text="..." />
-      ((props.label as any)?.props?.text as string) ||
-      "input";
+    let labelText = "input";
+    if (typeof props.label === "string") {
+      labelText = props.label;
+    } else if (props.label && typeof props.label === "object") {
+      const maybeLabel = props.label as { props?: { text?: string } };
+      if (typeof maybeLabel.props?.text === "string") {
+        labelText = maybeLabel.props.text;
+      }
+    }
     const inputType = props.type ?? "text";
     return (
       <div data-testid={`mock-input-${labelText}`}>
@@ -95,10 +99,15 @@ vi.mock("@components/common/PhoneInput/PhoneInput", () => ({
     warning?: string | null;
     defaultCountry?: string;
   }) => {
-    const labelText =
-      (typeof props.label === "string" && props.label) ||
-      ((props.label as any)?.props?.text as string) ||
-      "Phone";
+    let labelText = "Phone";
+    if (typeof props.label === "string") {
+      labelText = props.label;
+    } else if (props.label && typeof props.label === "object") {
+      const maybeLabel = props.label as { props?: { text?: string } };
+      if (typeof maybeLabel.props?.text === "string") {
+        labelText = maybeLabel.props.text;
+      }
+    }
     return (
       <div data-testid="mock-phone-input">
         {props.label ? <div>{labelText}</div> : null}

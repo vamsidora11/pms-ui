@@ -15,6 +15,7 @@ vi.mock("../hooks/useAllergySearch", () => ({
 }));
 
 import { useAllergySearch } from "../hooks/useAllergySearch";
+const mockedUseAllergySearch = vi.mocked(useAllergySearch);
 
 describe("AllergySelector", () => {
   const onQueryChange = vi.fn();
@@ -27,7 +28,7 @@ describe("AllergySelector", () => {
   });
 
   it("renders input with label and placeholder", () => {
-    (useAllergySearch as any).mockReturnValue({
+    mockedUseAllergySearch.mockReturnValue({
       suggestions: [],
       loading: false,
       error: null,
@@ -53,7 +54,7 @@ describe("AllergySelector", () => {
   });
 
   it("renders selected chips and calls onRemove when clicking X", async () => {
-    (useAllergySearch as any).mockReturnValue({
+    mockedUseAllergySearch.mockReturnValue({
       suggestions: [],
       loading: false,
       error: null,
@@ -84,7 +85,7 @@ describe("AllergySelector", () => {
   });
 
   it("calls onQueryChange when typing in the input", async () => {
-  (useAllergySearch as any).mockReturnValue({
+  mockedUseAllergySearch.mockReturnValue({
     suggestions: [],
     loading: false,
     error: null,
@@ -127,7 +128,7 @@ describe("AllergySelector", () => {
     const setOpen = vi.fn();
     const setHighlightIndex = vi.fn();
 
-    (useAllergySearch as any).mockReturnValue({
+    mockedUseAllergySearch.mockReturnValue({
       suggestions: ["Penicillin", "Aspirin"],
       loading: false,
       error: null,
@@ -170,7 +171,7 @@ describe("AllergySelector", () => {
     const setHighlightIndex = vi.fn();
 
     // Loading
-    (useAllergySearch as any).mockReturnValue({
+    mockedUseAllergySearch.mockReturnValue({
       suggestions: [],
       loading: true,
       error: null,
@@ -194,7 +195,7 @@ describe("AllergySelector", () => {
     expect(screen.getByText(/searching…/i)).toBeInTheDocument();
 
     // Error
-    (useAllergySearch as any).mockReturnValue({
+    mockedUseAllergySearch.mockReturnValue({
       suggestions: [],
       loading: false,
       error: "Network error",

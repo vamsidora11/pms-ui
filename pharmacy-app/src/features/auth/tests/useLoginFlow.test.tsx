@@ -4,13 +4,18 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 // 🚧 Guard mocks: prevent real store/slice/persist from executing during unit tests
 vi.mock("@store/auth/authSlice", () => ({
-  loginUser: vi.fn((creds: any) => ({ type: "auth/loginUser", payload: creds })),
+  loginUser: vi.fn(
+    (creds: { username: string; password: string }) => ({
+      type: "auth/loginUser",
+      payload: creds,
+    })
+  ),
 }));
 
 vi.mock("store", () => ({}));
 
 vi.mock("redux-persist", () => ({
-  persistReducer: (_cfg: any, reducer: any) => reducer,
+  persistReducer: (_cfg: unknown, reducer: unknown) => reducer,
   persistStore: vi.fn(),
 }));
 
@@ -20,7 +25,7 @@ const mockNavigate = vi.fn();
 const mockToastSuccess = vi.fn();
 
 vi.mock("react-redux", async () => {
-  const actual = await vi.importActual<any>("react-redux");
+  const actual = await vi.importActual<typeof import("react-redux")>("react-redux");
   return {
     ...actual,
     useDispatch: () => mockDispatch,
@@ -28,7 +33,7 @@ vi.mock("react-redux", async () => {
 });
 
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<any>("react-router-dom");
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -69,7 +74,7 @@ describe("useLoginFlow (vitest)", () => {
     const FAKE_TOKEN = "header.payload.sig";
     mockDispatchUnwrapResolve({ accessToken: FAKE_TOKEN });
 
-    const decodeToken = vi.fn().mockReturnValue({ role: "pharmacist" as any });
+    const decodeToken = vi.fn().mockReturnValue({ role: "pharmacist" });
     const getRoute = vi.fn().mockReturnValue("/pharmacist/dashboard");
 
     const { result } = renderHook(() => useLoginFlow({ decodeToken, getRoute }));
@@ -105,7 +110,7 @@ describe("useLoginFlow (vitest)", () => {
 
   it("invalid payload (no role): sets error and returns { ok: false }", async () => {
     mockDispatchUnwrapResolve({ accessToken: "token" });
-    const decodeToken = vi.fn().mockReturnValue({} as any);
+    const decodeToken = vi.fn().mockReturnValue({});
 
     const { result } = renderHook(() => useLoginFlow({ decodeToken }));
 

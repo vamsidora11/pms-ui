@@ -83,6 +83,11 @@ type Props = {
   detailsLoading: boolean;
   detailsError: string | null;
   prescriptions: PrescriptionSummaryDto[];
+  prescriptionsLoading: boolean;
+  prescriptionsError: string | null;
+  prescriptionsHasMore: boolean;
+  prescriptionsLoadingMore: boolean;
+  onLoadMorePrescriptions: () => void | Promise<void>;
 
   onClickUpdate: () => void;
 };
@@ -92,6 +97,11 @@ export default function PatientDetailsPanel({
   detailsLoading,
   detailsError,
   prescriptions,
+  prescriptionsLoading,
+  prescriptionsError,
+  prescriptionsHasMore,
+  prescriptionsLoadingMore,
+  onLoadMorePrescriptions,
   onClickUpdate,
 }: Props) {
   // Empty state (unchanged)
@@ -235,13 +245,36 @@ export default function PatientDetailsPanel({
               <h2 className="font-semibold">Prescriptions</h2>
             </div>
             <div className="p-6 space-y-3">
-              {prescriptions.length ? (
+              {prescriptionsLoading && (
+                <div className="text-gray-500 text-center">Loading prescriptions...</div>
+              )}
+
+              {!prescriptionsLoading && prescriptionsError && (
+                <div className="text-red-600 text-center">{prescriptionsError}</div>
+              )}
+
+              {!prescriptionsLoading && !prescriptionsError && prescriptions.length ? (
                 prescriptions.map((rx) => (
                   <PrescriptionItem key={rx.id} rx={rx} />
                 ))
               ) : (
-                <div className="text-gray-500 text-center">
-                  No prescriptions found
+                !prescriptionsLoading &&
+                !prescriptionsError && (
+                  <div className="text-gray-500 text-center">
+                    No prescriptions found
+                  </div>
+                )
+              )}
+
+              {!prescriptionsLoading && !prescriptionsError && prescriptionsHasMore && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={onLoadMorePrescriptions}
+                    disabled={prescriptionsLoadingMore}
+                    className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {prescriptionsLoadingMore ? "Loading..." : "Load more"}
+                  </button>
                 </div>
               )}
             </div>

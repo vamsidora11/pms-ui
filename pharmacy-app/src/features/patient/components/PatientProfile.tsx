@@ -7,9 +7,7 @@ import UpdatePatientModal from "./updatePatient";
 import { createPatient, getPatientDetails, searchPatients } from "@api/patient";
 import { getPrescriptionsByPatient } from "@api/prescription";
 
-import type {
-  PatientDetailsDto
-} from "@store/patient/patienttype";
+import type { PatientDetailsDto } from "@store/patient/patienttype";
 import type {
   PrescriptionSummaryDto
 } from "@prescription/prescription.types";
@@ -23,12 +21,12 @@ import PatientDetailsPanel from "./PatientDetailsPanel";
 
 export default function PatientProfiles() {
   const directory = usePatientDirectory({
-    searchFn: searchPatients as any,
+    searchFn: (query, opts) => searchPatients(query, opts),
     debounceMs: 250,
     minChars: 1,
   });
 
-  const details = usePatientDetails(getPatientDetails as any);
+  const details = usePatientDetails((id) => getPatientDetails(id));
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -36,7 +34,8 @@ export default function PatientProfiles() {
 
   // ✅ Prescriptions (loads automatically when selected patient changes)
   const prescriptionsState = usePatientPrescriptions<PrescriptionSummaryDto>(
-    getPrescriptionsByPatient as any,
+    (patientId, pageSize, continuationToken) =>
+      getPrescriptionsByPatient(patientId, pageSize, continuationToken),
     details.selectedPatient?.id ?? null,
     10,
   );

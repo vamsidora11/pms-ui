@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import TopNavBar from "./TopNavBar";
-import React from "react";
+import type { ComponentProps } from "react";
 
 vi.mock("lucide-react", () => ({
-  Bell: (props: any) => <svg data-testid="bell-icon" {...props} />,
-  Settings: (props: any) => <svg data-testid="settings-icon" {...props} />,
-  ChevronDown: (props: any) => <svg data-testid="chevron-icon" {...props} />,
+  Bell: (props: ComponentProps<"svg">) => <svg data-testid="bell-icon" {...props} />,
+  Settings: (props: ComponentProps<"svg">) => <svg data-testid="settings-icon" {...props} />,
+  ChevronDown: (props: ComponentProps<"svg">) => <svg data-testid="chevron-icon" {...props} />,
 }));
 
 describe("TopNavBar Component", () => {

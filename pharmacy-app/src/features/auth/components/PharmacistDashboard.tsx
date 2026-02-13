@@ -1,12 +1,11 @@
 // PharmacistDashboard.tsx
-import { useMemo, useCallback, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import {
   FileText,
   Clock,
   Package,
   AlertTriangle,
-  Activity
 } from "lucide-react";
 
 import DataTable from "@components/common/Table/Table";
@@ -63,7 +62,7 @@ export default function PharmacistDashboard() {
     readyForPickup: todaysPrescriptions.filter(
       p => p.status === "Active" || p.status === "Reviewed"
     ).length,
-    alerts: todaysPrescriptions.filter(p => p.alerts && p.alerts.length > 0).length,
+    alerts: todaysPrescriptions.filter(p => Boolean(p.alerts)).length,
     todayTotal: todaysPrescriptions.length
   }), [todaysPrescriptions]);
 
@@ -99,11 +98,11 @@ export default function PharmacistDashboard() {
         sortable: true,
         filterable: true,
         width: 150,
-        render: value => (
-          <div className="font-semibold text-gray-900">
-            {value}
-          </div>
-        )
+        render: value => {
+          const display =
+            typeof value === "string" || typeof value === "number" ? String(value) : "";
+          return <div className="font-semibold text-gray-900">{display}</div>;
+        }
       },
       {
         key: "patientName",
@@ -208,9 +207,7 @@ export default function PharmacistDashboard() {
           title="Pending Prescriptions"
           value={stats.pending}
           icon={<Clock className="w-5 h-5 text-amber-600" />}
-          trend={
-            <TrendIndicator value={trends.pending} inverse />
-          }
+          trend={<TrendIndicator value={trends.pending} inverse />}
         />
 
         <Kpi
@@ -229,9 +226,7 @@ export default function PharmacistDashboard() {
           title="Today's Prescriptions"
           value={stats.todayTotal}
           icon={<FileText className="w-5 h-5 text-blue-600" />}
-          trend={
-            <TrendIndicator value={trends.todayTotal} />
-          }
+          trend={<TrendIndicator value={trends.todayTotal} />}
         />
 
       </div>
@@ -292,12 +287,12 @@ function Kpi({
   title,
   value,
   icon,
-  
+  trend,
 }: {
   title: string;
   value: number;
   icon: React.ReactNode;
-  
+  trend?: React.ReactNode;
 }) {
   return (
     <div className="bg-white rounded-xl border p-5 shadow-sm hover:shadow-lg transition-all">
@@ -305,7 +300,7 @@ function Kpi({
         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
           {icon}
         </div>
-        
+        {trend}
       </div>
 
       <div className="text-2xl font-bold">

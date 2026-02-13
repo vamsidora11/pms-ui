@@ -17,7 +17,10 @@ type Options = { pageSize?: number; skipInitialFetch?: boolean };
 export function usePrescriptionHistoryData(options?: Options) {
   const dispatch = useDispatch<AppDispatch>();
   const prescriptionState = useSelector((s: RootState) => s.prescriptions);
-  const prescriptions = prescriptionState.items || [];
+  const prescriptions = useMemo(
+    () => prescriptionState.items ?? [],
+    [prescriptionState.items]
+  );
   const selected = prescriptionState.selected;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
  
@@ -89,9 +92,7 @@ export function usePrescriptionHistoryData(options?: Options) {
  
   /* ---------------- Derived data ---------------- */
   const expandedDetails: PrescriptionDetailsDto | null =
-    expandedRow && selected?.id === expandedRow.id
-      ? (selected as PrescriptionDetailsDto)
-      : null;
+    expandedRow && selected?.id === expandedRow.id ? selected : null;
  
   const expandedPatient: PatientDetails | null =
     expandedRow ? patientCache[expandedRow.patientId] ?? null : null;

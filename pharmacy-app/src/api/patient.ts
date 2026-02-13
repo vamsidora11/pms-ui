@@ -46,11 +46,18 @@ export const searchPatients = async (
     });
 
     return res.data as PatientSummaryDto[];
-  } catch (error: any) {
+  } catch (error) {
     // Axios v1 cancellation markers
-    if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED" || error?.name === "AbortError") {
-      // let caller decide to ignore
-      throw error;
+    if (typeof error === "object" && error !== null) {
+      const errObj = error as { name?: string; code?: string };
+      if (
+        errObj.name === "CanceledError" ||
+        errObj.code === "ERR_CANCELED" ||
+        errObj.name === "AbortError"
+      ) {
+        // let caller decide to ignore
+        throw error;
+      }
     }
     console.error("Failed to search patients:", error);
     throw error;
@@ -77,7 +84,7 @@ export const updatePatient = async (id: string, request: UpdatePatientRequest) =
   try {
     const response = await api.put(`${ENDPOINTS.patientDetails}/${id}`, request);
     return response.data;
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Failed to update patient ${id}:`, error);
     throw error;
   }

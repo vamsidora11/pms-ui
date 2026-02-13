@@ -83,6 +83,15 @@ export function usePrescriptionEntry() {
   const [draft, setDraft] = useState<PrescriptionDraft>(INITIAL_DRAFT);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as { message?: string };
+      return errorObj.message || "Server error";
+    }
+    return "Server error";
+  };
+
   // ✅ derived (memo) – avoids recomputing validation unnecessarily
   const isNextDisabled = useMemo(() => {
     if (currentStep === 1) return !validatePatientStep(draft).valid;
@@ -155,13 +164,12 @@ export function usePrescriptionEntry() {
       );
 
       reset();
-    } catch (error: unknown) {
-      const anyErr = error as any;
-      console.error("Create prescription failed:", anyErr);
+    } catch (error) {
+      console.error("Create prescription failed:", error);
 
       toast.error(
         "Failed to create prescription",
-        anyErr?.message || "Server error"
+        getErrorMessage(error)
       );
     } finally {
       setIsSubmitting(false);

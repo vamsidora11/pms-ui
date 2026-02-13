@@ -32,12 +32,13 @@ export function useLabelQueue(): UseLabelQueueResult {
       const res = await getLabelQueue();
       if (!mountedRef.current) return;
       setPrescriptions(res.items ?? []);
-    } catch (e) {
+    } catch {
       if (!mountedRef.current) return;
       setError("Failed to load label queue. Please try again.");
     } finally {
-      if (!mountedRef.current) return;
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

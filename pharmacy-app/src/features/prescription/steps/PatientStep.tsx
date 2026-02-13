@@ -43,7 +43,6 @@ export default function PatientStep({
     showResults,
     onQueryChange,
     selectPatient,
-    openResults,
   } = usePatientSearch({ searchFn, debounceMs, minChars });
 
   return (

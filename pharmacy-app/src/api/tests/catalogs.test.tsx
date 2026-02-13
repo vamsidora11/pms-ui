@@ -58,8 +58,7 @@ describe("catalog API > searchAllergies", () => {
   });
 
   it("should propagate abort errors", async () => {
-    const abortError = new Error("aborted") as any;
-    abortError.name = "AbortError";
+    const abortError = Object.assign(new Error("aborted"), { name: "AbortError" });
     mockedApi.get.mockRejectedValueOnce(abortError);
 
     await expect(catalog.searchAllergies("allergy")).rejects.toThrow(abortError);

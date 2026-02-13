@@ -321,12 +321,6 @@ export default function DataTable<T extends object>({
   const totalRows = serverSide ? totalItems ?? data.length : processedData.length;
   const totalPages = Math.max(1, Math.ceil(totalRows / Math.max(1, selectedPageSize)));
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * selectedPageSize;
 

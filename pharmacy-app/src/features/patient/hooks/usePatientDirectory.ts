@@ -26,6 +26,14 @@ export function usePatientDirectory({
   const [listError, setListError] = useState<string | null>(null);
 
   const listAbortRef = useRef<AbortController | null>(null);
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as { name?: string; code?: string; message?: string };
+      return errorObj.message || "Failed to fetch patients";
+    }
+    return "Failed to fetch patients";
+  };
 
   useEffect(() => {
     listAbortRef.current?.abort();
@@ -44,10 +52,13 @@ export function usePatientDirectory({
         });
 
         setPatients(result);
-      } catch (err: any) {
-        if (err?.name === "AbortError" || err?.code === "ERR_CANCELED") return;
+      } catch (err) {
+        if (typeof err === "object" && err !== null) {
+          const errorObj = err as { name?: string; code?: string };
+          if (errorObj.name === "AbortError" || errorObj.code === "ERR_CANCELED") return;
+        }
         console.error("searchPatients failed:", err);
-        setListError(err?.message || "Failed to fetch patients");
+        setListError(getErrorMessage(err));
         setPatients([]);
       } finally {
         setListLoading(false);

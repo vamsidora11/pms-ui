@@ -28,13 +28,14 @@ export function useLabelPrescriptionDetails(): UseLabelPrescriptionDetailsResult
       const data = await getPrescriptionForLabels(id);
       if (requestId !== requestIdRef.current) return; // ignore stale response
       setSelected(data);
-    } catch (e) {
+    } catch {
       if (requestId !== requestIdRef.current) return;
       setError("Failed to load prescription details.");
       setSelected(null);
     } finally {
-      if (requestId !== requestIdRef.current) return;
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

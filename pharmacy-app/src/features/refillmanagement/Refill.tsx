@@ -68,7 +68,7 @@ export default function Refill() {
           className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
           value={statusFilter}
           onChange={(e) => {
-            setStatusFilter(e.target.value as any);
+            setStatusFilter(e.target.value as never);
             setPage(1);
           }}
         >

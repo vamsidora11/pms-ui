@@ -37,7 +37,7 @@ describe("auth API", () => {
     it("should return accessToken on successful login", async () => {
       mockedPost.mockResolvedValueOnce({
         data: { accessToken: "mock-token" },
-      } as any);
+      } as { data: { accessToken: string } });
 
       const result = await loginApi({
         username: "test",
@@ -70,7 +70,7 @@ describe("auth API", () => {
       vi.spyOn(console, "log").mockImplementation(() => {});
       mockedPost.mockResolvedValueOnce({
         data: { accessToken: "new-token" },
-      } as any);
+      } as { data: { accessToken: string } });
 
       const result = await refreshApi();
 
@@ -95,7 +95,7 @@ describe("auth API", () => {
 
   describe("logoutApi", () => {
     it("should call logout endpoint successfully", async () => {
-      mockedPost.mockResolvedValueOnce({} as any);
+      mockedPost.mockResolvedValueOnce({} as Record<string, never>);
 
       await logoutApi();
 

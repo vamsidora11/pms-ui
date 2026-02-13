@@ -1,10 +1,16 @@
 import React from "react";
+import type { ComponentProps } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import type {
+  CreatePatientRequest,
+  PatientDetailsDto,
+} from "@store/patient/patienttype";
 
 // If you DON'T have a global lucide mock in setupFiles, keep this:
 vi.mock("lucide-react", () => {
-  const Svg = (props: any) => React.createElement("svg", props);
+  const Svg = (props: ComponentProps<"svg">) =>
+    React.createElement("svg", props);
   return { Plus: Svg };
 });
 
@@ -15,7 +21,7 @@ vi.mock("../components/addpatient", () => {
     onSave,
   }: {
     onClose: () => void;
-    onSave: (req: any) => Promise<void> | void;
+    onSave: (req: CreatePatientRequest) => Promise<void> | void;
   }) => (
     <div data-testid="add-patient-modal">
       <button onClick={() => onSave({ fullName: "New User" })}>
@@ -34,8 +40,8 @@ vi.mock("../components/updatePatient", () => {
     patient,
   }: {
     onClose: () => void;
-    onSave: (updated: any) => Promise<void> | void;
-    patient: any;
+    onSave: (updated: PatientDetailsDto) => Promise<void> | void;
+    patient: PatientDetailsDto;
   }) => (
     <div data-testid="update-patient-modal">
       <div>editing-{patient?.id}</div>
@@ -92,43 +98,60 @@ vi.mock("../components/PatientDetailsPanel", () => {
 });
 
 // ---- Mock APIs ----
-const createPatientMock = vi.fn();
-const searchPatientsMock = vi.fn();
-const getPatientDetailsMock = vi.fn();
-const getPrescriptionsByPatientMock = vi.fn();
+type PatientListItem = { id: string; fullName?: string };
+
+const createPatientMock = vi.fn<
+  (req: CreatePatientRequest) => Promise<{ patientId: string }>
+>();
+const searchPatientsMock = vi.fn<
+  (query?: string) => Promise<PatientListItem[]>
+>();
+const getPatientDetailsMock = vi.fn<
+  (id: string) => Promise<PatientDetailsDto>
+>();
+const getPrescriptionsByPatientMock = vi.fn<
+  (
+    patientId: string,
+    pageSize?: number,
+    continuationToken?: string | null
+  ) => Promise<{ items: PatientListItem[]; continuationToken: string | null }>
+>();
 
 vi.mock("@api/patient", () => ({
-  createPatient: (...args: any[]) => createPatientMock(...args),
-  searchPatients: (...args: any[]) => searchPatientsMock(...args),
-  getPatientDetails: (...args: any[]) => getPatientDetailsMock(...args),
+  createPatient: (req: CreatePatientRequest) => createPatientMock(req),
+  searchPatients: (query?: string) => searchPatientsMock(query),
+  getPatientDetails: (id: string) => getPatientDetailsMock(id),
 }));
 
 vi.mock("@api/prescription", () => ({
-  getPrescriptionsByPatient: (...args: any[]) =>
-    getPrescriptionsByPatientMock(...args),
+  getPrescriptionsByPatient: (
+    patientId: string,
+    pageSize?: number,
+    continuationToken?: string | null
+  ) => getPrescriptionsByPatientMock(patientId, pageSize, continuationToken),
 }));
 
 // ---- Mock hooks ----
 type DirReturn = {
-  patients: Array<{ id: string; fullName?: string }>;
+  patients: PatientListItem[];
   searchTerm: string;
   debouncedSearch: string | null;
   setSearchTerm: (v: string) => void;
-  setPatients: (ps: any[]) => void;
+  setPatients: (ps: PatientListItem[]) => void;
   listLoading: boolean;
   listError: string | null;
 };
 
 type DetailsReturn = {
-  selectedPatient: { id: string; fullName?: string } | null;
+  selectedPatient: PatientListItem | null;
   selectPatient: (id: string) => Promise<void>;
-  setSelectedPatient: (p: any) => void;
+  setSelectedPatient: (p: PatientListItem | null) => void;
   detailsLoading: boolean;
   detailsError: string | null;
 };
 
 type RxReturn = {
-  prescriptions: any[];
+  prescriptions: Array<{ id: string }>;
   prescriptionsLoading: boolean;
   prescriptionsError: string | null;
   hasMore: boolean;
@@ -137,20 +160,18 @@ type RxReturn = {
   reset: () => void;
 };
 
-const usePatientDirectoryMock = vi.fn<(...args: any[]) => DirReturn>();
-const usePatientDetailsMock = vi.fn<(...args: any[]) => DetailsReturn>();
-const usePatientPrescriptionsMock = vi.fn<
-  (...args: any[]) => RxReturn>();
+const usePatientDirectoryMock = vi.fn<() => DirReturn>();
+const usePatientDetailsMock = vi.fn<() => DetailsReturn>();
+const usePatientPrescriptionsMock = vi.fn<() => RxReturn>();
 
 vi.mock("../hooks/usePatientDirectory", () => ({
-  usePatientDirectory: (...args: any[]) => usePatientDirectoryMock(...args),
+  usePatientDirectory: () => usePatientDirectoryMock(),
 }));
 vi.mock("../hooks/usePatientDetails", () => ({
-  usePatientDetails: (...args: any[]) => usePatientDetailsMock(...args),
+  usePatientDetails: () => usePatientDetailsMock(),
 }));
 vi.mock("../hooks/usePatientPrescriptions", () => ({
-  usePatientPrescriptions: (...args: any[]) =>
-    usePatientPrescriptionsMock(...args),
+  usePatientPrescriptions: () => usePatientPrescriptionsMock(),
 }));
 
 import PatientProfiles from "../components/PatientProfile";

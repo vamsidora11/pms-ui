@@ -1,4 +1,4 @@
-import { Bell, Settings, ChevronDown } from "lucide-react";
+import { Bell } from "lucide-react";
 import type { UserRole } from "../../../store/auth/authtype"; 
 
 type TopNavBarProps = {

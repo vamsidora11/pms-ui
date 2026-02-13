@@ -7,56 +7,103 @@ import {
   getPrescriptionsByPatient,
   cancelPrescription as cancelPrescriptionApi,
 } from "@api/prescription";
-import type { PrescriptionHistoryQueryParams } from "@api/prescription";
+import type {
+  PrescriptionHistoryPageResult,
+  PrescriptionHistoryQueryParams,
+} from "@api/prescription";
+import type {
+  CreatePrescriptionRequest,
+  PrescriptionDetailsDto,
+  PrescriptionSummaryDto,
+} from "@prescription/prescription.types";
 
 /* ===================== THUNKS ===================== */
 
-export const createPrescription = createAsyncThunk(
+type PrescriptionListItem = PrescriptionSummaryDto | PrescriptionDetailsDto;
+
+function getErrorMessage(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && error !== null) {
+    const err = error as {
+      response?: { data?: { message?: string } };
+      message?: string;
+    };
+    return err.response?.data?.message || err.message || "Unknown error";
+  }
+  return "Unknown error";
+}
+
+export const createPrescription = createAsyncThunk<
+  PrescriptionDetailsDto,
+  CreatePrescriptionRequest,
+  { rejectValue: string }
+>(
   "prescriptions/create",
-  async (prescriptionData: any, { rejectWithValue }) => {
+  async (prescriptionData, { rejectWithValue }) => {
     try {
       return await createPrescriptionApi(prescriptionData);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-export const fetchPrescriptionDetails = createAsyncThunk(
+export const fetchPrescriptionDetails = createAsyncThunk<
+  PrescriptionDetailsDto,
+  string,
+  { rejectValue: string }
+>(
   "prescriptions/details",
   async (id: string, { rejectWithValue }) => {
     try {
       return await getPrescriptionDetails(id);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-export const cancelPrescription = createAsyncThunk(
+export const cancelPrescription = createAsyncThunk<
+  string,
+  { id: string; reason?: string },
+  { rejectValue: string }
+>(
   "prescriptions/cancel",
-  async ({ id, reason }: { id: string; reason?: string }, { rejectWithValue }) => {
+  async ({ id, reason }, { rejectWithValue }) => {
     try {
       await cancelPrescriptionApi(id, reason);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-export const fetchAllPrescriptions = createAsyncThunk(
+export const fetchAllPrescriptions = createAsyncThunk<
+  PrescriptionHistoryPageResult,
+  PrescriptionHistoryQueryParams | undefined,
+  { rejectValue: string }
+>(
   "prescriptions/fetchAll",
-  async (query: PrescriptionHistoryQueryParams = {}, { rejectWithValue }) => {
+  async (query, { rejectWithValue }) => {
     try {
-      return await getAllPrescriptions(query);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return await getAllPrescriptions(query ?? {});
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-export const searchPrescriptionsThunk = createAsyncThunk(
+export const searchPrescriptionsThunk = createAsyncThunk<
+  { items: PrescriptionSummaryDto[]; continuationToken: string | null; reset: boolean },
+  {
+    searchTerm: string;
+    pageSize?: number;
+    continuationToken?: string | null;
+    reset?: boolean;
+  },
+  { rejectValue: string }
+>(
   "prescriptions/search",
   async (
     {
@@ -64,11 +111,6 @@ export const searchPrescriptionsThunk = createAsyncThunk(
       pageSize = 10,
       continuationToken = null,
       reset = true,
-    }: {
-      searchTerm: string;
-      pageSize?: number;
-      continuationToken?: string | null;
-      reset?: boolean;
     },
     { rejectWithValue }
   ) => {
@@ -79,13 +121,22 @@ export const searchPrescriptionsThunk = createAsyncThunk(
         continuationToken: result.continuationToken || null,
         reset,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-export const fetchPrescriptionsByPatient = createAsyncThunk(
+export const fetchPrescriptionsByPatient = createAsyncThunk<
+  { items: PrescriptionSummaryDto[]; continuationToken: string | null; reset: boolean },
+  {
+    patientId: string;
+    pageSize?: number;
+    continuationToken?: string | null;
+    reset?: boolean;
+  },
+  { rejectValue: string }
+>(
   "prescriptions/byPatient",
   async (
     {
@@ -93,11 +144,6 @@ export const fetchPrescriptionsByPatient = createAsyncThunk(
       pageSize = 10,
       continuationToken = null,
       reset = true,
-    }: {
-      patientId: string;
-      pageSize?: number;
-      continuationToken?: string | null;
-      reset?: boolean;
     },
     { rejectWithValue }
   ) => {
@@ -108,8 +154,8 @@ export const fetchPrescriptionsByPatient = createAsyncThunk(
         continuationToken: result.continuationToken || null,
         reset,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -117,8 +163,8 @@ export const fetchPrescriptionsByPatient = createAsyncThunk(
 /* ===================== STATE ===================== */
 
 interface PrescriptionState {
-  items: any[];
-  selected?: any;
+  items: PrescriptionListItem[];
+  selected?: PrescriptionDetailsDto;
   continuationToken: string | null;
   pageNumber: number;
   pageSize: number;
@@ -169,7 +215,7 @@ const slice = createSlice({
       })
       .addCase(createPrescription.rejected, (s, a) => {
         s.status = "failed";
-        s.error = (a.payload as string) || a.error.message;
+        s.error = a.payload ?? a.error.message ?? "Unknown error";
       });
 
     b.addCase(fetchPrescriptionDetails.pending, (s) => {
@@ -182,7 +228,7 @@ const slice = createSlice({
       })
       .addCase(fetchPrescriptionDetails.rejected, (s, a) => {
         s.status = "failed";
-        s.error = (a.payload as string) || a.error.message;
+        s.error = a.payload ?? a.error.message ?? "Unknown error";
       });
 
     b.addCase(cancelPrescription.fulfilled, (s, a) => {
@@ -207,7 +253,7 @@ const slice = createSlice({
       })
       .addCase(fetchAllPrescriptions.rejected, (s, a) => {
         s.status = "failed";
-        s.error = (a.payload as string) || a.error.message;
+        s.error = a.payload ?? a.error.message ?? "Unknown error";
       });
 
     b.addCase(searchPrescriptionsThunk.pending, (s) => {
@@ -231,7 +277,7 @@ const slice = createSlice({
       })
       .addCase(searchPrescriptionsThunk.rejected, (s, a) => {
         s.status = "failed";
-        s.error = (a.payload as string) || a.error.message;
+        s.error = a.payload ?? a.error.message ?? "Unknown error";
       });
 
     b.addCase(fetchPrescriptionsByPatient.pending, (s) => {
@@ -255,7 +301,7 @@ const slice = createSlice({
       })
       .addCase(fetchPrescriptionsByPatient.rejected, (s, a) => {
         s.status = "failed";
-        s.error = (a.payload as string) || a.error.message;
+        s.error = a.payload ?? a.error.message ?? "Unknown error";
       });
   },
 });

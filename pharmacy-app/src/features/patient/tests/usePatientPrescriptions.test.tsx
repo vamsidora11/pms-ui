@@ -120,19 +120,19 @@ describe("usePatientPrescriptions", () => {
   });
 
   it("prevents race conditions when switching patients quickly", async () => {
-    let resolveFirst: (v: any) => void;
-    let resolveSecond: (v: any) => void;
+    let resolveFirst: (v: { items: Prescription[]; continuationToken: string | null }) => void;
+    let resolveSecond: (v: { items: Prescription[]; continuationToken: string | null }) => void;
 
-    const firstPromise = new Promise((res) => {
+    const firstPromise = new Promise<{ items: Prescription[]; continuationToken: string | null }>((res) => {
       resolveFirst = res;
     });
-    const secondPromise = new Promise((res) => {
+    const secondPromise = new Promise<{ items: Prescription[]; continuationToken: string | null }>((res) => {
       resolveSecond = res;
     });
 
     getPrescriptionsByPatient
-      .mockReturnValueOnce(firstPromise as any)
-      .mockReturnValueOnce(secondPromise as any);
+      .mockReturnValueOnce(firstPromise)
+      .mockReturnValueOnce(secondPromise);
 
     const { result, rerender } = renderHook(
       ({ patientId }) =>

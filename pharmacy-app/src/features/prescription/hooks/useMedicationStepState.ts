@@ -76,7 +76,13 @@ export function useMedicationStepState({
 
   // --- map rows -> drafts (what parent needs)
   const drafts = useMemo<MedicationDraft[]>(
-    () => rows.map(({ uid, isSearching, ...rest }) => rest),
+    () =>
+      rows.map((row) => {
+        const draft = { ...row } as Partial<MedicationRow>;
+        delete draft.uid;
+        delete draft.isSearching;
+        return draft as MedicationDraft;
+      }),
     [rows]
   );
 
@@ -203,7 +209,7 @@ export function useMedicationStepState({
           const data = await searchFn(q);
           if (reqIdByUidRef.current[uid] !== requestId) return;
           setResults((prev) => ({ ...prev, [uid]: Array.isArray(data) ? data : [] }));
-        } catch (e: unknown) {
+        } catch {
           if (reqIdByUidRef.current[uid] !== requestId) return;
           setResults((prev) => ({ ...prev, [uid]: [] }));
         } finally {

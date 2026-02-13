@@ -7,12 +7,21 @@ import userEvent from "@testing-library/user-event";
 import UpdatePatientModal from "../components/updatePatient";
 import type { PatientDetailsDto } from "@store/patient/patienttype";
 import * as patientApi from "@api/patient";
-import React from "react";
 
 // Mock PatientFormModal to handle submit
 vi.mock("../components/PatientFormModal", () => {
   return {
-    default: ({ onSubmit, onClose, initialValues, submitLabel }: any) => (
+    default: ({
+      onSubmit,
+      onClose,
+      initialValues,
+      submitLabel,
+    }: {
+      onSubmit: (values: PatientDetailsDto) => void;
+      onClose: () => void;
+      initialValues: PatientDetailsDto;
+      submitLabel: string;
+    }) => (
       <div>
         <button data-testid="modal-close" onClick={onClose}>
           Close
@@ -40,8 +49,8 @@ describe("UpdatePatientModal", () => {
     allergies: ["Peanuts"],
   };
 
-  let onClose: vi.Mock;
-  let onSave: vi.Mock;
+  let onClose: ReturnType<typeof vi.fn>;
+  let onSave: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();

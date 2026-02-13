@@ -11,10 +11,29 @@
 import { describe, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import AddPatientModal from "../components/addpatient";
+import type { CreatePatientRequest } from "@store/patient/patienttype";
 
 // Mock PatientFormModal to simplify testing
 vi.mock("../components/PatientFormModal", () => ({
-  default: ({ title, submitLabel, onClose, onSubmit }: any) => (
+  default: ({
+    title,
+    submitLabel,
+    onClose,
+    onSubmit,
+  }: {
+    title: string;
+    submitLabel: string;
+    onClose: () => void;
+    onSubmit: (values: {
+      fullName: string;
+      dob: string;
+      gender: string;
+      phone: string;
+      email: string;
+      address: string;
+      allergies: string[];
+    }) => void;
+  }) => (
     <div>
       <h3>{title}</h3>
       <button aria-label="submit-button" onClick={() => onSubmit({
@@ -35,7 +54,7 @@ vi.mock("../components/PatientFormModal", () => ({
 
 describe("AddPatientModal", () => {
   let onClose: () => void;
-  let onSave: (request: any) => void;
+  let onSave: (request: CreatePatientRequest) => void;
 
   beforeEach(() => {
     onClose = vi.fn();

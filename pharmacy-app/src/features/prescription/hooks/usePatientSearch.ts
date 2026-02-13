@@ -27,6 +27,15 @@ export function usePatientSearch(options: Options = {}) {
   const debouncedQuery = useDebouncedValue(query, debounceMs);
   const requestIdRef = useRef(0);
 
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as { message?: string };
+      return errorObj.message || "Failed to search patients";
+    }
+    return "Failed to search patients";
+  };
+
   useEffect(() => {
     const q = (debouncedQuery ?? "").trim();
 
@@ -47,10 +56,9 @@ export function usePatientSearch(options: Options = {}) {
         const data = await searchFn(q);
         if (requestId !== requestIdRef.current) return;
         setResults(Array.isArray(data) ? data : []);
-      } catch (e: unknown) {
+      } catch (e) {
         if (requestId !== requestIdRef.current) return;
-        const anyE = e as any;
-        setError(anyE?.message || "Failed to search patients");
+        setError(getErrorMessage(e));
         setResults([]);
       } finally {
         if (requestId === requestIdRef.current) setLoading(false);

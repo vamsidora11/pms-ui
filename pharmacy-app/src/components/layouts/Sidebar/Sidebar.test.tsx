@@ -13,9 +13,10 @@ let mockCollapsed = false;
 // Mock react-redux
 // =========================
 vi.mock("react-redux", () => {
+  type MockState = { ui: { sidebarCollapsed: boolean } };
   return {
     useDispatch: () => mockDispatch,
-    useSelector: (selector: any) =>
+    useSelector: (selector: (state: MockState) => unknown) =>
       selector({
         ui: { sidebarCollapsed: mockCollapsed },
       }),
@@ -142,4 +143,3 @@ describe("Sidebar Component", () => {
     expect(screen.queryByText("© 2025 Pharmacy App")).not.toBeInTheDocument();
   });
 });
-``

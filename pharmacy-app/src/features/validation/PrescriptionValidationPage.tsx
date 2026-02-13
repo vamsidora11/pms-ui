@@ -28,17 +28,14 @@ export default function PrescriptionValidationDetailsPage() {
 
   const { ui, actions } = useValidationUiState();
 
-  // useEffect(() => {
-  //   if (data) actions.init(data);
-  // }, [data, actions]);
   useEffect(() => {
-  if (!data) return;
+    if (!data) return;
 
-  // ✅ guard to avoid dispatching INIT repeatedly
-  if (ui.data?.id === data.id) return;
+    // guard to avoid dispatching INIT repeatedly
+    if (ui.data?.id === data.id) return;
 
-  actions.init(data);
-}, [data?.id, ui.data?.id, actions.init]);
+    actions.init(data);
+  }, [data, ui.data?.id, actions]);
 
   const viewData = (ui.data ?? data) as PrescriptionDetailsDto | null;
 
@@ -240,3 +237,4 @@ function KV({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   );
 }
+

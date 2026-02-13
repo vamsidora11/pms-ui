@@ -52,10 +52,7 @@ api.interceptors.response.use(
 
 
         // Update axios defaults for future requests
-        (api.defaults.headers as any).common = {
-          ...(api.defaults.headers as any).common,
-          Authorization: `Bearer ${newToken}`,
-        };
+        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
         // Ensure the retried request carries the new token even if defaults merge doesn’t apply
         const headers = new AxiosHeaders(originalRequest.headers);

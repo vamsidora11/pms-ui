@@ -10,27 +10,40 @@ export function usePrescriptionDetails(rxId: string) {
   useEffect(() => {
     let alive = true;
 
-    (async () => {
+    const getErrorMessage = (err: unknown): string => {
+      if (typeof err === "string") return err;
+      if (typeof err === "object" && err !== null) {
+        const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
+        return (
+          errorObj.response?.data?.message ||
+          errorObj.message ||
+          "Failed to load prescription"
+        );
+      }
+      return "Failed to load prescription";
+    };
+
+    const run = async (): Promise<void> => {
       setLoading(true);
       setError(null);
 
       try {
         const res = await getPrescriptionById(rxId);
-        if (!alive) return;
-        setData(res);
-      } catch (e: unknown) {
-        const anyE = e as any;
-        if (!alive) return;
-        setError(
-          anyE?.response?.data?.message ||
-            anyE?.message ||
-            "Failed to load prescription"
-        );
+        if (alive) {
+          setData(res);
+        }
+      } catch (e) {
+        if (alive) {
+          setError(getErrorMessage(e));
+        }
       } finally {
-        if (!alive) return;
-        setLoading(false);
+        if (alive) {
+          setLoading(false);
+        }
       }
-    })();
+    };
+
+    void run();
 
     return () => {
       alive = false;

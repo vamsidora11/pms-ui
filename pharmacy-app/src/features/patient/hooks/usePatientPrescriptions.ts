@@ -49,10 +49,14 @@ export function usePatientPrescriptions<T>(
 
       setItems(res.items ?? []);
       setToken(res.continuationToken ?? null);
-    } catch (err: any) {
+    } catch (err) {
       if (reqId !== reqIdRef.current) return;
       console.error("getPrescriptionsByPatient failed:", err);
-      setError(err?.message || "Failed to load prescriptions");
+      const message =
+        typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message?: string }).message)
+          : "Failed to load prescriptions";
+      setError(message);
       setItems([]);
       setToken(null);
     } finally {
@@ -76,10 +80,14 @@ export function usePatientPrescriptions<T>(
 
       setItems((prev) => [...prev, ...(res.items ?? [])]);
       setToken(res.continuationToken ?? null);
-    } catch (err: any) {
+    } catch (err) {
       if (reqId !== reqIdRef.current) return;
       console.error("loadMore prescriptions failed:", err);
-      setError(err?.message || "Failed to load more prescriptions");
+      const message =
+        typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message?: string }).message)
+          : "Failed to load more prescriptions";
+      setError(message);
     } finally {
       if (reqId === reqIdRef.current) setLoadingMore(false);
     }

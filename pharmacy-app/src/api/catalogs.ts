@@ -23,15 +23,32 @@ export async function searchAllergies(
     const data = Array.isArray(res.data) ? res.data : [];
     // Map to plain string[] while guarding against bad shapes
     const labels = data
-      .map((item: any) => (item?.code ?? "").toString().trim())
+      .map((item: unknown) => {
+        if (typeof item === "object" && item !== null && "code" in item) {
+          const code = (item as { code?: unknown }).code;
+          if (typeof code === "string" || typeof code === "number") {
+            return String(code).trim();
+          }
+        }
+        return "";
+      })
       .filter((s: string) => s.length > 0);
 
     return labels;
-  } catch (err: any) {
-    if (err?.name === "AbortError" || err?.code === "ERR_CANCELED") throw err;
+  } catch (err) {
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as { name?: string; code?: string };
+      if (errorObj.name === "AbortError" || errorObj.code === "ERR_CANCELED") throw err;
+    }
     console.error("searchAllergies failed:", {
-      status: err?.response?.status,
-      data: err?.response?.data,
+      status:
+        typeof err === "object" && err !== null && "response" in err
+          ? (err as { response?: { status?: number; data?: unknown } }).response?.status
+          : undefined,
+      data:
+        typeof err === "object" && err !== null && "response" in err
+          ? (err as { response?: { status?: number; data?: unknown } }).response?.data
+          : undefined,
     });
     throw err;
   }

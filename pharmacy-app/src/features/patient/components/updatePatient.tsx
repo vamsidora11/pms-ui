@@ -17,6 +17,14 @@ export default function UpdatePatientModal({
   onClose,
   onSave,
 }: UpdatePatientModalProps) {
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as { message?: string };
+      return errorObj.message || "Error updating patient";
+    }
+    return "Error updating patient";
+  };
   const initialValues: PatientFormValues = {
     fullName: patient.fullName,
     dob: patient.dob ? patient.dob.split("T")[0] : "",
@@ -46,9 +54,9 @@ export default function UpdatePatientModal({
       await updatePatient(patient.id, request);
       const updated = await getPatientDetails(patient.id);
       onSave(updated);
-    } catch (e: any) {
+    } catch (e) {
       // throw so PatientFormModal shows formError and stays open
-      throw new Error(e?.message || "Error updating patient");
+      throw new Error(getErrorMessage(e));
     }
   };
 

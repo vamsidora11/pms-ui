@@ -35,6 +35,15 @@ export function useAllergySearch({
     return new Set((selected ?? []).map((a) => (a ?? "").toLowerCase()));
   }, [selected]);
 
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as { name?: string; code?: string; message?: string };
+      return errorObj.message || "Failed to search allergies";
+    }
+    return "Failed to search allergies";
+  };
+
   useEffect(() => {
     const q = (debouncedQuery ?? "").trim();
 
@@ -74,11 +83,14 @@ export function useAllergySearch({
         setSuggestions(filtered);
         setOpen(true);
         setHighlightIndex(filtered.length ? 0 : -1);
-      } catch (err: any) {
+      } catch (err) {
         // Ignore aborts
-        if (err?.name === "AbortError" || err?.code === "ERR_CANCELED") return;
+        if (typeof err === "object" && err !== null) {
+          const errorObj = err as { name?: string; code?: string };
+          if (errorObj.name === "AbortError" || errorObj.code === "ERR_CANCELED") return;
+        }
 
-        setError(err?.message || "Failed to search allergies");
+        setError(getErrorMessage(err));
         setSuggestions([]);
         setOpen(true);
         setHighlightIndex(-1);
