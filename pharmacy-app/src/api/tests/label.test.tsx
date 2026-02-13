@@ -1,11 +1,10 @@
-// src/features/labels/api/__tests__/labels.api.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // SUT
 import {
   getLabelQueue,
   getPrescriptionForLabels,
-} from "../label"; // <-- update path to the file you shared if needed
+} from "../label";
 
 // ---- Mocks ----
 vi.mock("../axiosInstance", () => {

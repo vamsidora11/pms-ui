@@ -17,7 +17,7 @@ import type {
 import type { PatientDetails } from '@prescription/types/models';
 
 // ---------- Mock utils ----------
-vi.mock('../prescriptionHistoryUtils', () => ({
+vi.mock('../utils/prescriptionHistoryUtils', () => ({
   calculateAgeFromDob: vi.fn(() => 30),
 }));
 

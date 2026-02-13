@@ -17,11 +17,12 @@ import type {
 import { usePatientDirectory } from "../hooks/usePatientDirectory";
 import { usePatientDetails } from "../hooks/usePatientDetails";
 import { usePatientPrescriptions } from "../hooks/usePatientPrescriptions";
-
+import { useToast } from "@components/common/Toast/useToast";
 import PatientDirectoryPanel from "./PatientDirectoryPanel";
 import PatientDetailsPanel from "./PatientDetailsPanel";
 
 export default function PatientProfiles() {
+  const toast=useToast();
   const directory = usePatientDirectory({
     searchFn: searchPatients as any,
     debounceMs: 250,
@@ -128,7 +129,7 @@ export default function PatientProfiles() {
               setShowAddModal(false);
             } catch (err) {
               console.error("Failed to add patient", err);
-              alert("Error adding patient");
+              toast.error("Error adding patient");
             }
           }}
         />

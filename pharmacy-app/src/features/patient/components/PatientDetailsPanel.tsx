@@ -184,7 +184,7 @@ export default function PatientDetailsPanel({
             <Info
               icon={MapPin}
               label="Address"
-              value={selectedPatient.address}
+              value={selectedPatient.address ?? ""}
             />
             <Info icon={User} label="Gender" value={selectedPatient.gender} />
           </Section>

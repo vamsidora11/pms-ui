@@ -108,7 +108,6 @@ export default function PatientStep({
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-4">
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-blue-900 font-medium">Selected Patient</div>
                 <div className="text-blue-800 mt-1">{patient.fullName}</div>
               </div>
 
