@@ -62,7 +62,7 @@ vi.mock("@validation/hooks/usePrescriptionReview", () => ({
 
 interface MockUiState {
   data: PrescriptionDetailsDto | null;
-  adjusted: Record<string, number>;
+  approved: Record<string, number>;
   decisions: Record<string, "Accepted" | "Rejected">;
   reasons: Record<string, string>;
   rejectLineId: string | null;
@@ -74,7 +74,7 @@ let uiState: MockUiState;
 
 const mockActions = {
   init: vi.fn(),
-  setAdjusted: vi.fn(),
+  setApproved: vi.fn(),
   acceptLine: vi.fn(),
   openRejectLine: vi.fn(),
   openAllergy: vi.fn(),
@@ -171,11 +171,11 @@ const baseData: PrescriptionDetailsDto = {
           overallSeverity: null,
           interactingWith: [],
         },
-        lowStock: {
+        inventory: {
           isPresent: false,
           severity: null,
-          requiredQty: 0,
-          availableQty: 0,
+          requiredQty: 10,
+          reservableNow: 10,
           message: null,
         },
       },
@@ -228,7 +228,7 @@ describe("PrescriptionValidationDetailsPage - Fully Clean", () => {
 
     uiState = {
       data: null,
-      adjusted: {},
+      approved: {},
       decisions: {},
       reasons: {},
       rejectLineId: null,

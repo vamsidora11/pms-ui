@@ -42,7 +42,7 @@ describe("useValidationUiState", () => {
     const { result } = renderHook(() => useValidationUiState());
 
     expect(result.current.ui.data).toBeNull();
-    expect(result.current.ui.adjusted).toEqual({});
+    expect(result.current.ui.approved).toEqual({});
     expect(result.current.ui.decisions).toEqual({});
     expect(result.current.ui.reasons).toEqual({});
     expect(result.current.ui.rejectLineId).toBeNull();
@@ -58,7 +58,7 @@ describe("useValidationUiState", () => {
     });
 
     expect(result.current.ui.data).toEqual(mockRx);
-    expect(result.current.ui.adjusted).toEqual({
+    expect(result.current.ui.approved).toEqual({
       "MED-1": 10,
       "MED-2": 5,
     });
@@ -68,15 +68,15 @@ describe("useValidationUiState", () => {
     });
   });
 
-  it("sets adjusted quantity and clamps negative to zero", () => {
+  it("sets approved quantity and clamps negative to zero", () => {
     const { result } = renderHook(() => useValidationUiState());
     act(() => result.current.actions.init(createMockPrescription()));
 
     act(() => {
-      result.current.actions.setAdjusted("MED-1", -5);
+      result.current.actions.setApproved("MED-1", -5);
     });
 
-    expect(result.current.ui.adjusted["MED-1"]).toBe(0);
+    expect(result.current.ui.approved["MED-1"]).toBe(0);
   });
 
   it("accepts a line and clears reason", () => {

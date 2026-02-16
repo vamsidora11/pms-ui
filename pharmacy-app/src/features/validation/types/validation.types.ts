@@ -14,7 +14,7 @@ export interface AllergyAlert {
 export type ValidationUIState = {
   data: PrescriptionDetailsDto | null;
 
-  adjusted: Record<string, number>;
+  approved: Record<string, number>;
   decisions: Record<string, LineDecision>;
   reasons: Record<string, string>; // lineId -> reason, plus "_ALL_"
 

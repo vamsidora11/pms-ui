@@ -1,11 +1,23 @@
 import React from "react";
 
+type PrescriptionCardStatus =
+  | "Urgent"
+  | "Ready"
+  | "Collected"
+  | "In Progress"
+  | "Created"
+  | "Validated"
+  | "Dispensed"
+  | "Rejected"
+  | "Cancelled"
+  | string;
+
 interface PrescriptionCardProps {
   rxId: string;
   patientName: string;
   timestamp: string;
   itemCount?: number;
-  status?: "Urgent" | "Ready" | "Collected" | "In Progress"; // restrict to known statuses
+  status?: PrescriptionCardStatus;
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
   onViewDetails?: () => void;
@@ -21,14 +33,19 @@ const PrescriptionCard: React.FC<PrescriptionCardProps> = ({
   onPrimaryAction,
   onViewDetails,
 }) => {
-  const statusColor =
-    status === "Urgent"
-      ? "bg-red-100 text-red-600"
-      : status === "Ready"
-      ? "bg-green-100 text-green-600"
-      : status === "Collected"
-      ? "bg-purple-100 text-purple-600"
-      : "bg-gray-100 text-gray-600";
+  const statusColors: Record<string, string> = {
+    Urgent: "bg-red-100 text-red-600",
+    Rejected: "bg-red-100 text-red-600",
+    Cancelled: "bg-red-100 text-red-600",
+    Ready: "bg-green-100 text-green-600",
+    Validated: "bg-green-100 text-green-600",
+    Collected: "bg-purple-100 text-purple-600",
+    Dispensed: "bg-blue-100 text-blue-600",
+    "In Progress": "bg-gray-100 text-gray-600",
+    Created: "bg-gray-100 text-gray-600",
+  };
+
+  const statusColor = status ? statusColors[status] ?? "bg-gray-100 text-gray-600" : "";
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md border border-gray-200">

@@ -25,11 +25,11 @@ function createValidation(
       overallSeverity: null,
       interactingWith: [],
     },
-    lowStock: {
+    inventory: {
       isPresent: false,
       severity: null,
       requiredQty: 0,
-      availableQty: 0,
+      reservableNow: 0,
       message: null,
     },
     ...overrides,
@@ -97,14 +97,14 @@ describe("computeValidation", () => {
     expect(computeValidation(medicine, 10)).toBe("Blocked");
   });
 
-  it("returns Partial when low stock insufficient", () => {
+  it("returns Partial when reservable inventory is insufficient", () => {
     const medicine = createMedicine({
       validation: createValidation({
-        lowStock: {
+        inventory: {
           isPresent: true,
           severity: "Moderate",
           requiredQty: 10,
-          availableQty: 5,
+          reservableNow: 5,
           message: "Low stock",
         },
       }),
@@ -113,14 +113,14 @@ describe("computeValidation", () => {
     expect(computeValidation(medicine, 10)).toBe("Partial");
   });
 
-  it("returns OK when low stock sufficient", () => {
+  it("returns OK when reservable inventory is sufficient", () => {
     const medicine = createMedicine({
       validation: createValidation({
-        lowStock: {
+        inventory: {
           isPresent: true,
           severity: "Low",
           requiredQty: 10,
-          availableQty: 20,
+          reservableNow: 20,
           message: null,
         },
       }),

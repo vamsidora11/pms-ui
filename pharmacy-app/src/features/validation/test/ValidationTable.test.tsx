@@ -55,11 +55,11 @@ function createMedicine(
         overallSeverity: null,
         interactingWith: [],
       },
-      lowStock: {
+      inventory: {
         isPresent: false,
         severity: null,
         requiredQty: 10,
-        availableQty: 10,
+        reservableNow: 10,
         message: null,
       },
     },
@@ -97,10 +97,10 @@ describe("ValidationTable", () => {
     render(
       <ValidationTable
         data={createData()}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="OK"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
@@ -115,10 +115,10 @@ describe("ValidationTable", () => {
     render(
       <ValidationTable
         data={createData()}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="OK"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
@@ -136,10 +136,10 @@ describe("ValidationTable", () => {
     render(
       <ValidationTable
         data={createData()}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="OK"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
@@ -154,10 +154,10 @@ describe("ValidationTable", () => {
     render(
       <ValidationTable
         data={createData()}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="OK"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
@@ -168,16 +168,16 @@ describe("ValidationTable", () => {
     expect(onOpenReject).toHaveBeenCalledWith("MED-1");
   });
 
-  it("renders Max button when lowStock present", () => {
+  it("renders Max button when inventory validation is present", () => {
     const data = createData();
 
     render(
       <ValidationTable
         data={data}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="OK"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
@@ -193,10 +193,10 @@ describe("ValidationTable", () => {
     render(
       <ValidationTable
         data={data}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="OK"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
@@ -226,11 +226,11 @@ describe("ValidationTable", () => {
           overallSeverity: null,
           interactingWith: [],
         },
-        lowStock: {
+        inventory: {
           isPresent: false,
           severity: null,
           requiredQty: 10,
-          availableQty: 10,
+          reservableNow: 10,
           message: null,
         },
       },
@@ -242,10 +242,10 @@ describe("ValidationTable", () => {
     render(
       <ValidationTable
         data={data}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="OK"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
@@ -260,10 +260,10 @@ describe("ValidationTable", () => {
     render(
       <ValidationTable
         data={createData()}
-        adjusted={{}}
+        approved={{}}
         decisions={{}}
         overallResult="Blocked"
-        onAdjust={onAdjust}
+        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}

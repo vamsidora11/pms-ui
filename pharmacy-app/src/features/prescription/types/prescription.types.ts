@@ -27,6 +27,7 @@ export interface PrescriptionMedicineDto {
   name: string;
   strength: string;
   prescribedQuantity: number;
+  approvedQuantityPerFill?: number | null;
   dispensedQuantity: number;
   totalRefillsAuthorized: number;
   refillsRemaining: number;
@@ -80,7 +81,8 @@ export interface ValidationSummaryDto {
 export interface MedicineValidationDto {
   drugAllergy: DrugAllergyValidationDto;
   drugInteraction: DrugInteractionValidationDto;
-  lowStock: LowStockValidationDto;
+  inventory?: InventoryValidationDto;
+  lowStock?: InventoryValidationDto;
 }
 
 export interface DrugAllergyValidationDto {
@@ -108,13 +110,18 @@ export interface InteractionValidationItemDto {
   message: string;
 }
 
-export interface LowStockValidationDto {
+export interface InventoryValidationDto {
   isPresent: boolean;
   severity: string | null;
   requiredQty: number;
-  availableQty: number;
+  reservableQty?: number;
+  physicalQty?: number;
+  reservableNow?: number; // backward compatibility
+  availableQty?: number; // backward compatibility
   message: string | null;
 }
+
+export type LowStockValidationDto = InventoryValidationDto;
 
 export interface PharmacistReviewDto {
   decision: string;
@@ -127,8 +134,9 @@ export interface PharmacistReviewDto {
 
 export interface MedicineReviewDto {
   prescriptionMedicineId: string;
-  decision: string; // "Accepted" | "Rejected"
+  decision: "Accepted" | "Rejected";
   overrideReason?: string | null;
+  approvedQuantity: number | null;
 }
 
 export interface ReviewPrescriptionRequest {

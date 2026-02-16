@@ -18,6 +18,16 @@ vi.mock("@api/endpoints", () => ({
 
 describe("usePrescriptionReview", () => {
   const mockedPut = vi.mocked(api.put);
+  const reviewPayload = {
+    medicines: [
+      {
+        prescriptionMedicineId: "MED-1",
+        decision: "Accepted" as const,
+        overrideReason: null,
+        approvedQuantity: 5,
+      },
+    ],
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,14 +51,12 @@ describe("usePrescriptionReview", () => {
     let response;
 
     await act(async () => {
-      response = await result.current.submitReview({
-        status: "APPROVED",
-      });
+      response = await result.current.submitReview(reviewPayload);
     });
 
     expect(mockedPut).toHaveBeenCalledWith(
       "/prescriptions/RX-001/review",
-      { status: "APPROVED" }
+      reviewPayload
     );
 
     expect(response).toEqual({ ok: true });
@@ -67,7 +75,7 @@ describe("usePrescriptionReview", () => {
     let response;
 
     await act(async () => {
-      response = await result.current.submitReview({});
+      response = await result.current.submitReview(reviewPayload);
     });
 
     expect(response).toEqual({
@@ -90,7 +98,7 @@ describe("usePrescriptionReview", () => {
     let response;
 
     await act(async () => {
-      response = await result.current.submitReview({});
+      response = await result.current.submitReview(reviewPayload);
     });
 
     expect(response).toEqual({
@@ -109,7 +117,7 @@ describe("usePrescriptionReview", () => {
     let response;
 
     await act(async () => {
-      response = await result.current.submitReview({});
+      response = await result.current.submitReview(reviewPayload);
     });
 
     expect(response).toEqual({
@@ -132,7 +140,7 @@ describe("usePrescriptionReview", () => {
     );
 
     act(() => {
-      result.current.submitReview({});
+      result.current.submitReview(reviewPayload);
     });
 
     expect(result.current.submitting).toBe(true);
@@ -153,19 +161,19 @@ describe("usePrescriptionReview", () => {
     );
 
     await act(async () => {
-      await result.current.submitReview({});
+      await result.current.submitReview(reviewPayload);
     });
 
     rerender({ id: "RX-002" });
 
     await act(async () => {
-      await result.current.submitReview({});
+      await result.current.submitReview(reviewPayload);
     });
 
     expect(mockedPut).toHaveBeenNthCalledWith(
       2,
       "/prescriptions/RX-002/review",
-      {}
+      reviewPayload
     );
   });
 });

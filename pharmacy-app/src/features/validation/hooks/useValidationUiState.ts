@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useReducer } from "react";
 import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
+import { getMaxApprovableQuantity } from "@validation/utils/prescriptionValidationUtils";
 import type {
   AllergyAlert,
   LineDecision,
@@ -8,7 +9,7 @@ import type {
 
 type Action =
   | { type: "INIT"; payload: PrescriptionDetailsDto }
-  | { type: "SET_ADJUSTED"; id: string; qty: number }
+  | { type: "SET_APPROVED"; id: string; qty: number }
   | { type: "ACCEPT_LINE"; id: string }
   | { type: "OPEN_REJECT_LINE"; id: string }
   | { type: "CLOSE_REJECT_LINE" }
@@ -22,7 +23,7 @@ type Action =
 function createInitialUIState(): ValidationUIState {
   return {
     data: null,
-    adjusted: {},
+    approved: {},
     decisions: {},
     reasons: {},
     allergyFor: null,
@@ -35,22 +36,38 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
   switch (action.type) {
     case "INIT": {
       const res = action.payload;
-      const adjusted: Record<string, number> = {};
+      const approved: Record<string, number> = {};
       const decisions: Record<string, LineDecision> = {};
 
       res.medicines.forEach((m) => {
-        adjusted[m.prescriptionMedicineId] = m.prescribedQuantity;
+        const nextApproved =
+          typeof m.approvedQuantityPerFill === "number"
+            ? m.approvedQuantityPerFill
+            : getMaxApprovableQuantity(m);
+
+        approved[m.prescriptionMedicineId] = Math.max(0, nextApproved);
         decisions[m.prescriptionMedicineId] = null;
       });
 
-      return { ...state, data: res, adjusted, decisions, reasons: {} };
+      return { ...state, data: res, approved, decisions, reasons: {} };
     }
 
-    case "SET_ADJUSTED":
-      return {
-        ...state,
-        adjusted: { ...state.adjusted, [action.id]: Math.max(0, action.qty) },
-      };
+    case "SET_APPROVED":
+      {
+        const medicine = state.data?.medicines.find(
+          (m) => m.prescriptionMedicineId === action.id
+        );
+        const maxApprovable = medicine ? getMaxApprovableQuantity(medicine) : Number.MAX_SAFE_INTEGER;
+        const nextQty = Math.max(
+          0,
+          Math.min(maxApprovable, Math.trunc(Number.isFinite(action.qty) ? action.qty : 0))
+        );
+
+        return {
+          ...state,
+          approved: { ...state.approved, [action.id]: nextQty },
+        };
+      }
 
     case "ACCEPT_LINE": {
       const nextReasons = { ...state.reasons };
@@ -105,8 +122,8 @@ export function useValidationUiState() {
     dispatch({ type: "INIT", payload: data });
   }, []);
 
-  const setAdjusted = useCallback((id: string, qty: number) => {
-    dispatch({ type: "SET_ADJUSTED", id, qty });
+  const setApproved = useCallback((id: string, qty: number) => {
+    dispatch({ type: "SET_APPROVED", id, qty });
   }, []);
 
   const acceptLine = useCallback((id: string) => {
@@ -149,7 +166,7 @@ export function useValidationUiState() {
   const actions = useMemo(
     () => ({
       init,
-      setAdjusted,
+      setApproved,
       acceptLine,
       openRejectLine,
       closeRejectLine,
@@ -162,7 +179,7 @@ export function useValidationUiState() {
     }),
     [
       init,
-      setAdjusted,
+      setApproved,
       acceptLine,
       openRejectLine,
       closeRejectLine,

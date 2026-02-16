@@ -528,8 +528,18 @@ describe("prescription API", () => {
       const id = "rx-1";
       const payload = {
         medicines: [
-          { prescriptionMedicineId: "pm-1", decision: "Accepted", overrideReason: null },
-          { prescriptionMedicineId: "pm-2", decision: "Rejected", overrideReason: "Dose too high" },
+          {
+            prescriptionMedicineId: "pm-1",
+            decision: "Accepted",
+            overrideReason: null,
+            approvedQuantity: 10,
+          },
+          {
+            prescriptionMedicineId: "pm-2",
+            decision: "Rejected",
+            overrideReason: "Dose too high",
+            approvedQuantity: 0,
+          },
         ],
       } satisfies ReviewPrescriptionRequest;
 
@@ -550,7 +560,13 @@ describe("prescription API", () => {
     it("logs and rethrows on failure", async () => {
       const id = "rx-err";
       const payload = {
-        medicines: [{ prescriptionMedicineId: "pm-x", decision: "Rejected" }],
+        medicines: [
+          {
+            prescriptionMedicineId: "pm-x",
+            decision: "Rejected",
+            approvedQuantity: 0,
+          },
+        ],
       } satisfies ReviewPrescriptionRequest;
 
       const err = new Error("Review failed");

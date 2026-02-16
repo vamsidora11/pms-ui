@@ -252,7 +252,12 @@ import type { PrescriptionDetailsDto } from "@prescription/types/prescription.ty
 import { usePrescriptionDetails } from "@validation/hooks/usePrescriptionDetails";
 import { usePrescriptionReview } from "@validation/hooks/usePrescriptionReview";
 
-import { computeValidation, type ValidationResult } from "./utils/prescriptionValidationUtils";
+import {
+  computeValidation,
+  getMaxApprovableQuantity,
+  isValidApprovedQuantity,
+  type ValidationResult,
+} from "./utils/prescriptionValidationUtils";
 import { useValidationUiState } from "./hooks/useValidationUiState";
 import { formatDate } from "@utils/format";
 
@@ -287,12 +292,15 @@ export default function PrescriptionValidationDetailsPage() {
   const overallResult = useMemo<ValidationResult>(() => {
     if (!viewData) return "OK";
     const results = viewData.medicines.map((m) =>
-      computeValidation(m, ui.adjusted[m.prescriptionMedicineId] ?? m.prescribedQuantity)
+      computeValidation(
+        m,
+        ui.approved[m.prescriptionMedicineId] ?? getMaxApprovableQuantity(m)
+      )
     );
     if (results.includes("Blocked")) return "Blocked";
     if (results.includes("Partial")) return "Partial";
     return "OK";
-  }, [viewData, ui.adjusted]);
+  }, [viewData, ui.approved]);
 
   // === New: derive footer button disabling states ===
   const allAccepted = useMemo(() => {
@@ -317,6 +325,7 @@ export default function PrescriptionValidationDetailsPage() {
 
   const approvePrescription = useCallback(async () => {
     if (!viewData) return;
+    const invalidAcceptedMeds: string[] = [];
 
     // Default = Accepted, only explicit Rejected stays rejected
     const medicines = viewData.medicines.map((m) => {
@@ -327,11 +336,17 @@ export default function PrescriptionValidationDetailsPage() {
 
       const reason =
         finalDecision === "Rejected" ? (ui.reasons[id]?.trim() || "") : null;
+      const approvedQuantity = ui.approved[id] ?? getMaxApprovableQuantity(m);
+
+      if (finalDecision === "Accepted" && !isValidApprovedQuantity(m, approvedQuantity)) {
+        invalidAcceptedMeds.push(m.name);
+      }
 
       return {
         prescriptionMedicineId: id,
         decision: finalDecision,
         overrideReason: finalDecision === "Rejected" ? reason : null,
+        approvedQuantity: finalDecision === "Rejected" ? 0 : approvedQuantity,
       };
     });
 
@@ -343,6 +358,14 @@ export default function PrescriptionValidationDetailsPage() {
       return;
     }
 
+    if (invalidAcceptedMeds.length > 0) {
+      toast.error(
+        "Invalid approved quantity",
+        "For accepted medicines, approved quantity must be a whole number between 1 and the reservable amount."
+      );
+      return;
+    }
+
     const res = await submitReview({ medicines });
     if (!res.ok) {
       toast.error("Failed", res.message);
@@ -351,7 +374,7 @@ export default function PrescriptionValidationDetailsPage() {
 
     toast.success("Success", "Prescription review submitted successfully.");
     navigate(ROUTES.PHARMACIST.VALIDATION, { state: { refresh: true } });
-  }, [navigate, submitReview, toast, ui.decisions, ui.reasons, viewData]);
+  }, [navigate, submitReview, toast, ui.approved, ui.decisions, ui.reasons, viewData]);
 
   const confirmRejectAll = useCallback(async () => {
     if (!viewData) return;
@@ -366,6 +389,7 @@ export default function PrescriptionValidationDetailsPage() {
       prescriptionMedicineId: m.prescriptionMedicineId,
       decision: "Rejected" as const,
       overrideReason: reason,
+      approvedQuantity: 0,
     }));
 
     const res = await submitReview({ medicines });
@@ -439,10 +463,10 @@ export default function PrescriptionValidationDetailsPage() {
       {/* Table */}
       <ValidationTable
         data={viewData}
-        adjusted={ui.adjusted}
+        approved={ui.approved}
         decisions={ui.decisions}
         overallResult={overallResult}
-        onAdjust={actions.setAdjusted}
+        onApprovedChange={actions.setApproved}
         onAccept={actions.acceptLine}
         onOpenReject={actions.openRejectLine}
         onOpenAllergy={actions.openAllergy}

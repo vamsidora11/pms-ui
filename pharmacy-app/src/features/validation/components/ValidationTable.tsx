@@ -7,6 +7,9 @@ import type { AllergyAlert, LineDecision } from "../types/validation.types";
 
 import {
   computeValidation,
+  getInventoryValidation,
+  getMaxApprovableQuantity,
+  getReservableNow,
   mapInteractionLevel,
   pillToneBySeverity,
   type Severity,
@@ -17,19 +20,19 @@ import { Pill } from "./Pill";
 
 export default function ValidationTable({
   data,
-  adjusted,
+  approved,
   decisions,
   overallResult,
-  onAdjust,
+  onApprovedChange,
   onAccept,
   onOpenReject,
   onOpenAllergy,
 }: {
   data: PrescriptionDetailsDto;
-  adjusted: Record<string, number>;
+  approved: Record<string, number>;
   decisions: Record<string, LineDecision>;
   overallResult: ValidationResult;
-  onAdjust: (id: string, qty: number) => void;
+  onApprovedChange: (id: string, qty: number) => void;
   onAccept: (id: string) => void;
   onOpenReject: (id: string) => void;
   onOpenAllergy: (alert: AllergyAlert) => void;
@@ -51,8 +54,8 @@ export default function ValidationTable({
             <tr className="text-gray-500 border-b">
               <Th>Medicine</Th>
               <Th align="center">Prescribed</Th>
-              <Th align="center">Adjusted</Th>
-              <Th align="center">Stock</Th>
+              <Th align="center">Approved</Th>
+              <Th align="center">Reservable</Th>
               <Th align="center">Allergy</Th>
               <Th align="center">Interaction</Th>
               <Th align="center">Result</Th>
@@ -63,12 +66,28 @@ export default function ValidationTable({
           <tbody className="divide-y">
             {data.medicines.map((m: PrescriptionMedicineDto) => {
               const id = m.prescriptionMedicineId;
-              const adjustedQty = adjusted[id] ?? m.prescribedQuantity;
-              const vr = computeValidation(m, adjustedQty);
+              const approvedQty = approved[id] ?? getMaxApprovableQuantity(m);
+              const vr = computeValidation(m, approvedQty);
               const decision = decisions[id];
 
-              const stockInfo = m.validation?.lowStock;
-              const stockOk = stockInfo ? stockInfo.availableQty >= m.prescribedQuantity : true;
+              const stockInfo = getInventoryValidation(m);
+              const reservableNow = getReservableNow(m);
+              const requiredQty = stockInfo?.requiredQty ?? m.prescribedQuantity;
+              const physicalQty =
+                typeof stockInfo?.physicalQty === "number" ? stockInfo.physicalQty : null;
+              const maxApprovable = getMaxApprovableQuantity(m);
+              const stockOk = reservableNow === null ? true : reservableNow >= approvedQty;
+              const hasReservableShortage =
+                !!stockInfo?.isPresent &&
+                reservableNow !== null &&
+                reservableNow < requiredQty;
+              const stockTone = hasReservableShortage
+                ? "red"
+                : stockInfo?.isPresent
+                  ? pillToneBySeverity(stockInfo.severity)
+                  : stockOk
+                    ? "green"
+                    : "amber";
 
               return (
                 <tr key={id} className="align-top">
@@ -83,13 +102,19 @@ export default function ValidationTable({
                     <div className="inline-flex items-center gap-2">
                       <input
                         type="number"
-                        value={adjustedQty}
-                        onChange={(e) => onAdjust(id, Number(e.target.value))}
+                        value={approvedQty}
+                        onChange={(e) => {
+                          const value = Number(e.target.value);
+                          onApprovedChange(id, Number.isFinite(value) ? value : 0);
+                        }}
+                        min={0}
+                        max={maxApprovable}
+                        step={1}
                         className="w-20 px-2 py-1 border rounded-md"
                       />
                       {stockInfo && (
                         <button
-                          onClick={() => onAdjust(id, stockInfo.availableQty)}
+                          onClick={() => onApprovedChange(id, maxApprovable)}
                           className="text-blue-600 hover:text-blue-700 text-xs px-2 py-0.5 border rounded-md bg-blue-50"
                         >
                           Max
@@ -100,9 +125,14 @@ export default function ValidationTable({
 
                   <Td align="center">
                     {stockInfo ? (
-                      <Pill tone={stockOk ? "green" : "amber"}>
-                        {stockInfo.availableQty} / {stockInfo.requiredQty}
-                      </Pill>
+                      <div className="inline-flex flex-col items-center gap-1">
+                        <Pill tone={stockTone}>
+                          {(reservableNow ?? "N/A").toString()} / {requiredQty}
+                        </Pill>
+                        {physicalQty !== null && (
+                          <span className="text-xs text-gray-500">Physical: {physicalQty}</span>
+                        )}
+                      </div>
                     ) : (
                       <Pill tone="green">Sufficient</Pill>
                     )}
