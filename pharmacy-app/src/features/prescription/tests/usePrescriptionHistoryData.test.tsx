@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { RootState } from "../../../store";
 import { usePrescriptionHistoryData } from "../hooks/usePrescriptionHistoryData";
+import type {
+  PrescriptionDetailsDto,
+  PrescriptionSummaryDto,
+} from "@prescription/types/prescription.types";
+import type { PatientDetails } from "@prescription/types/models";
+import type { PrescriptionHistoryQueryParams } from "@api/prescription";
 
 /* -------------------- Mocks -------------------- */
 
@@ -16,7 +22,7 @@ vi.mock("react-redux", () => {
   return {
     __esModule: true,
     useDispatch: () => dispatchSpy,
-    useSelector: (selector: (s: RootState) => any) => selector(mockState),
+    useSelector: (selector: (s: RootState) => unknown) => selector(mockState),
   };
 });
 
@@ -24,7 +30,7 @@ vi.mock("react-redux", () => {
 vi.mock("@store/prescription/prescriptionSlice", () => {
   return {
     __esModule: true,
-    fetchAllPrescriptions: vi.fn((payload: any) => ({
+    fetchAllPrescriptions: vi.fn((payload: PrescriptionHistoryQueryParams) => ({
       type: "prescriptions/fetchAllPrescriptions",
       payload,
     })),
@@ -49,28 +55,60 @@ import { getPatientById } from "@api/patientSearch";
 
 /* -------------------- Helpers -------------------- */
 
-const makeSummary = (overrides: Partial<any> = {}) => ({
+const baseSummary: PrescriptionSummaryDto = {
+  alerts: false,
   id: "rx-1",
   patientId: "p-1",
+  patientName: "John Doe",
+  prescriberName: "Dr. Jane Smith",
   createdAt: "2026-02-01T10:00:00Z",
+  expiresAt: "2026-12-31T10:00:00Z",
   status: "CREATED",
+  medicineCount: 1,
+  validationSummary: {
+    totalIssues: 0,
+    highSeverityCount: 0,
+    moderateCount: 0,
+    lowCount: 0,
+    requiresReview: false,
+  },
+};
+
+const makeSummary = (overrides: Partial<PrescriptionSummaryDto> = {}) => ({
+  ...baseSummary,
   ...overrides,
 });
 
-const makeDetails = (overrides: Partial<any> = {}) => ({
+const baseDetails: PrescriptionDetailsDto = {
   id: "rx-1",
   patientId: "p-1",
+  patientName: "John Doe",
+  prescriber: { id: "d-1", name: "Dr. Jane Smith" },
+  createdAt: "2026-02-01T10:00:00Z",
+  expiresAt: "2026-12-31T10:00:00Z",
+  status: "CREATED",
+  isRefillable: false,
   medicines: [],
-  notes: "",
+};
+
+const makeDetails = (overrides: Partial<PrescriptionDetailsDto> = {}) => ({
+  ...baseDetails,
   ...overrides,
 });
 
-const makePatient = (overrides: Partial<any> = {}) => ({
+const basePatient: PatientDetails = {
   id: "p-1",
   fullName: "John Doe",
-  address: "221B Baker Street",
-  email: "john@example.com",
   phone: "+1-555-0100",
+  dob: "1980-01-01",
+  gender: "Male",
+  email: "john@example.com",
+  address: "221B Baker Street",
+  allergies: [],
+};
+
+const makePatient = (overrides: Partial<PatientDetails> = {}) => ({
+  ...basePatient,
   ...overrides,
 });
 
@@ -88,13 +126,15 @@ function seedState(overrides?: Partial<RootState>): RootState {
       error: undefined,            // optional -> prefer undefined or omit
     },
     // add other root slices here if your RootState includes them
-    ...(overrides as any),
+    ...overrides,
   } as RootState;
 }
 
 /* -------------------- Tests -------------------- */
 
 describe("usePrescriptionHistoryData", () => {
+  const mockedGetPatientById = vi.mocked(getPatientById);
+
   beforeEach(() => {
     vi.clearAllMocks();
     dispatchSpy.mockClear();
@@ -368,9 +408,11 @@ describe("usePrescriptionHistoryData", () => {
     });
 
     const resolveQueue: Array<() => void> = [];
-    (getPatientById as any).mockImplementation((_id: string) => {
+    mockedGetPatientById.mockImplementation((id: string) => {
       return new Promise((resolve) => {
-        resolveQueue.push(() => resolve(makePatient({ id: "p-9", fullName: "Alice" })));
+        resolveQueue.push(() =>
+          resolve(makePatient({ id, fullName: "Alice" }))
+        );
       });
     });
 
@@ -392,7 +434,7 @@ describe("usePrescriptionHistoryData", () => {
       result.current.toggleRow("rx-1"); // expand again (shouldn't duplicate fetch)
     });
 
-    expect((getPatientById as any).mock.calls.length).toBe(1);
+    expect(mockedGetPatientById.mock.calls.length).toBe(1);
 
     // Resolve pending fetch
     await act(async () => {
@@ -410,7 +452,7 @@ describe("usePrescriptionHistoryData", () => {
       result.current.toggleRow("rx-1");
       result.current.toggleRow("rx-1");
     });
-    expect((getPatientById as any).mock.calls.length).toBe(1);
+    expect(mockedGetPatientById.mock.calls.length).toBe(1);
   });
 
   it("handles getPatientById resolve to null (no cache insert) and loading flags reset", async () => {
@@ -429,7 +471,7 @@ describe("usePrescriptionHistoryData", () => {
       },
     });
 
-    (getPatientById as any).mockResolvedValueOnce(null);
+    mockedGetPatientById.mockResolvedValueOnce(undefined);
 
     const { result } = renderHook(() => usePrescriptionHistoryData({ skipInitialFetch: true }));
 

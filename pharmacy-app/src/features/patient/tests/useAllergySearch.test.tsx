@@ -194,9 +194,8 @@ describe("useAllergySearch", () => {
       expect(result.current.suggestions).toEqual([]);
       expect(result.current.error).toBeNull();
       expect(result.current.open).toBe(false);
+      expect(result.current.loading).toBe(false);
     });
-
-    expect(result.current.loading).toBe(false);
   });
 
   it("sets loading state correctly during async search", async () => {

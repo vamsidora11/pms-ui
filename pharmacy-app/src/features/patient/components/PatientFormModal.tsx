@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, forwardRef } from "react";
 import { X } from "lucide-react";
 import clsx from "clsx";
 
@@ -82,6 +82,30 @@ export default function PatientFormModal({
     return `${year}-${month}-${day}`;
   };
 
+  const DateInput = forwardRef<HTMLInputElement, { value?: string }>(
+    ({ value, ...rest }, ref) => (
+      <div
+        className={clsx(
+          "flex items-center gap-3 h-11 px-4 rounded-lg transition-all duration-200 shadow-inner",
+          errors.dob
+            ? "ring-1 ring-red-500 bg-red-50"
+            : "bg-gray-50 border border-gray-200 hover:bg-gray-200 focus-within:bg-gray-200 focus-within:ring-2 focus-within:ring-blue-500",
+        )}
+      >
+        <input
+          ref={ref}
+          value={value ?? ""}
+          readOnly
+          placeholder="Select date of birth"
+          aria-invalid={!!errors.dob}
+          className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 outline-none border-0"
+          {...rest}
+        />
+      </div>
+    ),
+  );
+  DateInput.displayName = "DateInput";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -116,8 +140,8 @@ export default function PatientFormModal({
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-900 mb-1 block">
                 <RequiredLabel text="Date of Birth" />
               </label>
               <DatePicker
@@ -149,12 +173,7 @@ export default function PatientFormModal({
                     e.preventDefault();
                   }
                 }}
-                className={clsx(
-                  "w-full px-3 py-2 border rounded-lg text-sm",
-                  errors.dob
-                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                    : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                )}
+                customInput={<DateInput />}
                 wrapperClassName="w-full"
               />
               {errors.dob && (

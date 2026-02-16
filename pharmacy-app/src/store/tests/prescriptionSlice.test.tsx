@@ -1,5 +1,10 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore, type AnyAction } from "@reduxjs/toolkit";
+import type {
+  CreatePrescriptionRequest,
+  PrescriptionDetailsDto,
+} from "@prescription/types/prescription.types";
+import type { PrescriptionHistoryQueryParams } from "@api/prescription";
 
 // ---- Mock APIs first (before importing SUT) ----
 const createPrescriptionApiMock = vi.fn();
@@ -10,12 +15,13 @@ const getPrescriptionsByPatientMock = vi.fn();
 const cancelPrescriptionApiMock = vi.fn();
 
 vi.mock("@api/prescription", () => ({
-  createPrescription: (...args: any[]) => createPrescriptionApiMock(...args),
-  getPrescriptionDetails: (...args: any[]) => getPrescriptionDetailsMock(...args),
-  searchPrescriptions: (...args: any[]) => searchPrescriptionsMock(...args),
-  getAllPrescriptions: (...args: any[]) => getAllPrescriptionsMock(...args),
-  getPrescriptionsByPatient: (...args: any[]) => getPrescriptionsByPatientMock(...args),
-  cancelPrescription: (...args: any[]) => cancelPrescriptionApiMock(...args),
+  createPrescription: (...args: unknown[]) => createPrescriptionApiMock(...args),
+  getPrescriptionDetails: (...args: unknown[]) => getPrescriptionDetailsMock(...args),
+  searchPrescriptions: (...args: unknown[]) => searchPrescriptionsMock(...args),
+  getAllPrescriptions: (...args: unknown[]) => getAllPrescriptionsMock(...args),
+  getPrescriptionsByPatient: (...args: unknown[]) =>
+    getPrescriptionsByPatientMock(...args),
+  cancelPrescription: (...args: unknown[]) => cancelPrescriptionApiMock(...args),
 }));
 
 // ---- Import SUT (after mocks) ----
@@ -38,6 +44,36 @@ function makeStore() {
     },
   });
 }
+
+const baseCreateRequest: CreatePrescriptionRequest = {
+  patientId: "p-1",
+  patientName: "Patient One",
+  prescriber: { id: "dr-1", name: "Dr. One" },
+  medicines: [
+    {
+      productId: "med-1",
+      name: "Amoxicillin",
+      strength: "250mg",
+      prescribedQuantity: 10,
+      totalRefillsAuthorized: 0,
+      frequency: "once",
+      daysSupply: 5,
+      instruction: "Take with water",
+    },
+  ],
+};
+
+const baseDetails: PrescriptionDetailsDto = {
+  id: "rx-1",
+  patientId: "p-1",
+  patientName: "Patient One",
+  prescriber: { id: "dr-1", name: "Dr. One" },
+  createdAt: "2025-01-01T00:00:00.000Z",
+  expiresAt: "2025-12-31T00:00:00.000Z",
+  status: "Created",
+  isRefillable: false,
+  medicines: [],
+};
 
 describe("prescriptionsSlice (100% coverage, race-free)", () => {
   afterEach(() => {
@@ -108,7 +144,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
 
   describe("createPrescription thunk", () => {
     it("pending → status=loading, clears error (reduce pending directly to avoid race)", () => {
-      const prev = {
+      const prev: ReturnType<typeof reducer> = {
         items: [],
         continuationToken: null,
         pageNumber: 1,
@@ -118,7 +154,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
         status: "idle" as const,
         error: "Prev error",
       };
-      const next = reducer(prev as any, { type: createPrescription.pending.type });
+      const next = reducer(prev, { type: createPrescription.pending.type } as AnyAction);
       expect(next.status).toBe("loading");
       expect(next.error).toBeUndefined();
     });
@@ -130,7 +166,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       // Set mock BEFORE dispatch
       createPrescriptionApiMock.mockResolvedValueOnce(newRx);
 
-      const action = await store.dispatch(createPrescription({ drug: "Amox" }) as any);
+      const action = await store.dispatch(createPrescription(baseCreateRequest));
       expect(action.type).toBe(createPrescription.fulfilled.type);
 
       const s = store.getState().prescriptions;
@@ -144,9 +180,9 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       const axiosLike = {
         response: { data: { message: "Validation failed" } },
       };
-      createPrescriptionApiMock.mockRejectedValueOnce(axiosLike as any);
+      createPrescriptionApiMock.mockRejectedValueOnce(axiosLike);
 
-      const action = await store.dispatch(createPrescription({}) as any);
+      const action = await store.dispatch(createPrescription(baseCreateRequest));
       expect(action.type).toBe(createPrescription.rejected.type);
 
       const s = store.getState().prescriptions;
@@ -158,10 +194,10 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
   describe("fetchPrescriptionDetails thunk", () => {
     it("fulfilled → sets selected and status=succeeded", async () => {
       const store = makeStore();
-      const details = { id: "p-11", meta: { a: 1 } };
+      const details = { ...baseDetails, id: "p-11" };
       getPrescriptionDetailsMock.mockResolvedValueOnce(details);
 
-      const action = await store.dispatch(fetchPrescriptionDetails("p-11") as any);
+      const action = await store.dispatch(fetchPrescriptionDetails("p-11"));
       expect(action.type).toBe(fetchPrescriptionDetails.fulfilled.type);
 
       const s = store.getState().prescriptions;
@@ -174,7 +210,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
 
       getPrescriptionDetailsMock.mockRejectedValueOnce(new Error("Not found"));
 
-      const action = await store.dispatch(fetchPrescriptionDetails("404") as any);
+      const action = await store.dispatch(fetchPrescriptionDetails("404"));
       expect(action.type).toBe(fetchPrescriptionDetails.rejected.type);
 
       const s = store.getState().prescriptions;
@@ -206,7 +242,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       cancelPrescriptionApiMock.mockResolvedValueOnce(undefined);
 
       const action = await store.dispatch(
-        cancelPrescription({ id: "b", reason: "patient request" }) as any
+        cancelPrescription({ id: "b", reason: "patient request" })
       );
       expect(action.type).toBe(cancelPrescription.fulfilled.type);
 
@@ -233,9 +269,9 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       const axiosLike = {
         response: { data: { message: "Cancel not allowed" } },
       };
-      cancelPrescriptionApiMock.mockRejectedValueOnce(axiosLike as any);
+      cancelPrescriptionApiMock.mockRejectedValueOnce(axiosLike);
 
-      const action = await store.dispatch(cancelPrescription({ id: "x1" }) as any);
+      const action = await store.dispatch(cancelPrescription({ id: "x1" }));
       expect(action.type).toBe(cancelPrescription.rejected.type);
       expect(action.payload).toBe("Cancel not allowed");
 
@@ -258,7 +294,8 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       };
       getAllPrescriptionsMock.mockResolvedValueOnce(payload);
 
-      const action = await store.dispatch(fetchAllPrescriptions({ q: "anything" } as any) as any);
+      const query: PrescriptionHistoryQueryParams = { patientName: "anything" };
+      const action = await store.dispatch(fetchAllPrescriptions(query));
       expect(action.type).toBe(fetchAllPrescriptions.fulfilled.type);
 
       const s = store.getState().prescriptions;
@@ -275,9 +312,9 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       const store = makeStore();
       const axiosLike = { response: { data: { message: "Server busy" } } };
 
-      getAllPrescriptionsMock.mockRejectedValueOnce(axiosLike as any);
+      getAllPrescriptionsMock.mockRejectedValueOnce(axiosLike);
 
-      const action = await store.dispatch(fetchAllPrescriptions() as any);
+      const action = await store.dispatch(fetchAllPrescriptions());
       expect(action.type).toBe(fetchAllPrescriptions.rejected.type);
 
       const s = store.getState().prescriptions;
@@ -302,7 +339,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
           pageSize: 10,
           continuationToken: null,
           reset: true,
-        }) as any
+        })
       );
       expect(action.type).toBe(searchPrescriptionsThunk.fulfilled.type);
 
@@ -340,7 +377,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
           pageSize: 10,
           continuationToken: "ct-a",
           reset: false,
-        }) as any
+        })
       );
       expect(action.type).toBe(searchPrescriptionsThunk.fulfilled.type);
 
@@ -356,9 +393,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
 
       searchPrescriptionsMock.mockRejectedValueOnce(new Error("Search error"));
 
-      const action = await store.dispatch(
-        searchPrescriptionsThunk({ searchTerm: "x" }) as any
-      );
+      const action = await store.dispatch(searchPrescriptionsThunk({ searchTerm: "x" }));
       expect(action.type).toBe(searchPrescriptionsThunk.rejected.type);
 
       const s = store.getState().prescriptions;
@@ -378,7 +413,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       getPrescriptionsByPatientMock.mockResolvedValueOnce(server);
 
       const action = await store.dispatch(
-        fetchPrescriptionsByPatient({ patientId: "p-1", reset: true }) as any
+        fetchPrescriptionsByPatient({ patientId: "p-1", reset: true })
       );
       expect(action.type).toBe(fetchPrescriptionsByPatient.fulfilled.type);
 
@@ -411,7 +446,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
           patientId: "p-1",
           continuationToken: "ct-z",
           reset: false,
-        }) as any
+        })
       );
       expect(action.type).toBe(fetchPrescriptionsByPatient.fulfilled.type);
 
@@ -426,10 +461,10 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       const store = makeStore();
 
       const axiosLike = { response: { data: { message: "Patient not found" } } };
-      getPrescriptionsByPatientMock.mockRejectedValueOnce(axiosLike as any);
+      getPrescriptionsByPatientMock.mockRejectedValueOnce(axiosLike);
 
       const action = await store.dispatch(
-        fetchPrescriptionsByPatient({ patientId: "nope" }) as any
+        fetchPrescriptionsByPatient({ patientId: "nope" })
       );
       expect(action.type).toBe(fetchPrescriptionsByPatient.rejected.type);
 

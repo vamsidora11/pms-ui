@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import api from "@api/axiosInstance";
 import { ENDPOINTS } from "@api/endpoints";
-import type { ReviewPrescriptionRequest } from "@prescription/prescription.types";
+import type { ReviewPrescriptionRequest } from "@prescription/types/prescription.types";
 
 export function usePrescriptionReview(rxId: string) {
   const [submitting, setSubmitting] = useState(false);

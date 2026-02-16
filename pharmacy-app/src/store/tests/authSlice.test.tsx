@@ -1,19 +1,20 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { configureStore } from "@reduxjs/toolkit";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { configureStore, type AnyAction } from "@reduxjs/toolkit";
+import type { UserRole } from "../auth/authtype";
 
 // ---- Mocks (declare first, then import SUT) ----
 const loginApiMock = vi.fn();
 const refreshApiMock = vi.fn();
 const logoutApiMock = vi.fn();
 vi.mock("@api/auth", () => ({
-  loginApi: (...args: any[]) => loginApiMock(...args),
-  refreshApi: (...args: any[]) => refreshApiMock(...args),
-  logoutApi: (...args: any[]) => logoutApiMock(...args),
+  loginApi: (...args: unknown[]) => loginApiMock(...args),
+  refreshApi: (...args: unknown[]) => refreshApiMock(...args),
+  logoutApi: (...args: unknown[]) => logoutApiMock(...args),
 }));
 
 const jwtDecodeMock = vi.fn();
 vi.mock("jwt-decode", () => ({
-  jwtDecode: (...args: any[]) => jwtDecodeMock(...args),
+  jwtDecode: (...args: unknown[]) => jwtDecodeMock(...args),
 }));
 
 // ---- Import SUT after mocks ----
@@ -51,8 +52,13 @@ describe("authSlice - end-to-end + reducer coverage", () => {
   describe("loginUser thunk", () => {
     it("sets status=loading and clears error on pending (reducer path)", () => {
       // Directly reduce the pending action to ensure that path is covered
-      const prev = { user: null, accessToken: null, status: "idle" as const, error: "Old error" as string | undefined };
-      const next = authReducer(prev as any, { type: loginUser.pending.type });
+      const prev: ReturnType<typeof authReducer> = {
+        user: null,
+        accessToken: null,
+        status: "idle",
+        error: "Old error",
+      };
+      const next = authReducer(prev, { type: loginUser.pending.type } as AnyAction);
       expect(next.status).toBe("loading");
       expect(next.error).toBeUndefined();
     });
@@ -61,10 +67,16 @@ describe("authSlice - end-to-end + reducer coverage", () => {
       const store = makeStore();
 
       const token = "token-1";
-      const payload = {
+      const payload: {
+        sub: string;
+        username: string;
+        role: UserRole;
+        exp: number;
+        avatarUrl?: string;
+      } = {
         sub: "u-1",
         username: "alice",
-        role: "Admin",
+        role: "manager",
         exp: 1234567890,
         avatarUrl: "https://example.com/a.png",
       };
@@ -73,7 +85,7 @@ describe("authSlice - end-to-end + reducer coverage", () => {
       jwtDecodeMock.mockReturnValue(payload);
 
       const resultAction = await store.dispatch(
-        loginUser({ username: "alice", password: "pw" }) as any
+        loginUser({ username: "alice", password: "pw" })
       );
 
       // Assert thunk fulfilled
@@ -100,7 +112,7 @@ describe("authSlice - end-to-end + reducer coverage", () => {
       loginApiMock.mockRejectedValue(new Error("Network down"));
 
       const resultAction = await store.dispatch(
-        loginUser({ username: "bob", password: "wrong" }) as any
+        loginUser({ username: "bob", password: "wrong" })
       );
 
       // Thunk catch path -> rejectWithValue("Incorrect username or password")
@@ -126,10 +138,16 @@ describe("authSlice - end-to-end + reducer coverage", () => {
       });
 
       const newToken = "token-2";
-      const payload2 = {
+      const payload2: {
+        sub: string;
+        username: string;
+        role: UserRole;
+        exp: number;
+        avatarUrl?: string;
+      } = {
         sub: "u-2",
         username: "charlie",
-        role: "Pharmacist",
+        role: "pharmacist",
         exp: 9999999999,
         // avatarUrl omitted on purpose (optional)
       };
@@ -137,7 +155,7 @@ describe("authSlice - end-to-end + reducer coverage", () => {
       refreshApiMock.mockResolvedValue({ accessToken: newToken });
       jwtDecodeMock.mockReturnValue(payload2);
 
-      const resultAction = await store.dispatch(refreshAccess() as any);
+      const resultAction = await store.dispatch(refreshAccess());
 
       expect(resultAction.type).toBe(refreshAccess.fulfilled.type);
       expect(refreshApiMock).toHaveBeenCalledTimes(1);
@@ -165,13 +183,13 @@ describe("authSlice - end-to-end + reducer coverage", () => {
       jwtDecodeMock.mockReturnValue({
         sub: "u-seed",
         username: "seed",
-        role: "Admin",
+        role: "manager",
         exp: 1,
       });
 
       refreshApiMock.mockRejectedValue(new Error("Token expired"));
 
-      const resultAction = await store.dispatch(refreshAccess() as any);
+      const resultAction = await store.dispatch(refreshAccess());
 
       expect(resultAction.type).toBe(refreshAccess.rejected.type);
       expect(resultAction.payload).toBe("Token expired");
@@ -195,13 +213,13 @@ describe("authSlice - end-to-end + reducer coverage", () => {
       jwtDecodeMock.mockReturnValue({
         sub: "u-logout",
         username: "to-logout",
-        role: "Admin",
+        role: "manager",
         exp: 1,
       });
 
       logoutApiMock.mockResolvedValue(undefined);
 
-      const resultAction = await store.dispatch(serverLogout() as any);
+      const resultAction = await store.dispatch(serverLogout());
       expect(resultAction.type).toBe(serverLogout.fulfilled.type);
       expect(logoutApiMock).toHaveBeenCalledTimes(1);
 
@@ -216,13 +234,13 @@ describe("authSlice - end-to-end + reducer coverage", () => {
   describe("logout reducer (sync action)", () => {
     it("clears state immediately", () => {
       // Start from a non-empty state
-      const prevState = {
-        user: { id: "u-1", username: "x", role: "Admin", avatarUrl: "a" },
+      const prevState: ReturnType<typeof authReducer> = {
+        user: { id: "u-1", username: "x", role: "manager", avatarUrl: "a" },
         accessToken: "t",
-        status: "succeeded" as const,
+        status: "succeeded",
         error: "something",
       };
-      const next = authReducer(prevState as any, logout());
+      const next = authReducer(prevState, logout());
 
       expect(next.user).toBeNull();
       expect(next.accessToken).toBeNull();

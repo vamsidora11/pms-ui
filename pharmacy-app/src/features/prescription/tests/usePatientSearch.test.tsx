@@ -20,9 +20,9 @@ describe("usePatientSearch", () => {
   });
 
   const samplePatients: PatientSummary[] = [
-    { id: "p-001", fullName: "Alice Walker", phone: "+14155550101" } as any,
-    { id: "p-002", fullName: "Bob Marley", phone: "+14155550102" } as any,
-    { id: "p-003", fullName: "Charlie Puth", phone: "+14155550103" } as any,
+    { id: "p-001", fullName: "Alice Walker", phone: "+14155550101" },
+    { id: "p-002", fullName: "Bob Marley", phone: "+14155550102" },
+    { id: "p-003", fullName: "Charlie Puth", phone: "+14155550103" },
   ];
 
   it("returns initial state", () => {

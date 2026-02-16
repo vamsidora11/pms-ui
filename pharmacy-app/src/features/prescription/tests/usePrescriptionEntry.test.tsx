@@ -2,11 +2,27 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 
 import { usePrescriptionEntry } from "../hooks/usePrescriptionEntry";
+import type {
+  DoctorDetails,
+  MedicationDraft,
+  PatientDetails,
+  PatientSummary,
+} from "@prescription/types/models";
+import type {
+  CreatePrescriptionRequest,
+  PrescriptionDetailsDto,
+} from "@prescription/types/prescription.types";
+import type { ValidationResult } from "@prescription/utils/validation";
 
 /* -------------------- MOCKS -------------------- */
 
+type ToastMock = {
+  success: ReturnType<typeof vi.fn>;
+  error: ReturnType<typeof vi.fn>;
+};
+
 vi.mock("@components/common/Toast/useToast", () => {
-  const toastMock = {
+  const toastMock: ToastMock = {
     success: vi.fn(),
     error: vi.fn(),
   };
@@ -61,27 +77,36 @@ import {
 /* -------------------- HELPERS -------------------- */
 
 function samplePatientSummary() {
-  return { id: "p-1", fullName: "John Doe" } as any;
-}
-
-function samplePatientDetails(overrides: Partial<any> = {}) {
-  return {
+  const summary: PatientSummary = {
     id: "p-1",
     fullName: "John Doe",
     phone: "+1-555-0100",
+  };
+  return summary;
+}
+
+function samplePatientDetails(overrides: Partial<PatientDetails> = {}) {
+  const details: PatientDetails = {
+    id: "p-1",
+    fullName: "John Doe",
+    phone: "+1-555-0100",
+    dob: "1980-01-01",
+    gender: "Male",
     email: "john@example.com",
     address: "221B Baker Street",
     allergies: undefined,
     ...overrides,
-  } as any;
+  };
+  return details;
 }
 
 function sampleDoctor() {
-  return { id: "d-99", name: "Dr. Jane Smith" } as any;
+  const doctor: DoctorDetails = { id: "d-99", name: "Dr. Jane Smith" };
+  return doctor;
 }
 
 function sampleMedications() {
-  return [
+  const meds: MedicationDraft[] = [
     {
       drugId: "prod-123",
       drugName: "Amoxicillin",
@@ -92,20 +117,40 @@ function sampleMedications() {
       refills: 1,
       instructions: "After meals",
     },
-  ] as any;
+  ];
+  return meds;
 }
+
+const createdPrescriptionResponse: PrescriptionDetailsDto = {
+  id: "rx-100",
+  patientId: "p-1",
+  patientName: "John Doe",
+  prescriber: { id: "d-99", name: "Dr. Jane Smith" },
+  createdAt: "2025-01-01T00:00:00.000Z",
+  expiresAt: "2025-12-31T00:00:00.000Z",
+  status: "CREATED",
+  isRefillable: false,
+  medicines: [],
+};
 
 /* -------------------- TESTS -------------------- */
 
 describe("usePrescriptionEntry", () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  const mockedGetPatientById = vi.mocked(getPatientById);
+  const mockedCreatePrescription = vi.mocked(createPrescription);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (validatePatientStep as any).mockReturnValue({ valid: false, errors: ["Invalid patient"] });
-    (validateDoctorStep as any).mockReturnValue({ valid: false, errors: ["Invalid doctor"] });
-    (validateMedicationStep as any).mockReturnValue({ valid: false, errors: ["Invalid meds"] });
-    (validatePrescriptionDraft as any).mockReturnValue({ valid: false, errors: ["Form invalid"] });
+    const invalidPatient: ValidationResult = { valid: false, errors: ["Invalid patient"] };
+    const invalidDoctor: ValidationResult = { valid: false, errors: ["Invalid doctor"] };
+    const invalidMeds: ValidationResult = { valid: false, errors: ["Invalid meds"] };
+    const invalidDraft: ValidationResult = { valid: false, errors: ["Form invalid"] };
+
+    vi.mocked(validatePatientStep).mockReturnValue(invalidPatient);
+    vi.mocked(validateDoctorStep).mockReturnValue(invalidDoctor);
+    vi.mocked(validateMedicationStep).mockReturnValue(invalidMeds);
+    vi.mocked(validatePrescriptionDraft).mockReturnValue(invalidDraft);
 
     // Silence console.error by default (we'll restore per-test if needed)
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -152,7 +197,7 @@ it("computes isNextDisabled based on step-specific validations", () => {
 
   // --- Step 1 (Patient) ---
   // make it valid
-  (validatePatientStep as any).mockReturnValue({ valid: true, errors: [] });
+  vi.mocked(validatePatientStep).mockReturnValue({ valid: true, errors: [] });
 
   // Force a state change: move away from 1, then back to 1
   act(() => {
@@ -168,7 +213,7 @@ it("computes isNextDisabled based on step-specific validations", () => {
   expect(result.current.isNextDisabled).toBe(false);
 
   // --- Step 2 (Doctor) ---
-  (validateDoctorStep as any).mockReturnValue({ valid: true, errors: [] });
+  vi.mocked(validateDoctorStep).mockReturnValue({ valid: true, errors: [] });
 
   act(() => {
     result.current.setCurrentStep(3);
@@ -183,7 +228,7 @@ it("computes isNextDisabled based on step-specific validations", () => {
   expect(result.current.isNextDisabled).toBe(false);
 
   // --- Step 3 (Medications) ---
-  (validateMedicationStep as any).mockReturnValue({ valid: true, errors: [] });
+  vi.mocked(validateMedicationStep).mockReturnValue({ valid: true, errors: [] });
 
   act(() => {
     result.current.setCurrentStep(4);
@@ -231,7 +276,9 @@ it("computes isNextDisabled based on step-specific validations", () => {
   });
 
   it("handlePatientSelected loads details, normalizes allergies, and updates draft", async () => {
-    (getPatientById as any).mockResolvedValueOnce(samplePatientDetails({ allergies: undefined }));
+    mockedGetPatientById.mockResolvedValueOnce(
+      samplePatientDetails({ allergies: undefined })
+    );
     const { result } = renderHook(() => usePrescriptionEntry());
 
     await act(async () => {
@@ -245,19 +292,19 @@ it("computes isNextDisabled based on step-specific validations", () => {
       allergies: [],
     });
 
-    const { toastMock } = ToastModule as unknown as { toastMock: { success: any; error: any } };
+    const { toastMock } = ToastModule as unknown as { toastMock: ToastMock };
     expect(toastMock.error).not.toHaveBeenCalled();
   });
 
   it("handlePatientSelected shows toast error when details missing", async () => {
-    (getPatientById as any).mockResolvedValueOnce(null);
+    mockedGetPatientById.mockResolvedValueOnce(undefined);
     const { result } = renderHook(() => usePrescriptionEntry());
 
     await act(async () => {
       await result.current.handlePatientSelected(samplePatientSummary());
     });
 
-    const { toastMock } = ToastModule as unknown as { toastMock: { success: any; error: any } };
+    const { toastMock } = ToastModule as unknown as { toastMock: ToastMock };
     expect(toastMock.error).toHaveBeenCalledWith("Error", "Failed to load patient details");
   });
 
@@ -283,7 +330,7 @@ it("computes isNextDisabled based on step-specific validations", () => {
   });
 
   it("handleSubmit shows validation error and does not call API when invalid", async () => {
-    (validatePrescriptionDraft as any).mockReturnValueOnce({
+    vi.mocked(validatePrescriptionDraft).mockReturnValueOnce({
       valid: false,
       errors: ["Please fix the issues"],
     });
@@ -294,20 +341,25 @@ it("computes isNextDisabled based on step-specific validations", () => {
       await result.current.handleSubmit();
     });
 
-    const { toastMock } = ToastModule as unknown as { toastMock: { success: any; error: any } };
+    const { toastMock } = ToastModule as unknown as { toastMock: ToastMock };
     expect(toastMock.error).toHaveBeenCalledWith("Validation Error", "Please fix the issues");
     expect(createPrescription).not.toHaveBeenCalled();
     expect(result.current.isSubmitting).toBe(false);
   });
 
   it("handleSubmit posts when valid, shows success, and resets state", async () => {
-    (validatePrescriptionDraft as any).mockReturnValueOnce({ valid: true, errors: [] });
-    (createPrescription as any).mockResolvedValueOnce({ id: "rx-100", status: "CREATED" });
+    vi.mocked(validatePrescriptionDraft).mockReturnValueOnce({
+      valid: true,
+      errors: [],
+    });
+    mockedCreatePrescription.mockResolvedValueOnce(createdPrescriptionResponse);
 
     const { result } = renderHook(() => usePrescriptionEntry());
 
     await act(async () => {
-      (getPatientById as any).mockResolvedValueOnce(samplePatientDetails({ allergies: ["Peanuts"] }));
+      mockedGetPatientById.mockResolvedValueOnce(
+        samplePatientDetails({ allergies: ["Peanuts"] })
+      );
       await result.current.handlePatientSelected(samplePatientSummary());
     });
 
@@ -321,7 +373,7 @@ it("computes isNextDisabled based on step-specific validations", () => {
     });
 
     expect(createPrescription).toHaveBeenCalledTimes(1);
-    const calledWith = (createPrescription as any).mock.calls[0][0];
+    const calledWith = mockedCreatePrescription.mock.calls[0]?.[0] as CreatePrescriptionRequest;
 
     expect(calledWith).toMatchObject({
       patientId: "p-1",
@@ -340,7 +392,7 @@ it("computes isNextDisabled based on step-specific validations", () => {
       instruction: "After meals",
     });
 
-    const { toastMock } = ToastModule as unknown as { toastMock: { success: any; error: any } };
+    const { toastMock } = ToastModule as unknown as { toastMock: ToastMock };
     expect(toastMock.success).toHaveBeenCalledWith(
       "Prescription Created Successfully",
       "Prescription ID: rx-100 | Status: CREATED"
@@ -354,13 +406,16 @@ it("computes isNextDisabled based on step-specific validations", () => {
   });
 
   it("handleSubmit shows error when API fails and does not reset draft", async () => {
-    (validatePrescriptionDraft as any).mockReturnValueOnce({ valid: true, errors: [] });
-    (createPrescription as any).mockRejectedValueOnce(new Error("Server down"));
+    vi.mocked(validatePrescriptionDraft).mockReturnValueOnce({
+      valid: true,
+      errors: [],
+    });
+    mockedCreatePrescription.mockRejectedValueOnce(new Error("Server down"));
 
     const { result } = renderHook(() => usePrescriptionEntry());
 
     await act(async () => {
-      (getPatientById as any).mockResolvedValueOnce(samplePatientDetails());
+      mockedGetPatientById.mockResolvedValueOnce(samplePatientDetails());
       await result.current.handlePatientSelected(samplePatientSummary());
     });
     act(() => {
@@ -372,7 +427,7 @@ it("computes isNextDisabled based on step-specific validations", () => {
       await result.current.handleSubmit();
     });
 
-    const { toastMock } = ToastModule as unknown as { toastMock: { success: any; error: any } };
+    const { toastMock } = ToastModule as unknown as { toastMock: ToastMock };
 
     // ✅ Your hook uses anyErr?.message || "Server error" → for Error("Server down"), msg is "Server down"
     expect(toastMock.error).toHaveBeenCalledWith(

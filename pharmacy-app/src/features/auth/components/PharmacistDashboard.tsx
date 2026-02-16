@@ -5,7 +5,7 @@ import {
   FileText,
   Clock,
   Package,
-  AlertTriangle,
+
 } from "lucide-react";
 
 import DataTable from "@components/common/Table/Table";
@@ -203,7 +203,7 @@ export default function PharmacistDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
         <Kpi
           title="Pending Prescriptions"
@@ -218,11 +218,11 @@ export default function PharmacistDashboard() {
           icon={<Package className="w-5 h-5 text-green-600" />}
         />
 
-        <Kpi
+        {/* <Kpi
           title="Active Alerts"
           value={stats.alerts}
           icon={<AlertTriangle className="w-5 h-5 text-red-600" />}
-        />
+        /> */}
 
         <Kpi
           title="Today's Prescriptions"

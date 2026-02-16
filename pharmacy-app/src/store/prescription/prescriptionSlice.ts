@@ -15,7 +15,7 @@ import type {
   CreatePrescriptionRequest,
   PrescriptionDetailsDto,
   PrescriptionSummaryDto,
-} from "@prescription/prescription.types";
+} from "@prescription/types/prescription.types";
 
 /* ===================== THUNKS ===================== */
 
@@ -106,20 +106,22 @@ export const searchPrescriptionsThunk = createAsyncThunk<
 >(
   "prescriptions/search",
   async (
-    {
-      searchTerm,
-      pageSize = 10,
-      continuationToken = null,
-      reset = true,
-    },
+    { searchTerm, pageSize, continuationToken, reset },
     { rejectWithValue }
   ) => {
     try {
-      const result = await searchPrescriptions(searchTerm, pageSize, continuationToken);
+      const resolvedPageSize = pageSize ?? 10;
+      const resolvedContinuationToken = continuationToken ?? null;
+      const resolvedReset = reset ?? true;
+      const result = await searchPrescriptions(
+        searchTerm,
+        resolvedPageSize,
+        resolvedContinuationToken
+      );
       return {
         items: result.items || [],
         continuationToken: result.continuationToken || null,
-        reset,
+        reset: resolvedReset,
       };
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
@@ -139,20 +141,22 @@ export const fetchPrescriptionsByPatient = createAsyncThunk<
 >(
   "prescriptions/byPatient",
   async (
-    {
-      patientId,
-      pageSize = 10,
-      continuationToken = null,
-      reset = true,
-    },
+    { patientId, pageSize, continuationToken, reset },
     { rejectWithValue }
   ) => {
     try {
-      const result = await getPrescriptionsByPatient(patientId, pageSize, continuationToken);
+      const resolvedPageSize = pageSize ?? 10;
+      const resolvedContinuationToken = continuationToken ?? null;
+      const resolvedReset = reset ?? true;
+      const result = await getPrescriptionsByPatient(
+        patientId,
+        resolvedPageSize,
+        resolvedContinuationToken
+      );
       return {
         items: result.items || [],
         continuationToken: result.continuationToken || null,
-        reset,
+        reset: resolvedReset,
       };
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));

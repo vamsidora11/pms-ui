@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import type { PrescriptionSummaryDto } from "@prescription/prescription.types";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
 import PharmacistDashboard from "../components/PharmacistDashboard";
 
 /* ============================================

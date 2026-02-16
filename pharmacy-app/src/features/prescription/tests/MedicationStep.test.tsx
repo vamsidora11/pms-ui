@@ -13,7 +13,7 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 vi.mock("lucide-react", () => {
   const Icon =
     (name: string) =>
-    (props: any) =>
+    (props: React.SVGProps<SVGSVGElement>) =>
       <svg data-icon={name} {...props} />;
   return {
     Plus: Icon("Plus"),
@@ -47,7 +47,9 @@ type Row = {
 };
 
 let mockRows: Row[] = [];
-let mockSearchText: Record<string, string> = {};
+type SearchText = Record<string, string>;
+
+let mockSearchText: SearchText = {};
 let mockResults: Record<string, Array<{ productId: string; name: string; strength: string }>> = {};
 let mockLoadingByUid: Record<string, boolean> = {};
 
@@ -58,13 +60,15 @@ const startSearchModeSpy = vi.fn();
 const selectDrugSpy = vi.fn();
 
 // This spy applies the updater immediately, mimicking React's setState(updater)
-const setSearchTextSpy = vi.fn((updaterOrValue: any) => {
+const setSearchTextSpy = vi.fn(
+  (updaterOrValue: SearchText | ((prev: SearchText) => SearchText) | null) => {
   if (typeof updaterOrValue === "function") {
     mockSearchText = updaterOrValue(mockSearchText);
   } else {
     mockSearchText = updaterOrValue ?? {};
   }
-});
+  }
+);
 
 vi.mock("../hooks/useMedicationStepState", () => ({
   useMedicationStepState: vi.fn(() => ({

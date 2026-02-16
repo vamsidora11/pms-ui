@@ -276,7 +276,7 @@ export default function PrescriptionValidationDetailsPage() {
     // Guard to avoid re-initializing if already set for this id
     if (ui.data?.id === data.id) return;
     actions.init(data);
-  }, [data?.id, ui.data?.id, actions]);
+  }, [data, ui.data?.id, actions]);
 
   const viewData = (ui.data ?? data) as PrescriptionDetailsDto | null;
 

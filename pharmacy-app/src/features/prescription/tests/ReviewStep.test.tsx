@@ -1,13 +1,21 @@
-import React from "react";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
+import type {
+  DoctorDetails,
+  MedicationDraft,
+  PatientDetails,
+  PrescriptionDraft,
+} from "../types/models";
 
 /**
  * Mocks must be declared BEFORE importing the SUT
  */
 
 // Mock @utils/format → formatDate
-const formatDateSpy = vi.fn((_iso: string) => "Jan 01, 2000");
+const formatDateSpy = vi.fn((iso: string) => {
+  void iso;
+  return "Jan 01, 2000";
+});
 vi.mock("@utils/format", () => ({
   formatDate: (iso: string) => formatDateSpy(iso),
 }));
@@ -15,54 +23,23 @@ vi.mock("@utils/format", () => ({
 // ⬇️ Import SUT after mocks
 import ReviewStep from "../steps/ReviewStep";
 
-// Types (lightweight mirrors to help readability in this test)
-type Patient = {
-  id: string;
-  fullName: string;
-  dob: string;
-  gender: string;
-  phone: string;
-  email?: string;
-  allergies?: string[];
-};
-
-type Doctor = { id: string; name: string };
-
-type Med = {
-  drugId?: string; // optional when incomplete
-  drugName: string;
-  strength: string;
-  frequency: string;
-  quantity: number;
-  durationDays: number;
-  refills: number;
-  instructions?: string;
-};
-
-type Draft = {
-  patient: Patient | null;
-  doctor: Doctor;
-  medications: Med[];
-  notes?: string;
-};
-
 // Helpers to quickly build drafts
-const mkPatient = (p?: Partial<Patient>): Patient => ({
+const mkPatient = (p?: Partial<PatientDetails>): PatientDetails => ({
   id: "P-001",
   fullName: "John Patient",
   dob: "2000-01-01",
-  gender: "M",
+  gender: "Male",
   phone: "9990001111",
   ...p,
 });
 
-const mkDoctor = (d?: Partial<Doctor>): Doctor => ({
+const mkDoctor = (d?: Partial<DoctorDetails>): DoctorDetails => ({
   id: "DR-001",
   name: "Dr. Strange",
   ...d,
 });
 
-const mkMed = (m?: Partial<Med>): Med => ({
+const mkMed = (m?: Partial<MedicationDraft>): MedicationDraft => ({
   drugId: "INV-123",
   drugName: "Amoxicillin",
   strength: "500mg",
@@ -81,14 +58,14 @@ describe("ReviewStep", () => {
 
   it("shows validation error box for missing patient, missing doctor fields, and incomplete medications", () => {
     // Missing: patient (null), doctor id empty, doctor name empty, and one med without drugId
-    const draft: Draft = {
+    const draft: PrescriptionDraft = {
       patient: null,
       doctor: mkDoctor({ id: "", name: "" }),
       medications: [
         mkMed({ drugId: undefined, drugName: "(none)", instructions: "Drink water" }),
         mkMed(), // one complete med too (not strictly needed, but ok)
       ],
-      notes: undefined,
+      notes: "",
     };
 
     const onSubmit = vi.fn();
@@ -143,7 +120,7 @@ expect(within(nameField).getByText("(Not set)")).toBeInTheDocument();
   });
 
   it("renders complete patient info, calls formatDate for DOB, shows email, allergies, and a complete med including Inventory ID and Instructions; notes present", () => {
-    const draft: Draft = {
+    const draft: PrescriptionDraft = {
       patient: mkPatient({
         email: "john@example.com",
         allergies: ["Peanuts", "Dust"],
@@ -173,7 +150,7 @@ expect(within(nameField).getByText("(Not set)")).toBeInTheDocument();
     // Patient fields
     expect(screen.getByText("John Patient")).toBeInTheDocument();
     expect(screen.getByText("P-001")).toBeInTheDocument();
-    expect(screen.getByText("M")).toBeInTheDocument();
+    expect(screen.getByText("Male")).toBeInTheDocument();
     expect(screen.getByText("9990001111")).toBeInTheDocument();
 
     // formatDate called with DOB and its returned string rendered
@@ -223,13 +200,13 @@ expect(within(nameField).getByText("(Not set)")).toBeInTheDocument();
   });
 
   it("renders medication item without instructions cleanly (no Instructions block)", () => {
-    const draft: Draft = {
+    const draft: PrescriptionDraft = {
       patient: mkPatient(),
       doctor: mkDoctor(),
       medications: [
         mkMed({ drugId: "INV-001", instructions: undefined, drugName: "Paracetamol" }),
       ],
-      notes: undefined,
+      notes: "",
     };
 
     render(<ReviewStep draft={draft} onSubmit={vi.fn()} isSubmitting={false} />);
@@ -240,7 +217,7 @@ expect(within(nameField).getByText("(Not set)")).toBeInTheDocument();
   });
 
   it("shows 'Submitting...' and disables button when isSubmitting=true", () => {
-    const draft: Draft = {
+    const draft: PrescriptionDraft = {
       patient: mkPatient(),
       doctor: mkDoctor(),
       medications: [mkMed()],
@@ -260,11 +237,11 @@ expect(within(nameField).getByText("(Not set)")).toBeInTheDocument();
   });
 
   it("when allergies absent and email absent, those blocks do not render", () => {
-    const draft: Draft = {
+    const draft: PrescriptionDraft = {
       patient: mkPatient({ email: undefined, allergies: [] }),
       doctor: mkDoctor(),
       medications: [mkMed()],
-      notes: undefined,
+      notes: "",
     };
     render(<ReviewStep draft={draft} onSubmit={vi.fn()} isSubmitting={false} />);
 
@@ -276,13 +253,13 @@ expect(within(nameField).getByText("(Not set)")).toBeInTheDocument();
   });
 
   it("shows per-med red state when drugId missing, including red 'Drug not selected' banner", () => {
-    const draft: Draft = {
+    const draft: PrescriptionDraft = {
       patient: mkPatient(),
       doctor: mkDoctor({ id: "", name: "" }), // doctor missing -> error + "(Not set)"
       medications: [
         mkMed({ drugId: undefined, drugName: "(Not selected)", strength: "" }),
       ],
-      notes: undefined,
+      notes: "",
     };
     render(<ReviewStep draft={draft} onSubmit={vi.fn()} isSubmitting={false} />);
 

@@ -1,6 +1,10 @@
-import React from "react";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
+import type { PatientDetails } from "../types/models";
+import type { HistoryTableQuery } from "../utils/prescriptionHistoryUtils";
+import type { PrescriptionHistoryQueryParams } from "@api/prescription";
 
 /**
  * IMPORTANT: All mocks are declared BEFORE importing the SUT, and
@@ -11,10 +15,10 @@ import { render, screen } from "@testing-library/react";
 // Mock: react-redux/useDispatch
 // -----------------------
 const dispatchSpy = vi.fn();
-vi.mock("react-redux", async (orig) => {
+vi.mock("react-redux", async (orig: () => Promise<Record<string, unknown>>) => {
   const actual = await orig();
   return {
-    ...actual,
+    ...(actual as Record<string, unknown>),
     useDispatch: () => dispatchSpy,
   };
 });
@@ -22,35 +26,50 @@ vi.mock("react-redux", async (orig) => {
 // -----------------------
 // Mocks: utils (use EXACT string: "./utils/prescriptionHistoryUtils")
 // -----------------------
-const formatDateTimeMock = vi.fn((_iso: string) => ({
-  date: "2025-01-01",
-  time: "10:00 AM",
-}));
-const statusStyleMock = vi.fn((_status: string) => "bg-green-100 text-green-800");
-const buildHistoryQueryParamsMock = vi.fn((q: any) => ({ ...q, __mapped: true }));
+const formatDateTimeMock = vi.fn((iso: string) => {
+  void iso;
+  return {
+    date: "2025-01-01",
+    time: "10:00 AM",
+  };
+});
+const statusStyleMock = vi.fn((status: string) => {
+  void status;
+  return "bg-green-100 text-green-800";
+});
+type MappedParams = PrescriptionHistoryQueryParams & { __mapped: boolean };
+const buildHistoryQueryParamsMock = vi.fn(
+  (q: HistoryTableQuery): MappedParams => ({ ...q, __mapped: true })
+);
 
 vi.mock("../utils/prescriptionHistoryUtils", () => ({
   formatDateTime: (iso: string) => formatDateTimeMock(iso),
   statusStyle: (s: string) => statusStyleMock(s),
-  buildHistoryQueryParams: (q: any) => buildHistoryQueryParamsMock(q),
+  buildHistoryQueryParams: (q: HistoryTableQuery) => buildHistoryQueryParamsMock(q),
 }));
 
 // -----------------------
 // Mock: Redux action creator (exact string: "@store/prescription/prescriptionSlice")
 // -----------------------
-const fetchAllPrescriptionsMock = vi.fn((payload: any) => ({
+const fetchAllPrescriptionsMock = vi.fn((payload: PrescriptionHistoryQueryParams) => ({
   type: "prescriptions/fetchAll",
   payload,
 }));
 vi.mock("@store/prescription/prescriptionSlice", () => ({
-  fetchAllPrescriptions: (payload: any) => fetchAllPrescriptionsMock(payload),
+  fetchAllPrescriptions: (payload: PrescriptionHistoryQueryParams) =>
+    fetchAllPrescriptionsMock(payload),
 }));
 
 // -----------------------
 // Mock: Expanded details (exact string: "./components/PrescriptionExpandedDetails")
 // -----------------------
 vi.mock("../components/PrescriptionExpandedDetails", () => {
-  const Mock = (props: any) => (
+  const Mock = (props: {
+    row?: PrescriptionSummaryDto;
+    patient?: PatientDetails | null;
+    patientLoading?: boolean;
+    details?: { items?: unknown[] };
+  }) => (
     <div data-testid="expanded-details">
       <div data-testid="expanded-row-id">{props.row?.id}</div>
       <div data-testid="expanded-patient-loading">{String(props.patientLoading)}</div>
@@ -66,16 +85,32 @@ vi.mock("../components/PrescriptionExpandedDetails", () => {
 // We render all column renderers for the first row to execute formatDateTime/statusStyle.
 // Also trigger renderExpandedRow, isRowExpanded, onRowClick, onServerQueryChange.
 // -----------------------
+type ColumnDef = {
+  key: keyof PrescriptionSummaryDto | string;
+  render?: (value: unknown, row: PrescriptionSummaryDto) => ReactNode;
+};
+
+type DataTableProps = {
+  data?: PrescriptionSummaryDto[];
+  columns?: ColumnDef[];
+  loading?: boolean;
+  initialServerQuery?: { pageNumber?: number; pageSize?: number };
+  renderExpandedRow?: (row: PrescriptionSummaryDto) => ReactNode;
+  isRowExpanded?: (row: PrescriptionSummaryDto) => boolean;
+  onRowClick?: (row: PrescriptionSummaryDto) => void;
+  onServerQueryChange?: (query: HistoryTableQuery) => void;
+};
+
 vi.mock("@components/common/Table/Table", () => {
-  const MockDataTable = (props: any) => {
+  const MockDataTable = (props: DataTableProps) => {
     const rows = Array.isArray(props.data) ? props.data : [];
 
     const firstRow = rows[0];
     const renderedCells =
       firstRow && Array.isArray(props.columns)
-        ? props.columns.map((col: any, idx: number) => {
+        ? props.columns.map((col, idx) => {
             if (typeof col.render === "function") {
-              const val = (firstRow as any)[col.key];
+              const val = firstRow[col.key as keyof PrescriptionSummaryDto];
               return (
                 <div key={idx} data-testid={`col-${col.key}`}>
                   {col.render(val, firstRow)}
@@ -84,23 +119,24 @@ vi.mock("@components/common/Table/Table", () => {
             }
             return (
               <div key={idx} data-testid={`col-${col.key}`}>
-                {String((firstRow as any)[col.key] ?? "")}
+                {String(firstRow[col.key as keyof PrescriptionSummaryDto] ?? "")}
               </div>
             );
           })
         : null;
 
-    const expandedResults = rows.map((r: any) => (
+    const expandedResults = rows.map((r) => (
       <div key={`exp-${r.id}`} data-testid={`expanded-for-${r.id}`}>
-        {props.renderExpandedRow?.(r)}
+        {props.renderExpandedRow ? props.renderExpandedRow(r) : null}
       </div>
     ));
 
+    const isRowExpanded = props.isRowExpanded;
     const expandStateText =
-      typeof props.isRowExpanded === "function"
-        ? rows.map((r: any) => (
+      typeof isRowExpanded === "function"
+        ? rows.map((r) => (
             <div key={`isExp-${r.id}`} data-testid={`is-expanded-${r.id}`}>
-              {String(props.isRowExpanded(r))}
+              {String(isRowExpanded(r))}
             </div>
           ))
         : null;
@@ -139,19 +175,32 @@ vi.mock("@components/common/Table/Table", () => {
 // Mock: usePrescriptionHistoryData (exact string: "./hooks/usePrescriptionHistoryData")
 // -----------------------
 const toggleRowSpy = vi.fn();
-const isRowExpandedSpy = vi.fn((row: any) => row?.id === "rx-1");
+const isRowExpandedSpy = vi.fn((row: PrescriptionSummaryDto) => row?.id === "rx-1");
+
+const baseSummary: PrescriptionSummaryDto = {
+  alerts: false,
+  id: "rx-1",
+  patientId: "P-001",
+  patientName: "Alice",
+  prescriberName: "Dr. Who",
+  createdAt: "2025-01-01T04:30:00.000Z",
+  expiresAt: "2025-12-31T00:00:00.000Z",
+  status: "Active",
+  medicineCount: 1,
+  validationSummary: {
+    totalIssues: 0,
+    highSeverityCount: 0,
+    moderateCount: 0,
+    lowCount: 0,
+    requiresReview: false,
+  },
+};
 
 const baseHookReturn = {
   prescriptions: [
+    baseSummary,
     {
-      id: "rx-1",
-      patientName: "Alice",
-      patientId: "P-001",
-      prescriberName: "Dr. Who",
-      createdAt: "2025-01-01T04:30:00.000Z",
-      status: "Active",
-    },
-    {
+      ...baseSummary,
       id: "rx-2",
       patientName: "Bob",
       patientId: "P-002",
@@ -166,16 +215,23 @@ const baseHookReturn = {
   pageSize: 10,
   expandedRowId: "rx-1",
   expandedDetails: { items: [{ k: 1 }, { k: 2 }] },
-  expandedPatient: { id: "P-001", fullName: "Alice A." },
+  expandedPatient: {
+    id: "P-001",
+    fullName: "Alice A.",
+    phone: "5550001111",
+    dob: "1990-01-01",
+    gender: "Female",
+  } satisfies PatientDetails,
   expandedPatientLoading: true,
   toggleRow: toggleRowSpy,
   isRowExpanded: isRowExpandedSpy,
 };
 
-let hookReturn: any = { ...baseHookReturn };
+type HookReturn = typeof baseHookReturn;
+let hookReturn: HookReturn = { ...baseHookReturn };
 
 vi.mock("../hooks/usePrescriptionHistoryData", () => ({
-  usePrescriptionHistoryData: vi.fn((_args: any) => hookReturn),
+  usePrescriptionHistoryData: vi.fn(() => hookReturn),
 }));
 
 // ⬇️ Import the SUT **after** mocks so they apply correctly.

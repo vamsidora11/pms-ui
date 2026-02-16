@@ -1,7 +1,20 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import PrescriptionValidationQueuePage from "../PrescriptionValidationPage";
+import PrescriptionValidationQueuePage from "../PrescriptionValidationQueue";
 import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
+
+/* ------------------------------------------------------------------ */
+/* --------------------------- TOAST MOCK ----------------------------- */
+/* ------------------------------------------------------------------ */
+
+vi.mock("@components/common/Toast/useToast", () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
 
 /* ------------------------------------------------------------------ */
 /* --------------------------- ROUTER MOCK ---------------------------- */
@@ -247,7 +260,9 @@ describe("PrescriptionValidationQueuePage", () => {
 
     render(<PrescriptionValidationQueuePage />);
 
-    expect(mockRefetch).toHaveBeenCalled();
+    return waitFor(() => {
+      expect(mockRefetch).toHaveBeenCalled();
+    });
   });
 
   /* ---------------- Pluralization ---------------- */
