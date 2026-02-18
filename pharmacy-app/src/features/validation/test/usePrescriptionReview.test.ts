@@ -1,24 +1,21 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { usePrescriptionReview } from "../hooks/usePrescriptionReview";
-import api from "@api/axiosInstance";
-// import { ENDPOINTS } from "@api/endpoints";
+import {
+  createDispenseForPrescription,
+  reviewPrescription,
+} from "@api/prescription";
 
-vi.mock("@api/axiosInstance", () => ({
-  default: {
-    put: vi.fn(),
-  },
-}));
-
-vi.mock("@api/endpoints", () => ({
-  ENDPOINTS: {
-    prescriptions: "/prescriptions",
-  },
+vi.mock("@api/prescription", () => ({
+  reviewPrescription: vi.fn(),
+  createDispenseForPrescription: vi.fn(),
 }));
 
 describe("usePrescriptionReview", () => {
-  const mockedPut = vi.mocked(api.put);
-  const reviewPayload = {
+  const mockedReviewPrescription = vi.mocked(reviewPrescription);
+  const mockedCreateDispenseForPrescription = vi.mocked(createDispenseForPrescription);
+
+  const acceptedPayload = {
     medicines: [
       {
         prescriptionMedicineId: "MED-1",
@@ -29,95 +26,105 @@ describe("usePrescriptionReview", () => {
     ],
   };
 
+  const rejectedPayload = {
+    medicines: [
+      {
+        prescriptionMedicineId: "MED-1",
+        decision: "Rejected" as const,
+        overrideReason: "Out of stock",
+        approvedQuantity: 0,
+      },
+    ],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("initially sets submitting to false", () => {
-    const { result } = renderHook(() =>
-      usePrescriptionReview("RX-001")
-    );
-
+    const { result } = renderHook(() => usePrescriptionReview("RX-001"));
     expect(result.current.submitting).toBe(false);
   });
 
-  it("submits successfully", async () => {
-    mockedPut.mockResolvedValueOnce({});
+  it("submits successfully and creates dispense when at least one medicine is accepted", async () => {
+    mockedReviewPrescription.mockResolvedValueOnce();
+    mockedCreateDispenseForPrescription.mockResolvedValueOnce();
 
-    const { result } = renderHook(() =>
-      usePrescriptionReview("RX-001")
-    );
+    const { result } = renderHook(() => usePrescriptionReview("RX-001"));
 
-    let response;
-
+    let response: Awaited<ReturnType<typeof result.current.submitReview>> | undefined;
     await act(async () => {
-      response = await result.current.submitReview(reviewPayload);
+      response = await result.current.submitReview(acceptedPayload);
     });
 
-    expect(mockedPut).toHaveBeenCalledWith(
-      "/prescriptions/RX-001/review",
-      reviewPayload
-    );
-
+    expect(mockedReviewPrescription).toHaveBeenCalledWith("RX-001", acceptedPayload);
+    expect(mockedCreateDispenseForPrescription).toHaveBeenCalledWith("RX-001");
     expect(response).toEqual({ ok: true });
     expect(result.current.submitting).toBe(false);
   });
 
-  it("handles API error with response message", async () => {
-    mockedPut.mockRejectedValueOnce({
+  it("submits successfully without creating dispense when all medicines are rejected", async () => {
+    mockedReviewPrescription.mockResolvedValueOnce();
+
+    const { result } = renderHook(() => usePrescriptionReview("RX-001"));
+
+    let response: Awaited<ReturnType<typeof result.current.submitReview>> | undefined;
+    await act(async () => {
+      response = await result.current.submitReview(rejectedPayload);
+    });
+
+    expect(mockedReviewPrescription).toHaveBeenCalledWith("RX-001", rejectedPayload);
+    expect(mockedCreateDispenseForPrescription).not.toHaveBeenCalled();
+    expect(response).toEqual({ ok: true });
+  });
+
+  it("handles review API error with response message", async () => {
+    mockedReviewPrescription.mockRejectedValueOnce({
       response: { data: { message: "Validation failed" } },
     });
 
-    const { result } = renderHook(() =>
-      usePrescriptionReview("RX-001")
-    );
+    const { result } = renderHook(() => usePrescriptionReview("RX-001"));
 
-    let response;
-
+    let response: Awaited<ReturnType<typeof result.current.submitReview>> | undefined;
     await act(async () => {
-      response = await result.current.submitReview(reviewPayload);
+      response = await result.current.submitReview(acceptedPayload);
     });
 
     expect(response).toEqual({
       ok: false,
       message: "Validation failed",
     });
-
+    expect(mockedCreateDispenseForPrescription).not.toHaveBeenCalled();
     expect(result.current.submitting).toBe(false);
   });
 
-  it("handles API error with generic message", async () => {
-    mockedPut.mockRejectedValueOnce({
-      message: "Network error",
+  it("handles dispense API error with generic message", async () => {
+    mockedReviewPrescription.mockResolvedValueOnce();
+    mockedCreateDispenseForPrescription.mockRejectedValueOnce({
+      message: "Dispense failed",
     });
 
-    const { result } = renderHook(() =>
-      usePrescriptionReview("RX-001")
-    );
+    const { result } = renderHook(() => usePrescriptionReview("RX-001"));
 
-    let response;
-
+    let response: Awaited<ReturnType<typeof result.current.submitReview>> | undefined;
     await act(async () => {
-      response = await result.current.submitReview(reviewPayload);
+      response = await result.current.submitReview(acceptedPayload);
     });
 
     expect(response).toEqual({
       ok: false,
-      message: "Network error",
+      message: "Dispense failed",
     });
   });
 
   it("falls back to default error message", async () => {
-    mockedPut.mockRejectedValueOnce({});
+    mockedReviewPrescription.mockRejectedValueOnce({});
 
-    const { result } = renderHook(() =>
-      usePrescriptionReview("RX-001")
-    );
+    const { result } = renderHook(() => usePrescriptionReview("RX-001"));
 
-    let response;
-
+    let response: Awaited<ReturnType<typeof result.current.submitReview>> | undefined;
     await act(async () => {
-      response = await result.current.submitReview(reviewPayload);
+      response = await result.current.submitReview(acceptedPayload);
     });
 
     expect(response).toEqual({
@@ -128,19 +135,16 @@ describe("usePrescriptionReview", () => {
 
   it("toggles submitting state correctly", async () => {
     let resolvePromise!: () => void;
-
-    const pending = new Promise<void>((res) => {
-      resolvePromise = res;
+    const pending = new Promise<void>((resolve) => {
+      resolvePromise = resolve;
     });
 
-    mockedPut.mockReturnValueOnce(pending as unknown as Promise<unknown>);
+    mockedReviewPrescription.mockReturnValueOnce(pending);
 
-    const { result } = renderHook(() =>
-      usePrescriptionReview("RX-001")
-    );
+    const { result } = renderHook(() => usePrescriptionReview("RX-001"));
 
     act(() => {
-      result.current.submitReview(reviewPayload);
+      void result.current.submitReview(acceptedPayload);
     });
 
     expect(result.current.submitting).toBe(true);
@@ -153,7 +157,8 @@ describe("usePrescriptionReview", () => {
   });
 
   it("rebinds when rxId changes", async () => {
-    mockedPut.mockResolvedValue({});
+    mockedReviewPrescription.mockResolvedValue(undefined);
+    mockedCreateDispenseForPrescription.mockResolvedValue(undefined);
 
     const { result, rerender } = renderHook(
       ({ id }) => usePrescriptionReview(id),
@@ -161,19 +166,16 @@ describe("usePrescriptionReview", () => {
     );
 
     await act(async () => {
-      await result.current.submitReview(reviewPayload);
+      await result.current.submitReview(acceptedPayload);
     });
 
     rerender({ id: "RX-002" });
 
     await act(async () => {
-      await result.current.submitReview(reviewPayload);
+      await result.current.submitReview(acceptedPayload);
     });
 
-    expect(mockedPut).toHaveBeenNthCalledWith(
-      2,
-      "/prescriptions/RX-002/review",
-      reviewPayload
-    );
+    expect(mockedReviewPrescription).toHaveBeenNthCalledWith(2, "RX-002", acceptedPayload);
+    expect(mockedCreateDispenseForPrescription).toHaveBeenNthCalledWith(2, "RX-002");
   });
 });

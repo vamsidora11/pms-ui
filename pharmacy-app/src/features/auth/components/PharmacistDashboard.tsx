@@ -81,7 +81,7 @@ export default function PharmacistDashboard() {
     dispatch(
       fetchAllPrescriptions({
         pageNumber: 1,
-        pageSize: 100,
+        pageSize: 10,
         sortBy: "createdAt",
         sortDirection: "desc",
       })

@@ -22,7 +22,25 @@ import PatientDirectoryPanel from "./PatientDirectoryPanel";
 import PatientDetailsPanel from "./PatientDetailsPanel";
 
 export default function PatientProfiles() {
-  const toast=useToast();
+  const toast = useToast();
+  const getErrorMessage = (err: unknown, fallback: string): string => {
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const errorObj = err as {
+        response?: { data?: { detail?: string; message?: string; title?: string } };
+        message?: string;
+      };
+      return (
+        errorObj.response?.data?.detail ||
+        errorObj.response?.data?.message ||
+        errorObj.response?.data?.title ||
+        errorObj.message ||
+        fallback
+      );
+    }
+    return fallback;
+  };
+
   const directory = usePatientDirectory({
     searchFn: (query, opts) => searchPatients(query, opts),
     debounceMs: 250,
@@ -130,7 +148,10 @@ export default function PatientProfiles() {
               setShowAddModal(false);
             } catch (err) {
               console.error("Failed to add patient", err);
-              toast.error("Error adding patient");
+              toast.error(
+                "Error adding patient",
+                getErrorMessage(err, "Error adding patient")
+              );
             }
           }}
         />
@@ -150,6 +171,7 @@ export default function PatientProfiles() {
             directory.setPatients(refreshed);
 
             setShowUpdateModal(false);
+            toast.success("Success", "Patient updated successfully.");
           }}
         />
       )}

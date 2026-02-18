@@ -129,9 +129,9 @@ export default function ValidationTable({
                         <Pill tone={stockTone}>
                           {(reservableNow ?? "N/A").toString()} / {requiredQty}
                         </Pill>
-                        {physicalQty !== null && (
+                        {/* {physicalQty !== null && (
                           <span className="text-xs text-gray-500">Physical: {physicalQty}</span>
-                        )}
+                        )} */}
                       </div>
                     ) : (
                       <Pill tone="green">Sufficient</Pill>

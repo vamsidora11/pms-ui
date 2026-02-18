@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 import type { RootState } from "store";
 import { useLoginFlow } from "../hooks/useLoginFlow"; // adjust path
+import appLogo from "@assets/logo.png";
 
 export default function LoginPage() {
   const { status } = useSelector((s: RootState) => s.auth);
@@ -46,15 +47,11 @@ export default function LoginPage() {
         <div className="rounded-3xl border border-white/60 bg-white/75 backdrop-blur-xl p-8 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)]">
           {/* Logo */}
           <div className="text-center mb-6">
-            <div className="mx-auto inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-600 to-teal-500 shadow-[0_18px_45px_-18px_rgba(20,184,166,0.7)]">
-              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  d="M4.22 11.29l2.54-2.82c.42-.46 1.14-.48 1.58-.06l1.72 1.64c.44.42 1.15.4 1.58-.06l5.58-6.2c.42-.46 1.14-.48 1.58-.06.44.42.46 1.11.04 1.57l-6.28 6.98c-.42.46-1.14.48-1.58.06l-1.72-1.64c-.44-.42-1.15-.4-1.58.06l-3.24 3.6c-.42.46-1.14.48-1.58.06-.44-.43-.46-1.12-.04-1.57z"
-                  transform="rotate(45 12 12)"
-                />
-                <rect x="6" y="10" width="12" height="8" rx="2" transform="rotate(45 12 14)" />
-              </svg>
-            </div>
+            <img
+              src={appLogo}
+              alt="MediFlow logo"
+              className="mx-auto h-24 w-24 rounded-3xl object-contain shadow-[0_18px_45px_-18px_rgba(20,184,166,0.7)]"
+            />
 
             <h1 className="mt-5 text-3xl font-semibold tracking-tight text-slate-900">
               MediFlow

@@ -1,5 +1,6 @@
 import { Bell } from "lucide-react";
 import type { UserRole } from "../../../store/auth/authtype"; 
+import appLogo from "@assets/logo.png";
 
 type TopNavBarProps = {
   onSearch?: (value: string) => void;
@@ -20,9 +21,12 @@ export default function TopNavBar({
         
         {/* Branding */}
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-blue-600 to-green-600 p-2 rounded-lg text-white font-bold">
-            M
-          </div>
+          <img
+            src={appLogo}
+            alt=""
+            aria-hidden="true"
+            className="h-10 w-10 rounded-lg object-contain"
+          />
           <div>
             <div className="font-semibold text-gray-900">MediFlow</div>
             <div className="text-xs text-gray-500">

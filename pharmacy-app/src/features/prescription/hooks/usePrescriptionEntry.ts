@@ -160,7 +160,7 @@ export function usePrescriptionEntry() {
 
       toast.success(
         "Prescription Created Successfully",
-        `Prescription ID: ${response.id} | Status: ${response.status}`
+        `Prescription ID: ${response.id}`
       );
 
       reset();

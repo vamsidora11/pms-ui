@@ -7,6 +7,35 @@ import type {
   PatientSummaryDto,
 } from "@patient/types/patienttype";
 
+type ApiErrorShape = {
+  response?: {
+    data?: {
+      detail?: string;
+      message?: string;
+      title?: string;
+    };
+  };
+  message?: string;
+};
+
+function getPatientApiErrorMessage(
+  error: unknown,
+  fallback: string
+): string {
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && error !== null) {
+    const err = error as ApiErrorShape;
+    return (
+      err.response?.data?.detail ||
+      err.response?.data?.message ||
+      err.response?.data?.title ||
+      err.message ||
+      fallback
+    );
+  }
+  return fallback;
+}
+
 /**
  * Server-side patient search.
  * @param query The search string (name/id/phone)
@@ -73,10 +102,15 @@ export const createPatient = async (
   request: CreatePatientRequest,
   opts?: { signal?: AbortSignal }
 ): Promise<{ patientId: string }> => {
-  const res = await api.post(ENDPOINTS.patients, request, {
-    signal: opts?.signal,
-  });
-  return res.data;
+  try {
+    const res = await api.post(ENDPOINTS.patients, request, {
+      signal: opts?.signal,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Failed to create patient:", error);
+    throw new Error(getPatientApiErrorMessage(error, "Error adding patient"));
+  }
 };
 
 /*update existing patient profile*/
@@ -86,7 +120,7 @@ export const updatePatient = async (id: string, request: UpdatePatientRequest) =
     return response.data;
   } catch (error) {
     console.error(`Failed to update patient ${id}:`, error);
-    throw error;
+    throw new Error(getPatientApiErrorMessage(error, "Error updating patient"));
   }
 };
 

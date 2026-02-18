@@ -7,6 +7,7 @@ import {
   TagIcon,
   UserCircleIcon,
   BellIcon,
+  ArchiveBoxIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -34,7 +35,7 @@ const roleNavItems: Record<
     { key: "profiles", label: "Patient Profiles", to: "/pharmacist/profiles", icon: UserCircleIcon },
     { key: "labels", label: "Label Generator", to: "/pharmacist/labels", icon: TagIcon },
     // { key: "refills", label: "Refill Management", to: "/pharmacist/refills", icon: ArrowPathIcon },
-    { key: "history", label: "Prescription History", to: "/pharmacist/history", icon: UserCircleIcon },
+    { key: "history", label: "Prescription History", to: "/pharmacist/history", icon: ArchiveBoxIcon },
   ],
   technician: [
     { key: "dashboard", label: "Dashboard", to: "/technician/dashboard", icon: HomeIcon },

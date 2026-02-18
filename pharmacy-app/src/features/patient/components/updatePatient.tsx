@@ -3,6 +3,7 @@ import type {
   PatientDetailsDto,
 } from "@patient/types/patienttype";
 import { updatePatient, getPatientDetails } from "@api/patient";
+import { useToast } from "@components/common/Toast/useToast";
 import PatientFormModal from "./PatientFormModal";
 import type { PatientFormValues } from "../hooks/usePatientForm";
 
@@ -17,11 +18,22 @@ export default function UpdatePatientModal({
   onClose,
   onSave,
 }: UpdatePatientModalProps) {
+  const toast = useToast();
+
   const getErrorMessage = (err: unknown): string => {
     if (typeof err === "string") return err;
     if (typeof err === "object" && err !== null) {
-      const errorObj = err as { message?: string };
-      return errorObj.message || "Error updating patient";
+      const errorObj = err as {
+        response?: { data?: { detail?: string; message?: string; title?: string } };
+        message?: string;
+      };
+      return (
+        errorObj.response?.data?.detail ||
+        errorObj.response?.data?.message ||
+        errorObj.response?.data?.title ||
+        errorObj.message ||
+        "Error updating patient"
+      );
     }
     return "Error updating patient";
   };
@@ -55,8 +67,10 @@ export default function UpdatePatientModal({
       const updated = await getPatientDetails(patient.id);
       onSave(updated);
     } catch (e) {
+      const message = getErrorMessage(e);
+      toast.error("Error updating patient", message);
       // throw so PatientFormModal shows formError and stays open
-      throw new Error(getErrorMessage(e));
+      throw new Error(message);
     }
   };
 

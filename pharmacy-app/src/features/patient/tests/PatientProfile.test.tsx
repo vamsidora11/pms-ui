@@ -268,7 +268,7 @@ describe('PatientProfiles', () => {
     await user.click(screen.getByTestId('add-save'));
 
     const toast = useToast();
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Error adding patient'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Error adding patient', 'bad'));
     expect(screen.getByText('AddPatientModal')).toBeInTheDocument();
   });
 
@@ -320,6 +320,8 @@ describe('PatientProfiles', () => {
     await waitFor(() => expect(det.setSelectedPatient).toHaveBeenCalledWith({ id: 'p-1', fullName: 'Updated P' }));
     expect(patientApi.searchPatients).toHaveBeenCalledWith('jane');
     expect(dir.setPatients).toHaveBeenCalledWith([{ id: 'p-1', fullName: 'Updated P' }]);
+    const toast = useToast();
+    expect(toast.success).toHaveBeenCalledWith('Success', 'Patient updated successfully.');
 
     await waitFor(() => expect(screen.queryByText('UpdatePatientModal')).not.toBeInTheDocument());
   });

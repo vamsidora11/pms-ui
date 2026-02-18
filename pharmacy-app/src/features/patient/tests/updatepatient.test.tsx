@@ -8,6 +8,16 @@ import UpdatePatientModal from "../components/updatePatient";
 import type { PatientDetailsDto } from "@patient/types/patienttype";
 import * as patientApi from "@api/patient";
 
+vi.mock("@components/common/Toast/useToast", () => ({
+  useToast: () => ({
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+    showToast: vi.fn(),
+  }),
+}));
+
 // Mock PatientFormModal to handle submit
 vi.mock("../components/PatientFormModal", () => {
   return {

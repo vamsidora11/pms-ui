@@ -296,6 +296,23 @@ export async function reviewPrescription(
   }
 }
 
+// ================== CREATE DISPENSE FROM PRESCRIPTION ==================
+
+export async function createDispenseForPrescription(
+  prescriptionId: string
+): Promise<void> {
+  try {
+    await api.post(`/api/dispenses/prescription/${prescriptionId}`);
+    logger.info("Dispense created from prescription", { prescriptionId });
+  } catch (error) {
+    logger.error("Create dispense from prescription failed", {
+      prescriptionId,
+      error,
+    });
+    throw error;
+  }
+}
+
 // ================== GET PENDING PRESCRIPTIONS ==================
 
 export async function getPendingPrescriptions(): Promise<PrescriptionSummaryDto[]> {

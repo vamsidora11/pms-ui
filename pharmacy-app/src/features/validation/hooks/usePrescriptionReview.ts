@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
-import api from "@api/axiosInstance";
-import { ENDPOINTS } from "@api/endpoints";
+import {
+  createDispenseForPrescription,
+  reviewPrescription,
+} from "@api/prescription";
 import type { ReviewPrescriptionRequest } from "@prescription/types/prescription.types";
 
 export function usePrescriptionReview(rxId: string) {
@@ -19,7 +21,16 @@ export function usePrescriptionReview(rxId: string) {
     async (payload: ReviewPrescriptionRequest) => {
       setSubmitting(true);
       try {
-        await api.put(`${ENDPOINTS.prescriptions}/${rxId}/review`, payload);
+        await reviewPrescription(rxId, payload);
+
+        const hasAcceptedMedicine = payload.medicines.some(
+          (medicine) => medicine.decision === "Accepted"
+        );
+
+        if (hasAcceptedMedicine) {
+          await createDispenseForPrescription(rxId);
+        }
+
         return { ok: true as const };
       } catch (e) {
         return {
