@@ -69,9 +69,23 @@ export const cancelPrescription = createAsyncThunk<
   { rejectValue: string }
 >(
   "prescriptions/cancel",
-  async ({ id, reason }, { rejectWithValue }) => {
+  async ({ id, reason }, { getState, rejectWithValue }) => {
     try {
-      await cancelPrescriptionApi(id, reason);
+      const rootState = getState() as { prescriptions: PrescriptionState };
+      const currentSelected = rootState.prescriptions.selected;
+      let etag =
+        currentSelected?.id === id ? currentSelected.__etag : undefined;
+
+      if (!etag) {
+        const fresh = await getPrescriptionDetails(id);
+        etag = fresh.__etag;
+      }
+
+      if (!etag) {
+        throw new Error("Unable to cancel prescription: missing ETag");
+      }
+
+      await cancelPrescriptionApi(id, reason, etag);
       return id;
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));

@@ -63,8 +63,6 @@ function mapDraftToCreatePrescriptionRequest(
     } as PrescriberDto,
     medicines: draft.medications.map<CreatePrescriptionMedicineRequest>((m) => ({
       productId: m.drugId!,
-      name: m.drugName,
-      strength: m.strength,
       prescribedQuantity: m.quantity,
       totalRefillsAuthorized: m.refills,
       frequency: m.frequency,

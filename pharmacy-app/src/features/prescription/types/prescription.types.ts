@@ -5,8 +5,9 @@ export interface PrescriberDto {
 
 export interface CreatePrescriptionMedicineRequest {
   productId: string;
-  name: string;
-  strength: string;
+  // Backend snapshots product metadata; keep client values optional/display-only.
+  name?: string;
+  strength?: string;
   prescribedQuantity: number;
   totalRefillsAuthorized: number;
   frequency: string;
@@ -49,6 +50,7 @@ export interface PrescriptionDetailsDto {
   status: string;
   isRefillable: boolean;
   medicines: PrescriptionMedicineDto[];
+  __etag?: string;
 }
 
 export interface PrescriptionSummaryDto {

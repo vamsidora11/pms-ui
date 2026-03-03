@@ -1,8 +1,9 @@
 // components/common/Toast/ToastProvider.tsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type {ReactNode} from 'react';
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 import { ToastContext, type Toast, type ToastContextType } from '@components/common/Toast/ToastContext';
+import { registerToastApi, unregisterToastApi } from '@components/common/Toast/toastService';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -100,6 +101,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     warning,
     info,
   };
+
+  useEffect(() => {
+    registerToastApi({ success, error, warning, info });
+    return () => {
+      unregisterToastApi();
+    };
+  }, [success, error, warning, info]);
 
   return (
     <ToastContext.Provider value={value}>

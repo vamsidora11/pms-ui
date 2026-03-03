@@ -89,11 +89,10 @@ export default function PrescriptionHistory() {
         filterType: "select",
         filterOptions: [
           { label: "Created", value: "Created" },
-          { label: "Reviewed", value: "Reviewed" },
+          { label: "Validated", value: "Validated" },
           { label: "Active", value: "Active" },
           { label: "Completed", value: "Completed" },
           { label: "Cancelled", value: "Cancelled" },
-          { label: "Expired", value: "Expired" },
         ],
         width: 160,
         render: (v) => {

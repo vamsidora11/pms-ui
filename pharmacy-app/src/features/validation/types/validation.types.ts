@@ -1,8 +1,6 @@
 import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
 import type { Severity } from "@validation/utils/prescriptionValidationUtils";
 
-export type LineDecision = "Accepted" | "Rejected" | null;
-
 export interface AllergyAlert {
   issueType: string;
   severity: Severity;
@@ -13,11 +11,7 @@ export interface AllergyAlert {
 
 export type ValidationUIState = {
   data: PrescriptionDetailsDto | null;
-
-  approved: Record<string, number>;
-  decisions: Record<string, LineDecision>;
   reasons: Record<string, string>; // lineId -> reason, plus "_ALL_"
-
   allergyFor: AllergyAlert | null;
   rejectLineId: string | null;
   rejectAllOpen: boolean;

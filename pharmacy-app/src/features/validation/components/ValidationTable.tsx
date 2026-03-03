@@ -1,50 +1,40 @@
-import React from "react";
 import clsx from "clsx";
-import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { AlertTriangle, XCircle } from "lucide-react";
 
-import type { PrescriptionDetailsDto, PrescriptionMedicineDto } from "@prescription/types/prescription.types";
-import type { AllergyAlert, LineDecision } from "../types/validation.types";
+import type {
+  PrescriptionDetailsDto,
+  PrescriptionMedicineDto,
+} from "@prescription/types/prescription.types";
+import type { AllergyAlert } from "../types/validation.types";
 
 import {
-  computeValidation,
-  getInventoryValidation,
-  getMaxApprovableQuantity,
-  getReservableNow,
+  isReviewedDecision,
   mapInteractionLevel,
   pillToneBySeverity,
   type Severity,
-  type ValidationResult,
 } from "../utils/prescriptionValidationUtils";
 
 import { Pill } from "./Pill";
 
 export default function ValidationTable({
   data,
-  approved,
-  decisions,
-  overallResult,
-  onApprovedChange,
+  submitting,
   onAccept,
   onOpenReject,
   onOpenAllergy,
 }: {
   data: PrescriptionDetailsDto;
-  approved: Record<string, number>;
-  decisions: Record<string, LineDecision>;
-  overallResult: ValidationResult;
-  onApprovedChange: (id: string, qty: number) => void;
+  submitting: boolean;
   onAccept: (id: string) => void;
   onOpenReject: (id: string) => void;
   onOpenAllergy: (alert: AllergyAlert) => void;
 }) {
   return (
     <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <div className="p-5 border-b flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-gray-900">Prescription Validation</h2>
-          <div className="text-sm text-gray-500">
-            Overall: <StatusPill result={overallResult} />
-          </div>
+      <div className="p-5 border-b">
+        <h2 className="font-semibold text-gray-900">Prescription Validation</h2>
+        <div className="text-sm text-gray-500">
+          Backend safety validation only (allergy + interaction).
         </div>
       </div>
 
@@ -54,11 +44,10 @@ export default function ValidationTable({
             <tr className="text-gray-500 border-b">
               <Th>Medicine</Th>
               <Th align="center">Prescribed</Th>
-              <Th align="center">Approved</Th>
-              <Th align="center">Reservable</Th>
+              <Th align="center">Approved/Fill</Th>
               <Th align="center">Allergy</Th>
               <Th align="center">Interaction</Th>
-              <Th align="center">Result</Th>
+              <Th align="center">Review</Th>
               <Th align="center">Decision</Th>
             </tr>
           </thead>
@@ -66,28 +55,8 @@ export default function ValidationTable({
           <tbody className="divide-y">
             {data.medicines.map((m: PrescriptionMedicineDto) => {
               const id = m.prescriptionMedicineId;
-              const approvedQty = approved[id] ?? getMaxApprovableQuantity(m);
-              const vr = computeValidation(m, approvedQty);
-              const decision = decisions[id];
-
-              const stockInfo = getInventoryValidation(m);
-              const reservableNow = getReservableNow(m);
-              const requiredQty = stockInfo?.requiredQty ?? m.prescribedQuantity;
-              const physicalQty =
-                typeof stockInfo?.physicalQty === "number" ? stockInfo.physicalQty : null;
-              const maxApprovable = getMaxApprovableQuantity(m);
-              const stockOk = reservableNow === null ? true : reservableNow >= approvedQty;
-              const hasReservableShortage =
-                !!stockInfo?.isPresent &&
-                reservableNow !== null &&
-                reservableNow < requiredQty;
-              const stockTone = hasReservableShortage
-                ? "red"
-                : stockInfo?.isPresent
-                  ? pillToneBySeverity(stockInfo.severity)
-                  : stockOk
-                    ? "green"
-                    : "amber";
+              const reviewDecision = m.pharmacistReview?.decision;
+              const isFinalized = isReviewedDecision(reviewDecision);
 
               return (
                 <tr key={id} className="align-top">
@@ -99,43 +68,11 @@ export default function ValidationTable({
                   <Td align="center">{m.prescribedQuantity}</Td>
 
                   <Td align="center">
-                    <div className="inline-flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={approvedQty}
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          onApprovedChange(id, Number.isFinite(value) ? value : 0);
-                        }}
-                        min={0}
-                        max={maxApprovable}
-                        step={1}
-                        className="w-20 px-2 py-1 border rounded-md"
-                      />
-                      {stockInfo && (
-                        <button
-                          onClick={() => onApprovedChange(id, maxApprovable)}
-                          className="text-blue-600 hover:text-blue-700 text-xs px-2 py-0.5 border rounded-md bg-blue-50"
-                        >
-                          Max
-                        </button>
-                      )}
-                    </div>
-                  </Td>
-
-                  <Td align="center">
-                    {stockInfo ? (
-                      <div className="inline-flex flex-col items-center gap-1">
-                        <Pill tone={stockTone}>
-                          {(reservableNow ?? "N/A").toString()} / {requiredQty}
-                        </Pill>
-                        {/* {physicalQty !== null && (
-                          <span className="text-xs text-gray-500">Physical: {physicalQty}</span>
-                        )} */}
-                      </div>
-                    ) : (
-                      <Pill tone="green">Sufficient</Pill>
-                    )}
+                    <Pill tone="blue">
+                      {typeof m.approvedQuantityPerFill === "number"
+                        ? m.approvedQuantityPerFill
+                        : "Pending"}
+                    </Pill>
                   </Td>
 
                   <Td align="center">
@@ -157,7 +94,9 @@ export default function ValidationTable({
                         }}
                       >
                         <Pill tone={pillToneBySeverity(m.validation.drugAllergy.overallSeverity)}>
-                          {m.validation.drugAllergy.overallSeverity === "High" && <XCircle size={14} />}
+                          {m.validation.drugAllergy.overallSeverity === "High" && (
+                            <XCircle size={14} />
+                          )}
                           {m.validation.drugAllergy.overallSeverity || "Unknown"}
                         </Pill>
                       </button>
@@ -178,16 +117,19 @@ export default function ValidationTable({
                   </Td>
 
                   <Td align="center">
-                    <StatusPill result={vr} />
+                    <Pill tone={isFinalized ? "green" : "amber"}>
+                      {isFinalized ? reviewDecision : "Pending"}
+                    </Pill>
                   </Td>
 
                   <Td align="center">
                     <div className="inline-flex items-center gap-2">
                       <button
                         onClick={() => onAccept(id)}
+                        disabled={submitting || isFinalized}
                         className={clsx(
-                          "px-2.5 py-1 rounded-md text-xs border",
-                          decision === "Accepted"
+                          "px-2.5 py-1 rounded-md text-xs border disabled:opacity-50 disabled:cursor-not-allowed",
+                          reviewDecision === "Accepted"
                             ? "bg-green-600 text-white border-green-600"
                             : "text-green-700 border-green-200 hover:bg-green-50"
                         )}
@@ -196,9 +138,10 @@ export default function ValidationTable({
                       </button>
                       <button
                         onClick={() => onOpenReject(id)}
+                        disabled={submitting || isFinalized}
                         className={clsx(
-                          "px-2.5 py-1 rounded-md text-xs border",
-                          decision === "Rejected"
+                          "px-2.5 py-1 rounded-md text-xs border disabled:opacity-50 disabled:cursor-not-allowed",
+                          reviewDecision === "Rejected"
                             ? "bg-red-600 text-white border-red-600"
                             : "text-red-700 border-red-200 hover:bg-red-50"
                         )}
@@ -217,27 +160,13 @@ export default function ValidationTable({
   );
 }
 
-function StatusPill({ result }: { result: ValidationResult }) {
-  if (result === "Blocked")
-    return (
-      <Pill tone="red">
-        <XCircle size={14} /> Blocked
-      </Pill>
-    );
-  if (result === "Partial")
-    return (
-      <Pill tone="amber">
-        <AlertTriangle size={14} /> Partial
-      </Pill>
-    );
-  return (
-    <Pill tone="green">
-      <CheckCircle2 size={14} /> OK
-    </Pill>
-  );
-}
-
-function Th({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "center" | "right" }) {
+function Th({
+  children,
+  align = "left",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "center" | "right";
+}) {
   return (
     <th
       className={clsx(
@@ -251,7 +180,13 @@ function Th({ children, align = "left" }: { children: React.ReactNode; align?: "
   );
 }
 
-function Td({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "center" | "right" }) {
+function Td({
+  children,
+  align = "left",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "center" | "right";
+}) {
   return (
     <td
       className={clsx(

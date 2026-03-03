@@ -1,6 +1,11 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
 import { logger } from "@utils/logger/logger";
+import {
+  reviewPrescriptionLine,
+  validatePrescription,
+  activatePrescription,
+} from "./prescriptionValidation";
 
 import type {
   CreatePrescriptionRequest,
@@ -62,6 +67,48 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function normalizeEtag(value: unknown): string | undefined {
+  if (!isNonEmptyString(value)) {
+    return undefined;
+  }
+  const cleaned = value.trim().replace(/"/g, "");
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
+function extractEtag(headers: unknown): string | undefined {
+  if (!headers) {
+    return undefined;
+  }
+
+  const getter = headers as { get?: (name: string) => unknown };
+  if (typeof getter.get === "function") {
+    const viaGetter = normalizeEtag(getter.get("etag"));
+    if (viaGetter) {
+      return viaGetter;
+    }
+  }
+
+  const record = asRecord(headers);
+  return normalizeEtag(record?.etag ?? record?.ETag);
+}
+
+function withEtag<T extends object>(
+  data: T,
+  headers: unknown
+): T & { __etag?: string } {
+  return {
+    ...data,
+    __etag: extractEtag(headers),
+  };
+}
+
+function requireEtag(etag: string | undefined, operation: string): string {
+  if (!isNonEmptyString(etag)) {
+    throw new Error(`Missing ETag for ${operation}`);
+  }
+  return etag.trim();
+}
+
 function parseHistoryResponse(
   data: unknown,
   requestedPageNumber: number,
@@ -118,7 +165,7 @@ export async function createPrescription(
       ENDPOINTS.prescriptions,
       payload
     );
-    return res.data;
+    return withEtag(res.data, res.headers);
   } catch (error) {
     logger.error("Create prescription failed", { payload, error });
     throw error;
@@ -134,7 +181,7 @@ export async function getPrescriptionById(
     const res = await api.get<PrescriptionDetailsDto>(
       `${ENDPOINTS.prescriptions}/${prescriptionId}`
     );
-    return res.data;
+    return withEtag(res.data, res.headers);
   } catch (error) {
     logger.error("Fetching prescription details failed", {
       prescriptionId,
@@ -261,13 +308,18 @@ export async function getAllPrescriptions(
 
 export async function cancelPrescription(
   prescriptionId: string,
-  reason?: string
-): Promise<void> {
+  reason?: string,
+  etag?: string
+): Promise<string | undefined> {
   try {
-    await api.post(
+    const res = await api.post(
       `${ENDPOINTS.prescriptions}/${prescriptionId}/cancel`,
-      reason ? { reason } : undefined
+      reason ? { reason } : undefined,
+      {
+        headers: { "If-Match": requireEtag(etag, "cancel prescription") },
+      }
     );
+    return extractEtag(res.headers);
   } catch (error) {
     logger.error("Cancel prescription failed", {
       prescriptionId,
@@ -277,23 +329,34 @@ export async function cancelPrescription(
   }
 }
 
-// ================== REVIEW PRESCRIPTION ==================
+export { reviewPrescriptionLine, validatePrescription, activatePrescription };
 
+// Backward-compatible wrapper now implemented via line-based endpoint.
 export async function reviewPrescription(
   prescriptionId: string,
-  payload: ReviewPrescriptionRequest
-): Promise<void> {
-  try {
-    await api.put(`${ENDPOINTS.prescriptions}/${prescriptionId}/review`, payload);
-    logger.info("Prescription reviewed successfully", { prescriptionId });
-  } catch (error) {
-    logger.error("Review prescription failed", {
-      prescriptionId,
-      payload,
-      error,
-    });
-    throw error;
+  payload: ReviewPrescriptionRequest,
+  patientId?: string,
+  etag?: string
+): Promise<string | undefined> {
+  if (!isNonEmptyString(patientId)) {
+    throw new Error("Missing patientId for review prescription");
   }
+  let currentEtag = requireEtag(etag, "review prescription");
+
+  for (const medicine of payload.medicines) {
+    const nextEtag = await reviewPrescriptionLine(
+      prescriptionId,
+      patientId,
+      medicine.prescriptionMedicineId,
+      medicine.decision,
+      medicine.overrideReason ?? null,
+      currentEtag
+    );
+    currentEtag = nextEtag ?? currentEtag;
+  }
+
+  logger.info("Prescription reviewed successfully", { prescriptionId });
+  return currentEtag;
 }
 
 // ================== CREATE DISPENSE FROM PRESCRIPTION ==================

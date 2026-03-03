@@ -489,11 +489,12 @@ describe("prescription API", () => {
       const id = "rx-1";
       apiPost.mockResolvedValueOnce({});
 
-      await cancelPrescription(id);
+      await cancelPrescription(id, undefined, "etag-1");
 
       expect(apiPost).toHaveBeenCalledWith(
         `${ENDPOINTS.prescriptions}/${id}/cancel`,
-        undefined
+        undefined,
+        { headers: { "If-Match": "etag-1" } }
       );
     });
 
@@ -501,11 +502,12 @@ describe("prescription API", () => {
       const id = "rx-2";
       apiPost.mockResolvedValueOnce({});
 
-      await cancelPrescription(id, "Duplicate");
+      await cancelPrescription(id, "Duplicate", "etag-2");
 
       expect(apiPost).toHaveBeenCalledWith(
         `${ENDPOINTS.prescriptions}/${id}/cancel`,
-        { reason: "Duplicate" }
+        { reason: "Duplicate" },
+        { headers: { "If-Match": "etag-2" } }
       );
     });
 
@@ -514,7 +516,7 @@ describe("prescription API", () => {
       const err = new Error("Cancel failed");
       apiPost.mockRejectedValueOnce(err);
 
-      await expect(cancelPrescription(id)).rejects.toThrow("Cancel failed");
+      await expect(cancelPrescription(id, undefined, "etag-3")).rejects.toThrow("Cancel failed");
       expect(logger.error).toHaveBeenCalledWith(
         "Cancel prescription failed",
         { prescriptionId: id, error: err }
@@ -524,7 +526,7 @@ describe("prescription API", () => {
 
   // ---------------- reviewPrescription ----------------
   describe("reviewPrescription", () => {
-    it("PUTs review with payload and logs info on success", async () => {
+    it("PUTs line-by-line review calls and logs info on success", async () => {
       const id = "rx-1";
       const payload = {
         medicines: [
@@ -544,12 +546,21 @@ describe("prescription API", () => {
       } satisfies ReviewPrescriptionRequest;
 
       apiPut.mockResolvedValueOnce({});
+      apiPut.mockResolvedValueOnce({});
 
-      await reviewPrescription(id, payload);
+      await reviewPrescription(id, payload, "p-1", "etag-1");
 
-      expect(apiPut).toHaveBeenCalledWith(
-        `${ENDPOINTS.prescriptions}/${id}/review`,
-        payload
+      expect(apiPut).toHaveBeenNthCalledWith(
+        1,
+        `${ENDPOINTS.prescriptions}/${id}/lines/pm-1/review`,
+        { patientId: "p-1", decision: "Accepted", notes: null },
+        { headers: { "If-Match": "etag-1" } }
+      );
+      expect(apiPut).toHaveBeenNthCalledWith(
+        2,
+        `${ENDPOINTS.prescriptions}/${id}/lines/pm-2/review`,
+        { patientId: "p-1", decision: "Rejected", notes: "Dose too high" },
+        { headers: { "If-Match": "etag-1" } }
       );
       expect(logger.info).toHaveBeenCalledWith(
         "Prescription reviewed successfully",
@@ -572,12 +583,18 @@ describe("prescription API", () => {
       const err = new Error("Review failed");
       apiPut.mockRejectedValueOnce(err);
 
-      await expect(reviewPrescription(id, payload)).rejects.toThrow(
+      await expect(reviewPrescription(id, payload, "p-1", "etag-1")).rejects.toThrow(
         "Review failed"
       );
       expect(logger.error).toHaveBeenCalledWith(
-        "Review prescription failed",
-        { prescriptionId: id, payload, error: err }
+        "Review prescription line failed",
+        {
+          prescriptionId: id,
+          lineId: "pm-x",
+          patientId: "p-1",
+          decision: "Rejected",
+          error: err,
+        }
       );
     });
   });

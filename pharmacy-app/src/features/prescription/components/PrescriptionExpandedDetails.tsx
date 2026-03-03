@@ -1,4 +1,3 @@
-import React from "react";
 import { User, Pill, AlertCircle } from "lucide-react";
  
 import type {
@@ -170,7 +169,7 @@ export default function PrescriptionExpandedDetails({
                       </div>
                     </div>
  
-                    <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                       <div className="bg-white border rounded-lg p-3">
                         <div className="text-[11px] text-emerald-700/70">
                           Quantity
@@ -195,6 +194,26 @@ export default function PrescriptionExpandedDetails({
                         </div>
                         <div className="font-bold">
                           {med.refillsRemaining}
+                        </div>
+                      </div>
+
+                      <div className="bg-white border rounded-lg p-3">
+                        <div className="text-[11px] text-emerald-700/70">
+                          Approved / Fill
+                        </div>
+                        <div className="font-bold">
+                          {typeof med.approvedQuantityPerFill === "number"
+                            ? med.approvedQuantityPerFill
+                            : "Pending"}
+                        </div>
+                      </div>
+
+                      <div className="bg-white border rounded-lg p-3">
+                        <div className="text-[11px] text-emerald-700/70">
+                          Review
+                        </div>
+                        <div className="font-bold">
+                          {med.pharmacistReview?.decision || "Pending"}
                         </div>
                       </div>
                     </div>

@@ -46,13 +46,22 @@ vi.mock("@components/common/Toast/useToast", () => ({
 ===================================================== */
 
 const mockSubmitReview: Mock<
-  (payload: { medicines: unknown[] }) => Promise<{ ok: boolean; message?: string }>
+  (
+    payload: { medicines: unknown[] },
+    patientId: string,
+    etag: string
+  ) => Promise<{ ok: boolean; message?: string }>
+> = vi.fn();
+const mockValidateAndActivate: Mock<
+  (etag: string) => Promise<{ ok: boolean; message?: string }>
 > = vi.fn();
 
 vi.mock("@validation/hooks/usePrescriptionReview", () => ({
   usePrescriptionReview: () => ({
     submitting: false,
     submitReview: mockSubmitReview,
+    validateAndActivate: mockValidateAndActivate,
+    latestEtag: null,
   }),
 }));
 
@@ -146,6 +155,7 @@ const baseData: PrescriptionDetailsDto = {
   expiresAt: "2025-12-31T00:00:00Z",
   status: "Pending",
   isRefillable: true,
+  __etag: "etag-1",
   medicines: [
     {
       prescriptionMedicineId: "M1",
@@ -266,14 +276,17 @@ describe("PrescriptionValidationDetailsPage - Fully Clean", () => {
   });
 
   it("approve success", async () => {
+    uiState.decisions = { M1: "Accepted" };
+    uiState.approved = { M1: 10 };
     mockSubmitReview.mockResolvedValue({ ok: true });
 
     renderPage();
-    fireEvent.click(screen.getByText("Approve Prescription"));
+    fireEvent.click(screen.getByText("Submit Line Reviews"));
 
     await waitFor(() => {
+      expect(mockSubmitReview).toHaveBeenCalled();
       expect(mockToast.success).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
 

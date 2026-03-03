@@ -1,20 +1,13 @@
 import { useCallback, useMemo, useReducer } from "react";
 import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
-import { getMaxApprovableQuantity } from "@validation/utils/prescriptionValidationUtils";
-import type {
-  AllergyAlert,
-  LineDecision,
-  ValidationUIState,
-} from "../types/validation.types";
+import type { AllergyAlert, ValidationUIState } from "../types/validation.types";
 
 type Action =
   | { type: "INIT"; payload: PrescriptionDetailsDto }
-  | { type: "SET_APPROVED"; id: string; qty: number }
-  | { type: "ACCEPT_LINE"; id: string }
   | { type: "OPEN_REJECT_LINE"; id: string }
   | { type: "CLOSE_REJECT_LINE" }
-  | { type: "CONFIRM_REJECT_LINE"; id: string }
   | { type: "SET_REASON"; key: string; value: string }
+  | { type: "CLEAR_REASON"; key: string }
   | { type: "OPEN_REJECT_ALL" }
   | { type: "CLOSE_REJECT_ALL" }
   | { type: "OPEN_ALLERGY"; alert: AllergyAlert }
@@ -23,8 +16,6 @@ type Action =
 function createInitialUIState(): ValidationUIState {
   return {
     data: null,
-    approved: {},
-    decisions: {},
     reasons: {},
     allergyFor: null,
     rejectLineId: null,
@@ -34,50 +25,14 @@ function createInitialUIState(): ValidationUIState {
 
 function reducer(state: ValidationUIState, action: Action): ValidationUIState {
   switch (action.type) {
-    case "INIT": {
-      const res = action.payload;
-      const approved: Record<string, number> = {};
-      const decisions: Record<string, LineDecision> = {};
-
-      res.medicines.forEach((m) => {
-        const nextApproved =
-          typeof m.approvedQuantityPerFill === "number"
-            ? m.approvedQuantityPerFill
-            : getMaxApprovableQuantity(m);
-
-        approved[m.prescriptionMedicineId] = Math.max(0, nextApproved);
-        decisions[m.prescriptionMedicineId] = null;
-      });
-
-      return { ...state, data: res, approved, decisions, reasons: {} };
-    }
-
-    case "SET_APPROVED":
-      {
-        const medicine = state.data?.medicines.find(
-          (m) => m.prescriptionMedicineId === action.id
-        );
-        const maxApprovable = medicine ? getMaxApprovableQuantity(medicine) : Number.MAX_SAFE_INTEGER;
-        const nextQty = Math.max(
-          0,
-          Math.min(maxApprovable, Math.trunc(Number.isFinite(action.qty) ? action.qty : 0))
-        );
-
-        return {
-          ...state,
-          approved: { ...state.approved, [action.id]: nextQty },
-        };
-      }
-
-    case "ACCEPT_LINE": {
-      const nextReasons = { ...state.reasons };
-      delete nextReasons[action.id];
+    case "INIT":
       return {
         ...state,
-        decisions: { ...state.decisions, [action.id]: "Accepted" },
-        reasons: nextReasons,
+        data: action.payload,
+        reasons: {},
+        rejectLineId: null,
+        rejectAllOpen: false,
       };
-    }
 
     case "OPEN_REJECT_LINE":
       return { ...state, rejectLineId: action.id };
@@ -85,18 +40,20 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
     case "CLOSE_REJECT_LINE":
       return { ...state, rejectLineId: null };
 
-    case "CONFIRM_REJECT_LINE":
-      return {
-        ...state,
-        decisions: { ...state.decisions, [action.id]: "Rejected" },
-        rejectLineId: null,
-      };
-
     case "SET_REASON":
       return {
         ...state,
         reasons: { ...state.reasons, [action.key]: action.value },
       };
+
+    case "CLEAR_REASON": {
+      const nextReasons = { ...state.reasons };
+      delete nextReasons[action.key];
+      return {
+        ...state,
+        reasons: nextReasons,
+      };
+    }
 
     case "OPEN_REJECT_ALL":
       return { ...state, rejectAllOpen: true };
@@ -122,14 +79,6 @@ export function useValidationUiState() {
     dispatch({ type: "INIT", payload: data });
   }, []);
 
-  const setApproved = useCallback((id: string, qty: number) => {
-    dispatch({ type: "SET_APPROVED", id, qty });
-  }, []);
-
-  const acceptLine = useCallback((id: string) => {
-    dispatch({ type: "ACCEPT_LINE", id });
-  }, []);
-
   const openRejectLine = useCallback((id: string) => {
     dispatch({ type: "OPEN_REJECT_LINE", id });
   }, []);
@@ -142,8 +91,8 @@ export function useValidationUiState() {
     dispatch({ type: "SET_REASON", key, value });
   }, []);
 
-  const confirmRejectLine = useCallback((id: string) => {
-    dispatch({ type: "CONFIRM_REJECT_LINE", id });
+  const clearReason = useCallback((key: string) => {
+    dispatch({ type: "CLEAR_REASON", key });
   }, []);
 
   const openRejectAll = useCallback(() => {
@@ -162,16 +111,13 @@ export function useValidationUiState() {
     dispatch({ type: "CLOSE_ALLERGY" });
   }, []);
 
-  // ✅ key fix: memoize the object so it's stable across renders
   const actions = useMemo(
     () => ({
       init,
-      setApproved,
-      acceptLine,
       openRejectLine,
       closeRejectLine,
-      confirmRejectLine,
       setReason,
+      clearReason,
       openRejectAll,
       closeRejectAll,
       openAllergy,
@@ -179,12 +125,10 @@ export function useValidationUiState() {
     }),
     [
       init,
-      setApproved,
-      acceptLine,
       openRejectLine,
       closeRejectLine,
-      confirmRejectLine,
       setReason,
+      clearReason,
       openRejectAll,
       closeRejectAll,
       openAllergy,

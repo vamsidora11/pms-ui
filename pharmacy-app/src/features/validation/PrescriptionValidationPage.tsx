@@ -240,7 +240,7 @@
 //     </div>
 //   );
 // }
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, ChevronLeft, XCircle } from "lucide-react";
 
@@ -271,7 +271,10 @@ export default function PrescriptionValidationDetailsPage() {
   const toast = useToast();
 
   const { data, loading, error } = usePrescriptionDetails(rxId);
-  const { submitting, submitReview } = usePrescriptionReview(rxId);
+  const { submitting, submitReview, validateAndActivate, latestEtag } =
+    usePrescriptionReview(rxId);
+  const [submittedSignature, setSubmittedSignature] = useState("");
+  const [workingEtag, setWorkingEtag] = useState("");
 
   const { ui, actions } = useValidationUiState();
 
@@ -284,6 +287,18 @@ export default function PrescriptionValidationDetailsPage() {
   }, [data, ui.data?.id, actions]);
 
   const viewData = (ui.data ?? data) as PrescriptionDetailsDto | null;
+
+  useEffect(() => {
+    if (!viewData) return;
+    setWorkingEtag(viewData.__etag ?? "");
+    setSubmittedSignature("");
+  }, [viewData?.id, viewData?.__etag]);
+
+  useEffect(() => {
+    if (latestEtag) {
+      setWorkingEtag(latestEtag);
+    }
+  }, [latestEtag]);
 
   const backToQueue = useCallback(() => {
     navigate(ROUTES.PHARMACIST.VALIDATION, { state: { refresh: true } });
@@ -302,61 +317,85 @@ export default function PrescriptionValidationDetailsPage() {
     return "OK";
   }, [viewData, ui.approved]);
 
-  // === New: derive footer button disabling states ===
-  const allAccepted = useMemo(() => {
-    if (!viewData) return false;
-    // Treat only explicit "Accepted" as accepted
-    return viewData.medicines.every(
-      (m) => ui.decisions[m.prescriptionMedicineId] === "Accepted"
-    );
-
-    // If you want "no explicit decision" to count as Accepted (since approve defaults to accept):
-    // return viewData.medicines.every(
-    //   (m) => (ui.decisions[m.prescriptionMedicineId] ?? "Accepted") === "Accepted"
-    // );
-  }, [viewData, ui.decisions]);
-
-  const allRejected = useMemo(() => {
-    if (!viewData) return false;
-    return viewData.medicines.every(
-      (m) => ui.decisions[m.prescriptionMedicineId] === "Rejected"
-    );
-  }, [viewData, ui.decisions]);
-
-  const approvePrescription = useCallback(async () => {
-    if (!viewData) return;
-    const invalidAcceptedMeds: string[] = [];
-
-    // Default = Accepted, only explicit Rejected stays rejected
-    const medicines = viewData.medicines.map((m) => {
+  const reviewLines = useMemo(() => {
+    if (!viewData) return [];
+    return viewData.medicines.map((m) => {
       const id = m.prescriptionMedicineId;
-      const decision = ui.decisions[id] ?? null;
-      const finalDecision: "Accepted" | "Rejected" =
-        decision === "Rejected" ? "Rejected" : "Accepted";
-
-      const reason =
-        finalDecision === "Rejected" ? (ui.reasons[id]?.trim() || "") : null;
+      const decision = ui.decisions[id];
       const approvedQuantity = ui.approved[id] ?? getMaxApprovableQuantity(m);
-
-      if (finalDecision === "Accepted" && !isValidApprovedQuantity(m, approvedQuantity)) {
-        invalidAcceptedMeds.push(m.name);
-      }
+      const reason = ui.reasons[id]?.trim() || "";
 
       return {
-        prescriptionMedicineId: id,
-        decision: finalDecision,
-        overrideReason: finalDecision === "Rejected" ? reason : null,
-        approvedQuantity: finalDecision === "Rejected" ? 0 : approvedQuantity,
+        id,
+        medicineName: m.name,
+        medicine: m,
+        decision,
+        overrideReason: reason,
+        approvedQuantity,
       };
     });
+  }, [viewData, ui.approved, ui.decisions, ui.reasons]);
 
-    const missingReason = medicines.some(
-      (x) => x.decision === "Rejected" && !x.overrideReason
-    );
-    if (missingReason) {
-      toast.error("Cannot approve", "Please provide a reason for all rejected medicines.");
+  const allLinesReviewed = useMemo(
+    () =>
+      reviewLines.length > 0 &&
+      reviewLines.every(
+        (line) => line.decision === "Accepted" || line.decision === "Rejected"
+      ),
+    [reviewLines]
+  );
+
+  const reviewSignature = useMemo(
+    () =>
+      reviewLines
+        .map((line) =>
+          [
+            line.id,
+            line.decision ?? "Pending",
+            line.overrideReason,
+            String(line.approvedQuantity),
+          ].join(":")
+        )
+        .join("|"),
+    [reviewLines]
+  );
+
+  const reviewsSyncedForValidation =
+    allLinesReviewed &&
+    submittedSignature.length > 0 &&
+    submittedSignature === reviewSignature;
+
+  const submitLineReviews = useCallback(async () => {
+    if (!viewData) return;
+
+    if (!allLinesReviewed) {
+      toast.error(
+        "Incomplete review",
+        "Review every line as Accepted or Rejected before submission."
+      );
       return;
     }
+
+    if (!workingEtag) {
+      toast.error("Conflict", "Missing ETag for line review. Reload this prescription.");
+      return;
+    }
+
+    const missingReason = reviewLines.some(
+      (line) => line.decision === "Rejected" && !line.overrideReason
+    );
+    if (missingReason) {
+      toast.error("Cannot submit", "Please provide a reason for all rejected medicines.");
+      return;
+    }
+
+    const invalidAcceptedMeds = reviewLines
+      .filter(
+        (line) =>
+          line.decision === "Accepted" &&
+          !isValidApprovedQuantity(line.medicine, line.approvedQuantity)
+      )
+      .map((line) => line.medicineName);
 
     if (invalidAcceptedMeds.length > 0) {
       toast.error(
@@ -366,15 +405,55 @@ export default function PrescriptionValidationDetailsPage() {
       return;
     }
 
-    const res = await submitReview({ medicines });
+    const res = await submitReview(
+      {
+        medicines: reviewLines.map((line) => ({
+          prescriptionMedicineId: line.id,
+          decision: line.decision as "Accepted" | "Rejected",
+          overrideReason:
+            line.decision === "Rejected" ? line.overrideReason : null,
+          approvedQuantity:
+            line.decision === "Rejected" ? 0 : line.approvedQuantity,
+        })),
+      },
+      viewData.patientId,
+      workingEtag
+    );
+
     if (!res.ok) {
       toast.error("Failed", res.message);
       return;
     }
 
-    toast.success("Success", "Prescription review submitted successfully.");
+    setSubmittedSignature(reviewSignature);
+    toast.success("Success", "Line reviews submitted successfully.");
+  }, [allLinesReviewed, reviewLines, reviewSignature, submitReview, toast, viewData, workingEtag]);
+
+  const handleValidatePrescription = useCallback(async () => {
+    if (!viewData) return;
+
+    if (!reviewsSyncedForValidation) {
+      toast.error(
+        "Review required",
+        "Submit line reviews first, then validate and activate."
+      );
+      return;
+    }
+
+    if (!workingEtag) {
+      toast.error("Conflict", "Missing ETag for validation. Reload this prescription.");
+      return;
+    }
+
+    const res = await validateAndActivate(workingEtag);
+    if (!res.ok) {
+      toast.error("Failed", res.message);
+      return;
+    }
+
+    toast.success("Success", "Prescription validated and activated successfully.");
     navigate(ROUTES.PHARMACIST.VALIDATION, { state: { refresh: true } });
-  }, [navigate, submitReview, toast, ui.approved, ui.decisions, ui.reasons, viewData]);
+  }, [navigate, reviewsSyncedForValidation, toast, validateAndActivate, viewData, workingEtag]);
 
   const confirmRejectAll = useCallback(async () => {
     if (!viewData) return;
@@ -392,7 +471,16 @@ export default function PrescriptionValidationDetailsPage() {
       approvedQuantity: 0,
     }));
 
-    const res = await submitReview({ medicines });
+    if (!workingEtag) {
+      toast.error("Conflict", "Missing ETag for line review. Reload this prescription.");
+      return;
+    }
+
+    const res = await submitReview(
+      { medicines },
+      viewData.patientId,
+      workingEtag
+    );
     if (!res.ok) {
       toast.error("Failed", res.message);
       return;
@@ -401,7 +489,7 @@ export default function PrescriptionValidationDetailsPage() {
     toast.success("Success", "Prescription rejected successfully.");
     actions.closeRejectAll();
     navigate(ROUTES.PHARMACIST.VALIDATION, { state: { refresh: true } });
-  }, [actions, navigate, submitReview, toast, ui.reasons, viewData]);
+  }, [actions, navigate, submitReview, toast, ui.reasons, viewData, workingEtag]);
 
   if (loading) return <div className="max-w-6xl mx-auto p-4">Loading...</div>;
 
@@ -476,8 +564,7 @@ export default function PrescriptionValidationDetailsPage() {
       <div className="p-5 border rounded-2xl shadow-sm bg-white flex flex-col sm:flex-row gap-3 sm:justify-end">
         <button
           onClick={actions.openRejectAll}
-          disabled={submitting || allAccepted}
-          title={allAccepted ? "All medicines are accepted" : undefined}
+          disabled={submitting}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border text-red-700 border-red-300 hover:bg-red-50 disabled:opacity-50"
         >
           <XCircle size={18} />
@@ -485,13 +572,21 @@ export default function PrescriptionValidationDetailsPage() {
         </button>
 
         <button
-          onClick={approvePrescription}
-          disabled={submitting || allRejected}
-          title={allRejected ? "All medicines are rejected" : undefined}
+          onClick={submitLineReviews}
+          disabled={submitting || !allLinesReviewed}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
         >
           <CheckCircle2 size={18} />
-          {submitting ? "Submitting..." : "Approve Prescription"}
+          {submitting ? "Submitting..." : "Submit Line Reviews"}
+        </button>
+
+        <button
+          onClick={handleValidatePrescription}
+          disabled={submitting || !reviewsSyncedForValidation}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          <CheckCircle2 size={18} />
+          {submitting ? "Submitting..." : "Validate Prescription"}
         </button>
       </div>
 
