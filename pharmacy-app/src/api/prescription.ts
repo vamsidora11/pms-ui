@@ -328,3 +328,29 @@ export async function getPendingPrescriptions(): Promise<PrescriptionSummaryDto[
     throw error;
   }
 }
+
+// ================== UPDATE PRESCRIPTION STATUS ==================
+
+export async function updatePrescriptionStatus(
+  prescriptionId: string,
+  status: string
+): Promise<void> {
+  try {
+    await api.patch(
+      `${ENDPOINTS.prescriptions}/${prescriptionId}/status`,
+      { status }
+    );
+
+    logger.info("Prescription status updated", {
+      prescriptionId,
+      status,
+    });
+  } catch (error) {
+    logger.error("Update prescription status failed", {
+      prescriptionId,
+      status,
+      error,
+    });
+    throw error;
+  }
+}

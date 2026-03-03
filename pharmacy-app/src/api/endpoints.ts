@@ -23,6 +23,10 @@ export const ENDPOINTS = {
   labelQueue: "/api/prescriptions/labels/queue",
 
   prescriptionLabels: (id: string) => `/api/prescriptions/${id}/labels`,
+  //Technician
+   inventory:       "/api/inventory",         // GET all items, DELETE /:id/dispose
+  restockRequests: "/api/restock-requests",  // GET all, POST new request
+  dispenses:       "/api/dispenses",         // PATCH /:id/status
  };
 
 

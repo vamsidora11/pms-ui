@@ -19,7 +19,9 @@ export default defineConfig({
       "@labels": path.resolve(__dirname, "src/features/labelgeneration"),
       "@refill": path.resolve(__dirname, "src/features/refillmanagement"),
       "@history": path.resolve(__dirname, "src/features/refillmanagement"),
-      "@assets": path.resolve(__dirname, "src/assets")
+      "@assets": path.resolve(__dirname, "src/assets"),
+         "@technician": path.resolve(__dirname, "src/features/technician"),
+      "@constants":  path.resolve(__dirname, "src/constants"),
     },
   },
   test: {

@@ -6,9 +6,9 @@ import {
   CheckBadgeIcon,
   TagIcon,
   UserCircleIcon,
-  BellIcon,
   ArchiveBoxIcon,
   ArrowRightOnRectangleIcon,
+  CubeIcon,
 } from "@heroicons/react/24/outline";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
@@ -39,8 +39,9 @@ const roleNavItems: Record<
   ],
   technician: [
     { key: "dashboard", label: "Dashboard", to: "/technician/dashboard", icon: HomeIcon },
-    { key: "status", label: "Prescription Status", to: "/technician/status", icon: ClipboardDocumentListIcon },
-    { key: "alerts", label: "Alerts", to: "/technician/alerts", icon: BellIcon },
+    //{ key: "status", label: "Prescription Status", to: "/technician/status", icon: ClipboardDocumentListIcon },
+    //{ key: "alerts", label: "Alerts", to: "/technician/alerts", icon: BellIcon },
+    { key: "inventory", label: "Inventory Management", to: "/technician/inventory", icon: CubeIcon },
   ],
 };
 

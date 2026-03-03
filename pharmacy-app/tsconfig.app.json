@@ -37,8 +37,10 @@
       "@validation/*": ["features/validation/*"],
       "@labels/*": ["features/labelgeneration/*"],  
       "@refill/*": ["features/refillmanagement/*"],
-      "@history/*": ["features/refillmanagement/*"],
-      "@assets/*": ["assets/*"]
+      "@history/*": ["features/history/*"],
+      "@assets/*": ["assets/*"],
+      "@constants/*": ["constants/*"],
+      "@technician/*": ["features/technician/*"]
 
     }
   },

@@ -51,3 +51,14 @@ export async function searchInventory(
     throw error;
   }
 }
+/* ✅ NEW — Get full inventory list */
+export const getInventoryItems = async () => {
+  const res = await api.get("/inventory");
+  return res.data;
+};
+
+/* ✅ NEW — Dispose/Delete inventory item */
+export const disposeInventoryItem = async (id: string) => {
+  const res = await api.delete(`/inventory/${id}`);
+  return res.data;
+};

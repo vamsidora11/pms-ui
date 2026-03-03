@@ -20,6 +20,8 @@ export const ROUTES = {
   TECHNICIAN: {
     BASE: "/technician",
     DASHBOARD: "/technician/dashboard",
+     INVENTORY: "/technician/inventory",
+    
   },
 
   FALLBACK: "*",
