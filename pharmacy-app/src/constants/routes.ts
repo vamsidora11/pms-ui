@@ -15,6 +15,7 @@ export const ROUTES = {
     REFILLS: "/pharmacist/refills",
     HISTORY: "/pharmacist/history",
     PROFILES: "/pharmacist/profiles",
+      DISPENSE: "/pharmacist/dispense",
   },
 
   TECHNICIAN: {

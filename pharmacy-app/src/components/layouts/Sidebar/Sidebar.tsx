@@ -1,5 +1,5 @@
 import { serverLogout } from "../../../store/auth/authSlice";
-import { NavLink, useNavigate,  } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
@@ -10,10 +10,10 @@ import {
   ArrowRightOnRectangleIcon,
   CubeIcon,
 } from "@heroicons/react/24/outline";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pill } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../../store";
-import { toggleSidebar } from "../../../store/ui/uiSlice"; 
+import { toggleSidebar } from "../../../store/ui/uiSlice";
 import type { User, UserRole } from "../../../store/auth/authtype";
 import type { AppDispatch } from "../../../store/index";
 
@@ -29,28 +29,26 @@ const roleNavItems: Record<
     { key: "dashboard", label: "Dashboard", to: "/manager/dashboard", icon: HomeIcon },
   ],
   pharmacist: [
-    { key: "dashboard", label: "Dashboard", to: "/pharmacist/dashboard", icon: HomeIcon },
-    { key: "entry", label: "Manual Prescription Entry", to: "/pharmacist/entry", icon: ClipboardDocumentListIcon },
-    { key: "validation", label: "Prescription Validation", to: "/pharmacist/validation", icon: CheckBadgeIcon },
-    { key: "profiles", label: "Patient Profiles", to: "/pharmacist/profiles", icon: UserCircleIcon },
-    { key: "labels", label: "Label Generator", to: "/pharmacist/labels", icon: TagIcon },
-    // { key: "refills", label: "Refill Management", to: "/pharmacist/refills", icon: ArrowPathIcon },
-    { key: "history", label: "Prescription History", to: "/pharmacist/history", icon: ArchiveBoxIcon },
+    { key: "dashboard",   label: "Dashboard",               to: "/pharmacist/dashboard",  icon: HomeIcon },
+    { key: "entry",       label: "Manual Prescription Entry",to: "/pharmacist/entry",      icon: ClipboardDocumentListIcon },
+    { key: "validation",  label: "Prescription Validation",  to: "/pharmacist/validation", icon: CheckBadgeIcon },
+    { key: "dispense",    label: "Prescription Dispense",    to: "/pharmacist/dispense",   icon: Pill },          
+    { key: "labels",      label: "Label Generator",          to: "/pharmacist/labels",     icon: TagIcon },
+    { key: "profiles",    label: "Patient Profiles",         to: "/pharmacist/profiles",   icon: UserCircleIcon },
+    { key: "history",     label: "Prescription History",     to: "/pharmacist/history",    icon: ArchiveBoxIcon },
   ],
   technician: [
-    { key: "dashboard", label: "Dashboard", to: "/technician/dashboard", icon: HomeIcon },
-    //{ key: "status", label: "Prescription Status", to: "/technician/status", icon: ClipboardDocumentListIcon },
-    //{ key: "alerts", label: "Alerts", to: "/technician/alerts", icon: BellIcon },
-    { key: "inventory", label: "Inventory Management", to: "/technician/inventory", icon: CubeIcon },
+    { key: "dashboard",  label: "Dashboard",            to: "/technician/dashboard", icon: HomeIcon },
+    { key: "inventory",  label: "Inventory Management", to: "/technician/inventory", icon: CubeIcon },
   ],
 };
 
 export default function Sidebar({ user }: SidebarProps) {
   const collapsed = useSelector((s: RootState) => s.ui.sidebarCollapsed);
   const navigate = useNavigate();
-  //const location = useLocation();
   const navItems = roleNavItems[user.role];
   const dispatch = useDispatch<AppDispatch>();
+
   return (
     <aside
       className={`fixed left-0 top-16 ${
@@ -58,18 +56,15 @@ export default function Sidebar({ user }: SidebarProps) {
       } h-[calc(100vh-4rem)] bg-white border-r flex flex-col transition-all duration-300`}
     >
       {/* Toggle button */}
-      
-<div className="px-3 py-2 border-b flex justify-between items-center">
-  {!collapsed && <span className="font-semibold">Menu</span>}
-
-  <button
-    onClick={() => dispatch(toggleSidebar())}
-    className="flex items-center justify-center text-gray-600 hover:text-gray-900 w-10 h-8"
-  >
-    {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-  </button>
-</div>
-
+      <div className="px-3 py-2 border-b flex justify-between items-center">
+        {!collapsed && <span className="font-semibold">Menu</span>}
+        <button
+          onClick={() => dispatch(toggleSidebar())}
+          className="flex items-center justify-center text-gray-600 hover:text-gray-900 w-10 h-8"
+        >
+          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        </button>
+      </div>
 
       {/* Role nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
@@ -98,10 +93,9 @@ export default function Sidebar({ user }: SidebarProps) {
         {/* Logout */}
         <div className="pt-4 mt-4 border-t">
           <button
-          
             onClick={() => {
-              dispatch(serverLogout()); 
-              navigate("/login");      
+              dispatch(serverLogout());
+              navigate("/login");
             }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-red-50 hover:text-red-700"
           >

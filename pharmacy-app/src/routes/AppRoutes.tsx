@@ -11,6 +11,7 @@ const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionV
 const PrescriptionValidationPage  = lazy(() => import("@validation/PrescriptionValidationPage"));
 
 const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntry"));
+const PrescriptionDispense = lazy(() => import("@prescription/PrescriptionDispense"));
 
 // ── Technician — moved from @auth/components into their own feature folder
 const TechnicianDashboard = lazy(() => import("@technician/TechnicianDashboard"));
@@ -42,6 +43,7 @@ export default function AppRoutes() {
             <Route path="entry"            element={<ManualPrescriptionView />} />
             <Route path="validation"       element={<PrescriptionValidationQueue />} />
             <Route path="validation/:rxId" element={<PrescriptionValidationPage />} />
+            <Route path="dispense"          element={<PrescriptionDispense />} />
             <Route path="labels"           element={<LabelGeneration />} />
             <Route path="refills"          element={<Refill />} />
             <Route path="history"          element={<PrescriptionHistory />} />
