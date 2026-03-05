@@ -1,23 +1,20 @@
-import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
-import type { Severity } from "@validation/utils/prescriptionValidationUtils";
-
-export type LineDecision = "Accepted" | "Rejected" | null;
+import type { PrescriptionDetails } from "@prescription/domain/model";
+import type { ValidationSeverity } from "@validation/domain/model";
 
 export interface AllergyAlert {
   issueType: string;
-  severity: Severity;
+  severity: ValidationSeverity;
   affectedBy: string;
   message: string;
   allergenCode: string;
 }
 
+export type LineDecision = "Approved" | "Rejected";
+
 export type ValidationUIState = {
-  data: PrescriptionDetailsDto | null;
-
-  approved: Record<string, number>;
+  data: PrescriptionDetails | null;
   decisions: Record<string, LineDecision>;
-  reasons: Record<string, string>; // lineId -> reason, plus "_ALL_"
-
+  reasons: Record<string, string>;
   allergyFor: AllergyAlert | null;
   rejectLineId: string | null;
   rejectAllOpen: boolean;

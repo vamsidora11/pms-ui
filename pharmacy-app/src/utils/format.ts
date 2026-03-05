@@ -1,7 +1,7 @@
-export function formatDate(iso: string) {
+export function formatDate(iso: string | Date) {
   try {
     return new Date(iso).toLocaleDateString();
   } catch {
-    return iso;
+    return String(iso);
   }
 }

@@ -1,48 +1,77 @@
 import { useCallback, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@store/index";
+import { extractApiError } from "@utils/httpError";
 import {
-  createDispenseForPrescription,
-  reviewPrescription,
-} from "@api/prescription";
-import type { ReviewPrescriptionRequest } from "@prescription/types/prescription.types";
+  fetchPrescriptionDetails,
+  reviewPrescription as reviewPrescriptionThunk,
+} from "@store/prescription/prescriptionSlice";
+import type { PrescriptionLineReviewDraft } from "@prescription/domain/model";
 
-export function usePrescriptionReview(rxId: string) {
+type SubmitResult = { ok: true } | { ok: false; message: string };
+
+export function usePrescriptionReview(rxId: string, patientId: string) {
+  const dispatch = useDispatch<AppDispatch>();
   const [submitting, setSubmitting] = useState(false);
+  const [latestEtag, setLatestEtag] = useState<string | null>(null);
+  const latestSnapshot = useSelector(
+    (state: RootState) => state.prescriptions.selected?.prescription ?? null
+  );
 
-  const getErrorMessage = (error: unknown): string => {
-    if (typeof error === "string") return error;
-    if (typeof error === "object" && error !== null) {
-      const err = error as { response?: { data?: { message?: string } }; message?: string };
-      return err.response?.data?.message || err.message || "Request failed";
+  const refreshLatest = useCallback(async () => {
+    if (!rxId || !patientId) {
+      return;
     }
-    return "Request failed";
-  };
+    await dispatch(fetchPrescriptionDetails({ id: rxId, patientId }));
+  }, [dispatch, patientId, rxId]);
 
   const submitReview = useCallback(
-    async (payload: ReviewPrescriptionRequest) => {
+    async (reviews: PrescriptionLineReviewDraft[], etag: string): Promise<SubmitResult> => {
       setSubmitting(true);
-      try {
-        await reviewPrescription(rxId, payload);
 
-        const hasAcceptedMedicine = payload.medicines.some(
-          (medicine) => medicine.decision === "Accepted"
+      try {
+        const action = await dispatch(
+          reviewPrescriptionThunk({
+            id: rxId,
+            patientId,
+            reviews,
+            etag,
+          })
         );
 
-        if (hasAcceptedMedicine) {
-          await createDispenseForPrescription(rxId);
+        if (reviewPrescriptionThunk.fulfilled.match(action)) {
+          setLatestEtag(action.payload.etag);
+          return { ok: true };
         }
 
-        return { ok: true as const };
-      } catch (e) {
+        const payload = action.payload;
+        if (payload && typeof payload === "object" && "type" in payload) {
+          const conflict = payload as { type: string; message: string; latest: { etag: string } };
+          if (conflict.type === "conflict") {
+            setLatestEtag(conflict.latest.etag);
+            return { ok: false, message: conflict.message };
+          }
+        }
+
         return {
-          ok: false as const,
-          message: getErrorMessage(e),
+          ok: false,
+          message:
+            (typeof payload === "string" && payload.trim().length > 0
+              ? payload
+              : extractApiError(action.error)) || "Request failed",
         };
       } finally {
         setSubmitting(false);
       }
     },
-    [rxId]
+    [dispatch, patientId, rxId]
   );
 
-  return { submitting, submitReview };
+  return {
+    submitting,
+    submitReview,
+    refreshLatest,
+    latestEtag,
+    latestSnapshot,
+  };
 }

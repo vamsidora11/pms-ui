@@ -1,194 +1,200 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { extractApiError } from "@utils/httpError";
 import {
-  createPrescription as createPrescriptionApi,
-  getPrescriptionDetails,
-  searchPrescriptions,
-  getAllPrescriptions,
-  getPrescriptionsByPatient,
   cancelPrescription as cancelPrescriptionApi,
-} from "@api/prescription";
+  createPrescription as createPrescriptionApi,
+  getAllPrescriptions,
+  getPrescriptionById,
+  reviewPrescription as reviewPrescriptionApi,
+} from "@api/prescription.api";
 import type {
-  PrescriptionHistoryPageResult,
-  PrescriptionHistoryQueryParams,
-} from "@api/prescription";
+  CreatePrescriptionRequestDto,
+} from "@api/prescription.dto";
+import type { PrescriptionHistoryQueryParams } from "@api/prescription.api";
+import {
+  mapDetailsDto,
+  mapReviewToDto,
+  mapSummaryDto,
+} from "@prescription/domain/mapper";
 import type {
-  CreatePrescriptionRequest,
-  PrescriptionDetailsDto,
-  PrescriptionSummaryDto,
-} from "@prescription/types/prescription.types";
+  PrescriptionDetails,
+  PrescriptionLineReviewDraft,
+  PrescriptionSummary,
+} from "@prescription/domain/model";
 
-/* ===================== THUNKS ===================== */
+type RequestStatus = "idle" | "loading" | "succeeded" | "failed";
 
-type PrescriptionListItem = PrescriptionSummaryDto | PrescriptionDetailsDto;
+type SelectedPrescription = {
+  prescription: PrescriptionDetails;
+  etag: string;
+};
 
-function getErrorMessage(error: unknown): string {
-  if (typeof error === "string") return error;
+type ReviewConflictError = {
+  type: "conflict";
+  message: string;
+  latest: SelectedPrescription;
+};
+
+type RejectableError = string | ReviewConflictError;
+
+function getStatusCode(error: unknown): number | undefined {
   if (typeof error === "object" && error !== null) {
-    const err = error as {
-      response?: { data?: { message?: string } };
-      message?: string;
-    };
-    return err.response?.data?.message || err.message || "Unknown error";
+    const obj = error as { response?: { status?: number } };
+    return obj.response?.status;
   }
-  return "Unknown error";
+  return undefined;
 }
 
 export const createPrescription = createAsyncThunk<
-  PrescriptionDetailsDto,
-  CreatePrescriptionRequest,
+  SelectedPrescription,
+  CreatePrescriptionRequestDto,
   { rejectValue: string }
->(
-  "prescriptions/create",
-  async (prescriptionData, { rejectWithValue }) => {
-    try {
-      return await createPrescriptionApi(prescriptionData);
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
-    }
+>("prescriptions/create", async (payload, { rejectWithValue }) => {
+  try {
+    const res = await createPrescriptionApi(payload);
+    return {
+      prescription: mapDetailsDto(res.data),
+      etag: res.etag ?? "",
+    };
+  } catch (error) {
+    return rejectWithValue(extractApiError(error));
   }
-);
+});
 
 export const fetchPrescriptionDetails = createAsyncThunk<
-  PrescriptionDetailsDto,
-  string,
+  SelectedPrescription,
+  { id: string; patientId: string },
   { rejectValue: string }
->(
-  "prescriptions/details",
-  async (id: string, { rejectWithValue }) => {
-    try {
-      return await getPrescriptionDetails(id);
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
-    }
+>("prescriptions/details", async ({ id, patientId }, { rejectWithValue }) => {
+  try {
+    const res = await getPrescriptionById(id, patientId);
+    return {
+      prescription: mapDetailsDto(res.data),
+      etag: res.etag ?? "",
+    };
+  } catch (error) {
+    return rejectWithValue(extractApiError(error));
   }
-);
-
-export const cancelPrescription = createAsyncThunk<
-  string,
-  { id: string; reason?: string },
-  { rejectValue: string }
->(
-  "prescriptions/cancel",
-  async ({ id, reason }, { rejectWithValue }) => {
-    try {
-      await cancelPrescriptionApi(id, reason);
-      return id;
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
-    }
-  }
-);
+});
 
 export const fetchAllPrescriptions = createAsyncThunk<
-  PrescriptionHistoryPageResult,
+  {
+    items: PrescriptionSummary[];
+    pageNumber: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  },
   PrescriptionHistoryQueryParams | undefined,
   { rejectValue: string }
->(
-  "prescriptions/fetchAll",
-  async (query, { rejectWithValue }) => {
-    try {
-      return await getAllPrescriptions(query ?? {});
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
-    }
+>("prescriptions/fetchAll", async (query, { rejectWithValue }) => {
+  try {
+    const response = await getAllPrescriptions(query ?? {});
+    return {
+      items: response.items.map(mapSummaryDto),
+      pageNumber: response.pageNumber,
+      pageSize: response.pageSize,
+      totalCount: response.totalCount,
+      totalPages: response.totalPages,
+      hasNextPage: response.hasNextPage,
+      hasPreviousPage: response.hasPreviousPage,
+    };
+  } catch (error) {
+    return rejectWithValue(extractApiError(error));
   }
-);
+});
 
-export const searchPrescriptionsThunk = createAsyncThunk<
-  { items: PrescriptionSummaryDto[]; continuationToken: string | null; reset: boolean },
-  {
-    searchTerm: string;
-    pageSize?: number;
-    continuationToken?: string | null;
-    reset?: boolean;
-  },
-  { rejectValue: string }
->(
-  "prescriptions/search",
-  async (
-    { searchTerm, pageSize, continuationToken, reset },
-    { rejectWithValue }
-  ) => {
-    try {
-      const resolvedPageSize = pageSize ?? 10;
-      const resolvedContinuationToken = continuationToken ?? null;
-      const resolvedReset = reset ?? true;
-      const result = await searchPrescriptions(
-        searchTerm,
-        resolvedPageSize,
-        resolvedContinuationToken
-      );
-      return {
-        items: result.items || [],
-        continuationToken: result.continuationToken || null,
-        reset: resolvedReset,
-      };
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+export const cancelPrescription = createAsyncThunk<
+  { id: string; etag?: string },
+  { id: string; patientId: string; reason?: string },
+  { state: { prescriptions: PrescriptionState }; rejectValue: string }
+>("prescriptions/cancel", async ({ id, patientId, reason }, thunkApi) => {
+  const { getState, rejectWithValue } = thunkApi;
+
+  try {
+    const selected = getState().prescriptions.selected;
+    let etag = selected?.prescription.id === id ? selected.etag : "";
+
+    if (!etag) {
+      const latest = await getPrescriptionById(id, patientId);
+      etag = latest.etag ?? "";
     }
-  }
-);
 
-export const fetchPrescriptionsByPatient = createAsyncThunk<
-  { items: PrescriptionSummaryDto[]; continuationToken: string | null; reset: boolean },
+    if (!etag) {
+      throw new Error("Missing ETag");
+    }
+
+    const nextEtag = await cancelPrescriptionApi(id, reason, etag);
+    return { id, etag: nextEtag };
+  } catch (error) {
+    return rejectWithValue(extractApiError(error));
+  }
+});
+
+export const reviewPrescription = createAsyncThunk<
+  SelectedPrescription,
   {
+    id: string;
     patientId: string;
-    pageSize?: number;
-    continuationToken?: string | null;
-    reset?: boolean;
+    reviews: PrescriptionLineReviewDraft[];
+    etag: string;
   },
-  { rejectValue: string }
->(
-  "prescriptions/byPatient",
-  async (
-    { patientId, pageSize, continuationToken, reset },
-    { rejectWithValue }
-  ) => {
-    try {
-      const resolvedPageSize = pageSize ?? 10;
-      const resolvedContinuationToken = continuationToken ?? null;
-      const resolvedReset = reset ?? true;
-      const result = await getPrescriptionsByPatient(
-        patientId,
-        resolvedPageSize,
-        resolvedContinuationToken
-      );
-      return {
-        items: result.items || [],
-        continuationToken: result.continuationToken || null,
-        reset: resolvedReset,
-      };
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+  { rejectValue: RejectableError }
+>("prescriptions/review", async ({ id, patientId, reviews, etag }, thunkApi) => {
+  const { rejectWithValue } = thunkApi;
+
+  try {
+    const payload = mapReviewToDto(reviews);
+    const nextEtag = await reviewPrescriptionApi(id, patientId, payload, etag);
+    const latest = await getPrescriptionById(id, patientId);
+    return {
+      prescription: mapDetailsDto(latest.data),
+      etag: nextEtag ?? latest.etag ?? etag,
+    };
+  } catch (error) {
+    if (getStatusCode(error) === 412) {
+      try {
+        const latest = await getPrescriptionById(id, patientId);
+        return rejectWithValue({
+          type: "conflict",
+          message: "Prescription updated by another user.",
+          latest: {
+            prescription: mapDetailsDto(latest.data),
+            etag: latest.etag ?? etag,
+          },
+        });
+      } catch {
+        return rejectWithValue("Prescription updated by another user.");
+      }
     }
+
+    return rejectWithValue(extractApiError(error));
   }
-);
+});
 
-/* ===================== STATE ===================== */
-
-interface PrescriptionState {
-  items: PrescriptionListItem[];
-  selected?: PrescriptionDetailsDto;
-  continuationToken: string | null;
+export interface PrescriptionState {
+  items: PrescriptionSummary[];
+  selected?: SelectedPrescription;
   pageNumber: number;
   pageSize: number;
   totalCount: number;
   totalPages: number;
-  status: "idle" | "loading" | "succeeded" | "failed";
+  status: RequestStatus;
   error?: string;
 }
 
 const initialState: PrescriptionState = {
   items: [],
-  continuationToken: null,
+  selected: undefined,
   pageNumber: 1,
   pageSize: 10,
   totalCount: 0,
   totalPages: 1,
   status: "idle",
+  error: undefined,
 };
-
-/* ===================== SLICE ===================== */
 
 const slice = createSlice({
   name: "prescriptions",
@@ -196,7 +202,6 @@ const slice = createSlice({
   reducers: {
     clearPrescriptions: (state) => {
       state.items = [];
-      state.continuationToken = null;
       state.pageNumber = 1;
       state.pageSize = 10;
       state.totalCount = 0;
@@ -208,104 +213,85 @@ const slice = createSlice({
       state.selected = undefined;
     },
   },
-  extraReducers: (b) => {
-    b.addCase(createPrescription.pending, (s) => {
-      s.status = "loading";
-      s.error = undefined;
-    })
-      .addCase(createPrescription.fulfilled, (s, a) => {
-        s.status = "succeeded";
-        s.items.unshift(a.payload);
+  extraReducers: (builder) => {
+    builder
+      .addCase(createPrescription.pending, (state) => {
+        state.status = "loading";
+        state.error = undefined;
       })
-      .addCase(createPrescription.rejected, (s, a) => {
-        s.status = "failed";
-        s.error = a.payload ?? a.error.message ?? "Unknown error";
+      .addCase(createPrescription.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.selected = action.payload;
+      })
+      .addCase(createPrescription.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload ?? action.error.message ?? "Unknown error";
       });
 
-    b.addCase(fetchPrescriptionDetails.pending, (s) => {
-      s.status = "loading";
-      s.error = undefined;
-    })
-      .addCase(fetchPrescriptionDetails.fulfilled, (s, a) => {
-        s.status = "succeeded";
-        s.selected = a.payload;
+    builder
+      .addCase(fetchPrescriptionDetails.pending, (state) => {
+        state.status = "loading";
+        state.error = undefined;
       })
-      .addCase(fetchPrescriptionDetails.rejected, (s, a) => {
-        s.status = "failed";
-        s.error = a.payload ?? a.error.message ?? "Unknown error";
+      .addCase(fetchPrescriptionDetails.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.selected = action.payload;
+      })
+      .addCase(fetchPrescriptionDetails.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload ?? action.error.message ?? "Unknown error";
       });
 
-    b.addCase(cancelPrescription.fulfilled, (s, a) => {
-      s.items = s.items.filter((p) => p.id !== a.payload);
-      if (s.selected?.id === a.payload) {
-        s.selected = undefined;
+    builder
+      .addCase(fetchAllPrescriptions.pending, (state) => {
+        state.status = "loading";
+        state.error = undefined;
+      })
+      .addCase(fetchAllPrescriptions.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload.items;
+        state.pageNumber = action.payload.pageNumber;
+        state.pageSize = action.payload.pageSize;
+        state.totalCount = action.payload.totalCount;
+        state.totalPages = action.payload.totalPages;
+      })
+      .addCase(fetchAllPrescriptions.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload ?? action.error.message ?? "Unknown error";
+      });
+
+    builder.addCase(cancelPrescription.fulfilled, (state, action) => {
+      const id = action.payload.id;
+      state.items = state.items.filter((item) => item.id !== id);
+
+      if (state.selected?.prescription.id === id) {
+        state.selected = undefined;
       }
     });
 
-    b.addCase(fetchAllPrescriptions.pending, (s) => {
-      s.status = "loading";
-      s.error = undefined;
-    })
-      .addCase(fetchAllPrescriptions.fulfilled, (s, a) => {
-        s.items = a.payload.items;
-        s.continuationToken = null;
-        s.pageNumber = a.payload.pageNumber;
-        s.pageSize = a.payload.pageSize;
-        s.totalCount = a.payload.totalCount;
-        s.totalPages = a.payload.totalPages;
-        s.status = "succeeded";
+    builder
+      .addCase(reviewPrescription.pending, (state) => {
+        state.status = "loading";
+        state.error = undefined;
       })
-      .addCase(fetchAllPrescriptions.rejected, (s, a) => {
-        s.status = "failed";
-        s.error = a.payload ?? a.error.message ?? "Unknown error";
-      });
+      .addCase(reviewPrescription.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.selected = action.payload;
+      })
+      .addCase(reviewPrescription.rejected, (state, action) => {
+        state.status = "failed";
 
-    b.addCase(searchPrescriptionsThunk.pending, (s) => {
-      s.status = "loading";
-      s.error = undefined;
-    })
-      .addCase(searchPrescriptionsThunk.fulfilled, (s, a) => {
-        const { items, continuationToken, reset } = a.payload;
-
-        if (reset) {
-          s.items = items;
-        } else {
-          s.items = [...s.items, ...items];
+        if (action.payload && typeof action.payload === "object" && "type" in action.payload) {
+          const conflict = action.payload as ReviewConflictError;
+          state.selected = conflict.latest;
+          state.error = conflict.message;
+          return;
         }
 
-        s.continuationToken = continuationToken;
-        s.pageNumber = 1;
-        s.totalCount = s.items.length;
-        s.totalPages = 1;
-        s.status = "succeeded";
-      })
-      .addCase(searchPrescriptionsThunk.rejected, (s, a) => {
-        s.status = "failed";
-        s.error = a.payload ?? a.error.message ?? "Unknown error";
-      });
-
-    b.addCase(fetchPrescriptionsByPatient.pending, (s) => {
-      s.status = "loading";
-      s.error = undefined;
-    })
-      .addCase(fetchPrescriptionsByPatient.fulfilled, (s, a) => {
-        const { items, continuationToken, reset } = a.payload;
-
-        if (reset) {
-          s.items = items;
-        } else {
-          s.items = [...s.items, ...items];
-        }
-
-        s.continuationToken = continuationToken;
-        s.pageNumber = 1;
-        s.totalCount = s.items.length;
-        s.totalPages = 1;
-        s.status = "succeeded";
-      })
-      .addCase(fetchPrescriptionsByPatient.rejected, (s, a) => {
-        s.status = "failed";
-        s.error = a.payload ?? a.error.message ?? "Unknown error";
+        state.error =
+          (typeof action.payload === "string" ? action.payload : undefined) ??
+          action.error.message ??
+          "Unknown error";
       });
   },
 });

@@ -1,29 +1,33 @@
 import { useCallback, useMemo, useReducer } from "react";
-import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
-import { getMaxApprovableQuantity } from "@validation/utils/prescriptionValidationUtils";
-import type {
-  AllergyAlert,
-  LineDecision,
-  ValidationUIState,
-} from "../types/validation.types";
+import type { PrescriptionDetails } from "@prescription/domain/model";
+import type { AllergyAlert, LineDecision, ValidationUIState } from "../types/validation.types";
 
 type Action =
-  | { type: "INIT"; payload: PrescriptionDetailsDto }
-  | { type: "SET_APPROVED"; id: string; qty: number }
+  | { type: "INIT"; payload: PrescriptionDetails }
   | { type: "ACCEPT_LINE"; id: string }
   | { type: "OPEN_REJECT_LINE"; id: string }
   | { type: "CLOSE_REJECT_LINE" }
   | { type: "CONFIRM_REJECT_LINE"; id: string }
   | { type: "SET_REASON"; key: string; value: string }
+  | { type: "CLEAR_REASON"; key: string }
   | { type: "OPEN_REJECT_ALL" }
   | { type: "CLOSE_REJECT_ALL" }
+  | { type: "REJECT_ALL"; reason: string }
   | { type: "OPEN_ALLERGY"; alert: AllergyAlert }
   | { type: "CLOSE_ALLERGY" };
+
+function buildInitialDecisions(data: PrescriptionDetails): Record<string, LineDecision> {
+  return data.medicines.reduce<Record<string, LineDecision>>((acc, line) => {
+    if (line.review.status === "Approved" || line.review.status === "Rejected") {
+      acc[line.lineId] = line.review.status;
+    }
+    return acc;
+  }, {});
+}
 
 function createInitialUIState(): ValidationUIState {
   return {
     data: null,
-    approved: {},
     decisions: {},
     reasons: {},
     allergyFor: null,
@@ -34,47 +38,22 @@ function createInitialUIState(): ValidationUIState {
 
 function reducer(state: ValidationUIState, action: Action): ValidationUIState {
   switch (action.type) {
-    case "INIT": {
-      const res = action.payload;
-      const approved: Record<string, number> = {};
-      const decisions: Record<string, LineDecision> = {};
-
-      res.medicines.forEach((m) => {
-        const nextApproved =
-          typeof m.approvedQuantityPerFill === "number"
-            ? m.approvedQuantityPerFill
-            : getMaxApprovableQuantity(m);
-
-        approved[m.prescriptionMedicineId] = Math.max(0, nextApproved);
-        decisions[m.prescriptionMedicineId] = null;
-      });
-
-      return { ...state, data: res, approved, decisions, reasons: {} };
-    }
-
-    case "SET_APPROVED":
-      {
-        const medicine = state.data?.medicines.find(
-          (m) => m.prescriptionMedicineId === action.id
-        );
-        const maxApprovable = medicine ? getMaxApprovableQuantity(medicine) : Number.MAX_SAFE_INTEGER;
-        const nextQty = Math.max(
-          0,
-          Math.min(maxApprovable, Math.trunc(Number.isFinite(action.qty) ? action.qty : 0))
-        );
-
-        return {
-          ...state,
-          approved: { ...state.approved, [action.id]: nextQty },
-        };
-      }
+    case "INIT":
+      return {
+        ...state,
+        data: action.payload,
+        decisions: buildInitialDecisions(action.payload),
+        reasons: {},
+        rejectLineId: null,
+        rejectAllOpen: false,
+      };
 
     case "ACCEPT_LINE": {
       const nextReasons = { ...state.reasons };
       delete nextReasons[action.id];
       return {
         ...state,
-        decisions: { ...state.decisions, [action.id]: "Accepted" },
+        decisions: { ...state.decisions, [action.id]: "Approved" },
         reasons: nextReasons,
       };
     }
@@ -98,11 +77,43 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
         reasons: { ...state.reasons, [action.key]: action.value },
       };
 
+    case "CLEAR_REASON": {
+      const nextReasons = { ...state.reasons };
+      delete nextReasons[action.key];
+      return { ...state, reasons: nextReasons };
+    }
+
     case "OPEN_REJECT_ALL":
       return { ...state, rejectAllOpen: true };
 
     case "CLOSE_REJECT_ALL":
       return { ...state, rejectAllOpen: false };
+
+    case "REJECT_ALL": {
+      if (!state.data) {
+        return state;
+      }
+
+      const decisions = state.data.medicines.reduce<Record<string, LineDecision>>(
+        (acc, line) => {
+          acc[line.lineId] = "Rejected";
+          return acc;
+        },
+        {}
+      );
+
+      const reasons = state.data.medicines.reduce<Record<string, string>>((acc, line) => {
+        acc[line.lineId] = action.reason;
+        return acc;
+      }, {});
+
+      return {
+        ...state,
+        decisions,
+        reasons: { ...state.reasons, ...reasons, _ALL_: action.reason },
+        rejectAllOpen: false,
+      };
+    }
 
     case "OPEN_ALLERGY":
       return { ...state, allergyFor: action.alert };
@@ -118,12 +129,8 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
 export function useValidationUiState() {
   const [ui, dispatch] = useReducer(reducer, undefined, createInitialUIState);
 
-  const init = useCallback((data: PrescriptionDetailsDto) => {
+  const init = useCallback((data: PrescriptionDetails) => {
     dispatch({ type: "INIT", payload: data });
-  }, []);
-
-  const setApproved = useCallback((id: string, qty: number) => {
-    dispatch({ type: "SET_APPROVED", id, qty });
   }, []);
 
   const acceptLine = useCallback((id: string) => {
@@ -138,12 +145,16 @@ export function useValidationUiState() {
     dispatch({ type: "CLOSE_REJECT_LINE" });
   }, []);
 
+  const confirmRejectLine = useCallback((id: string) => {
+    dispatch({ type: "CONFIRM_REJECT_LINE", id });
+  }, []);
+
   const setReason = useCallback((key: string, value: string) => {
     dispatch({ type: "SET_REASON", key, value });
   }, []);
 
-  const confirmRejectLine = useCallback((id: string) => {
-    dispatch({ type: "CONFIRM_REJECT_LINE", id });
+  const clearReason = useCallback((key: string) => {
+    dispatch({ type: "CLEAR_REASON", key });
   }, []);
 
   const openRejectAll = useCallback(() => {
@@ -154,6 +165,10 @@ export function useValidationUiState() {
     dispatch({ type: "CLOSE_REJECT_ALL" });
   }, []);
 
+  const rejectAll = useCallback((reason: string) => {
+    dispatch({ type: "REJECT_ALL", reason });
+  }, []);
+
   const openAllergy = useCallback((alert: AllergyAlert) => {
     dispatch({ type: "OPEN_ALLERGY", alert });
   }, []);
@@ -162,33 +177,34 @@ export function useValidationUiState() {
     dispatch({ type: "CLOSE_ALLERGY" });
   }, []);
 
-  // ✅ key fix: memoize the object so it's stable across renders
   const actions = useMemo(
     () => ({
       init,
-      setApproved,
       acceptLine,
       openRejectLine,
       closeRejectLine,
       confirmRejectLine,
       setReason,
+      clearReason,
       openRejectAll,
       closeRejectAll,
+      rejectAll,
       openAllergy,
       closeAllergy,
     }),
     [
-      init,
-      setApproved,
       acceptLine,
-      openRejectLine,
+      clearReason,
+      closeAllergy,
+      closeRejectAll,
       closeRejectLine,
       confirmRejectLine,
-      setReason,
-      openRejectAll,
-      closeRejectAll,
+      init,
       openAllergy,
-      closeAllergy,
+      openRejectAll,
+      openRejectLine,
+      rejectAll,
+      setReason,
     ]
   );
 

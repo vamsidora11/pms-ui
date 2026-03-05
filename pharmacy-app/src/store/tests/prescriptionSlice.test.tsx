@@ -236,7 +236,7 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       });
       store.dispatch({
         type: fetchPrescriptionDetails.fulfilled.type,
-        payload: { id: "b", label: "to cancel" },
+        payload: { id: "b", label: "to cancel", __etag: "etag-b" },
       });
 
       cancelPrescriptionApiMock.mockResolvedValueOnce(undefined);
@@ -245,6 +245,11 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
         cancelPrescription({ id: "b", reason: "patient request" })
       );
       expect(action.type).toBe(cancelPrescription.fulfilled.type);
+      expect(cancelPrescriptionApiMock).toHaveBeenCalledWith(
+        "b",
+        "patient request",
+        "etag-b"
+      );
 
       const s = store.getState().prescriptions;
       expect(s.items.map((x) => x.id)).toEqual(["a", "c"]);
@@ -269,6 +274,10 @@ describe("prescriptionsSlice (100% coverage, race-free)", () => {
       const axiosLike = {
         response: { data: { message: "Cancel not allowed" } },
       };
+      getPrescriptionDetailsMock.mockResolvedValueOnce({
+        id: "x1",
+        __etag: "etag-x1",
+      });
       cancelPrescriptionApiMock.mockRejectedValueOnce(axiosLike);
 
       const action = await store.dispatch(cancelPrescription({ id: "x1" }));

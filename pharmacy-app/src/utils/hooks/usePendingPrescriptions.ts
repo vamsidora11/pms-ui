@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPendingPrescriptions } from "@api/prescription";
-import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
+import { mapSummaryDto } from "@prescription/domain/mapper";
+import type { PrescriptionSummary } from "@prescription/domain/model";
 
 type Options = {
   refreshOnFocus?: boolean;
 };
 
 type UsePendingPrescriptionsReturn = {
-  rows: PrescriptionSummaryDto[];
+  rows: PrescriptionSummary[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -18,7 +19,7 @@ export function usePendingPrescriptions(
 ): UsePendingPrescriptionsReturn {
   const { refreshOnFocus = true } = options;
 
-  const [rows, setRows] = useState<PrescriptionSummaryDto[]>([]);
+  const [rows, setRows] = useState<PrescriptionSummary[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,11 +29,12 @@ export function usePendingPrescriptions(
     setLoading(true);
     setError(null);
 
-    let data: PrescriptionSummaryDto[] | null = null;
+    let data: PrescriptionSummary[] | null = null;
     let hasError = false;
 
     try {
-      data = await getPendingPrescriptions();
+      const response = await getPendingPrescriptions();
+      data = response.map(mapSummaryDto);
     } catch {
       hasError = true;
     }

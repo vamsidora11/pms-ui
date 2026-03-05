@@ -6,14 +6,14 @@ import {
   fetchPrescriptionDetails,
 } from "@store/prescription/prescriptionSlice";
 import type {
-  PrescriptionSummaryDto,
-  PrescriptionDetailsDto,
-} from "@prescription/types/prescription.types";
+  PrescriptionDetails,
+  PrescriptionSummary,
+} from "@prescription/domain/model";
 import type { PatientDetails } from "@prescription/types/models";
 import { getPatientById } from "@api/patientSearch";
- 
+
 type Options = { pageSize?: number; skipInitialFetch?: boolean };
- 
+
 export function usePrescriptionHistoryData(options?: Options) {
   const dispatch = useDispatch<AppDispatch>();
   const prescriptionState = useSelector((s: RootState) => s.prescriptions);
@@ -23,22 +23,18 @@ export function usePrescriptionHistoryData(options?: Options) {
   );
   const selected = prescriptionState.selected;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
- 
-  // UI state
-  const [patientCache, setPatientCache] =
-    useState<Record<string, PatientDetails>>({});
-  const [patientLoading, setPatientLoading] =
-    useState<Record<string, boolean>>({});
- 
-  // refs (no re-renders)
+
+  const [patientCache, setPatientCache] = useState<Record<string, PatientDetails>>({});
+  const [patientLoading, setPatientLoading] = useState<Record<string, boolean>>({});
   const inFlightRef = useRef<Record<string, boolean>>({});
- 
+
   const pageSize = options?.pageSize ?? 10;
   const skipInitialFetch = options?.skipInitialFetch ?? false;
- 
-  /* ---------------- Initial load ---------------- */
+
   useEffect(() => {
-    if (skipInitialFetch) return;
+    if (skipInitialFetch) {
+      return;
+    }
 
     dispatch(
       fetchAllPrescriptions({
@@ -47,69 +43,78 @@ export function usePrescriptionHistoryData(options?: Options) {
       })
     );
   }, [dispatch, pageSize, skipInitialFetch]);
- 
-  /* ---------------- Expanded row ---------------- */
+
   const expandedRow = useMemo(() => {
-    if (!expandedRowId) return null;
-    return prescriptions.find((p) => p.id === expandedRowId) || null;
-  }, [expandedRowId, prescriptions]);
- 
-  /* ---------------- Prescription details ---------------- */
-  useEffect(() => {
-    if (!expandedRow) return;
-    if (selected?.id !== expandedRow.id) {
-      dispatch(fetchPrescriptionDetails(expandedRow.id));
+    if (!expandedRowId) {
+      return null;
     }
-  }, [dispatch, expandedRow, selected?.id]);
- 
-  /* ---------------- Patient fetch (FIXED) ---------------- */
-  const fetchPatient = useCallback(async (pid: string) => {
-    // already cached
-    if (patientCache[pid]) return;
-    // already fetching
-    if (inFlightRef.current[pid]) return;
- 
-    inFlightRef.current[pid] = true;
-    setPatientLoading((prev) => ({ ...prev, [pid]: true }));
- 
+    return prescriptions.find((row) => row.id === expandedRowId) ?? null;
+  }, [expandedRowId, prescriptions]);
+
+  useEffect(() => {
+    if (!expandedRow) {
+      return;
+    }
+
+    if (selected?.prescription.id !== expandedRow.id) {
+      dispatch(
+        fetchPrescriptionDetails({
+          id: expandedRow.id,
+          patientId: expandedRow.patientId,
+        })
+      );
+    }
+  }, [dispatch, expandedRow, selected?.prescription.id]);
+
+  const fetchPatient = useCallback(async (patientId: string) => {
+    if (patientCache[patientId]) {
+      return;
+    }
+    if (inFlightRef.current[patientId]) {
+      return;
+    }
+
+    inFlightRef.current[patientId] = true;
+    setPatientLoading((prev) => ({ ...prev, [patientId]: true }));
+
     try {
-      const res = await getPatientById(pid);
-      if (res) {
-        setPatientCache((prev) => ({ ...prev, [pid]: res }));
+      const data = await getPatientById(patientId);
+      if (data) {
+        setPatientCache((prev) => ({ ...prev, [patientId]: data }));
       }
     } finally {
-      inFlightRef.current[pid] = false;
-      setPatientLoading((prev) => ({ ...prev, [pid]: false }));
+      inFlightRef.current[patientId] = false;
+      setPatientLoading((prev) => ({ ...prev, [patientId]: false }));
     }
   }, [patientCache]);
- 
+
   useEffect(() => {
-    const pid = expandedRow?.patientId;
-    if (pid) {
-      fetchPatient(pid);
+    const patientId = expandedRow?.patientId;
+    if (patientId) {
+      void fetchPatient(patientId);
     }
   }, [expandedRow?.patientId, fetchPatient]);
- 
-  /* ---------------- Derived data ---------------- */
-  const expandedDetails: PrescriptionDetailsDto | null =
-    expandedRow && selected?.id === expandedRow.id ? selected : null;
- 
+
+  const expandedDetails: PrescriptionDetails | null =
+    expandedRow && selected?.prescription.id === expandedRow.id
+      ? selected.prescription
+      : null;
+
   const expandedPatient: PatientDetails | null =
     expandedRow ? patientCache[expandedRow.patientId] ?? null : null;
- 
+
   const expandedPatientLoading =
     expandedRow ? !!patientLoading[expandedRow.patientId] : false;
- 
-  /* ---------------- Actions ---------------- */
+
   const toggleRow = useCallback((rowId: string) => {
     setExpandedRowId((prev) => (prev === rowId ? null : rowId));
   }, []);
- 
+
   const isRowExpanded = useCallback(
-    (row: PrescriptionSummaryDto) => row.id === expandedRowId,
+    (row: PrescriptionSummary) => row.id === expandedRowId,
     [expandedRowId]
   );
- 
+
   return {
     prescriptions,
     requestStatus: prescriptionState.status,
@@ -127,4 +132,3 @@ export function usePrescriptionHistoryData(options?: Options) {
     isRowExpanded,
   };
 }
- 

@@ -32,6 +32,35 @@ type Props = {
   closeOnSuccess?: boolean;
 };
 
+type DateInputProps = {
+  value?: string;
+  hasError?: boolean;
+};
+
+const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
+  ({ value, hasError, ...rest }, ref) => (
+    <div
+      className={clsx(
+        "flex items-center gap-3 h-11 px-4 rounded-lg transition-all duration-200 shadow-inner",
+        hasError
+          ? "ring-1 ring-red-500 bg-red-50"
+          : "bg-gray-50 border border-gray-200 hover:bg-gray-200 focus-within:bg-gray-200 focus-within:ring-2 focus-within:ring-blue-500",
+      )}
+    >
+      <input
+        ref={ref}
+        value={value ?? ""}
+        readOnly
+        placeholder="Select date of birth"
+        aria-invalid={!!hasError}
+        className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 outline-none border-0"
+        {...rest}
+      />
+    </div>
+  ),
+);
+DateInput.displayName = "DateInput";
+
 export default function PatientFormModal({
   title,
   submitLabel,
@@ -81,30 +110,6 @@ export default function PatientFormModal({
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
-
-  const DateInput = forwardRef<HTMLInputElement, { value?: string }>(
-    ({ value, ...rest }, ref) => (
-      <div
-        className={clsx(
-          "flex items-center gap-3 h-11 px-4 rounded-lg transition-all duration-200 shadow-inner",
-          errors.dob
-            ? "ring-1 ring-red-500 bg-red-50"
-            : "bg-gray-50 border border-gray-200 hover:bg-gray-200 focus-within:bg-gray-200 focus-within:ring-2 focus-within:ring-blue-500",
-        )}
-      >
-        <input
-          ref={ref}
-          value={value ?? ""}
-          readOnly
-          placeholder="Select date of birth"
-          aria-invalid={!!errors.dob}
-          className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 outline-none border-0"
-          {...rest}
-        />
-      </div>
-    ),
-  );
-  DateInput.displayName = "DateInput";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -173,7 +178,7 @@ export default function PatientFormModal({
                     e.preventDefault();
                   }
                 }}
-                customInput={<DateInput />}
+                customInput={<DateInput hasError={!!errors.dob} />}
                 wrapperClassName="w-full"
               />
               {errors.dob && (

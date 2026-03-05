@@ -1,10 +1,10 @@
 // hooks/useDashboardData.ts
 import { useSelector } from "react-redux";
-import type { RootState } from "@store/prescription/prescriptionSlice";
-import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
+import type { RootState } from "@store/index";
+import type { PrescriptionSummary } from "@prescription/domain/model";
 
 interface UseDashboardDataResult {
-  prescriptions: PrescriptionSummaryDto[];
+  prescriptions: PrescriptionSummary[];
   requestStatus: "idle" | "loading" | "succeeded" | "failed";
   totalCount: number;
   pageNumber: number;

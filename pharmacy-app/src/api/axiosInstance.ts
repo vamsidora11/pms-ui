@@ -2,6 +2,7 @@
 import axios, { AxiosHeaders } from "axios";
 import { store } from "../store";
 import { refreshAccess, logout } from "@store/auth/authSlice";
+import { toast } from "@components/common/Toast/toastService";
 import type { InternalAxiosRequestConfig } from "axios";
 
 type RetriableConfig = InternalAxiosRequestConfig & {
@@ -73,6 +74,10 @@ api.interceptors.response.use(
 
     if (status === 500) {
       console.error("Server error occurred");
+    }
+
+    if (status === 412) {
+      toast.error("Conflict", "Prescription was modified by another user.");
     }
 
     throw error;

@@ -5,14 +5,15 @@ import AddPatientModal from "./addpatient";
 import UpdatePatientModal from "./updatePatient";
 
 import { createPatient, getPatientDetails, searchPatients } from "@api/patient";
-import { getPrescriptionsByPatient } from "@api/prescription";
+import { getAllPrescriptions } from "@api/prescription.api";
+import { mapSummaryDto } from "@prescription/domain/mapper";
 
 import type {
   PatientDetailsDto
 } from "@patient/types/patienttype";
 import type {
-  PrescriptionSummaryDto
-} from "@prescription/types/prescription.types";
+  PrescriptionSummary
+} from "@prescription/domain/model";
 
 import { usePatientDirectory } from "../hooks/usePatientDirectory";
 import { usePatientDetails } from "../hooks/usePatientDetails";
@@ -54,9 +55,20 @@ export default function PatientProfiles() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   // ✅ Prescriptions (loads automatically when selected patient changes)
-  const prescriptionsState = usePatientPrescriptions<PrescriptionSummaryDto>(
-    (patientId, pageSize, continuationToken) =>
-      getPrescriptionsByPatient(patientId, pageSize, continuationToken),
+  const prescriptionsState = usePatientPrescriptions<PrescriptionSummary>(
+    async (id, pageNumber, pageSize) => {
+      const result = await getAllPrescriptions({
+        patientId: id,
+        pageNumber,
+        pageSize,
+      });
+
+      return {
+        items: result.items.map(mapSummaryDto),
+        pageNumber: result.pageNumber,
+        totalPages: result.totalPages,
+      };
+    },
     details.selectedPatient?.id ?? null,
     10,
   );
