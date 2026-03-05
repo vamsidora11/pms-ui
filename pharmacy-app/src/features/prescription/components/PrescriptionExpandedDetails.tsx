@@ -1,17 +1,17 @@
 import { User, Pill, AlertCircle } from "lucide-react";
  
 import type {
-  PrescriptionSummaryDto,
-  PrescriptionDetailsDto,
-  PrescriptionMedicineDto,
-} from "@prescription/types/prescription.types";
+  PrescriptionSummary,
+  PrescriptionDetails,
+  PrescriptionLine,
+} from "@prescription/domain/model";
 import type { PatientDetails } from "@prescription/types/models";
  
 import { calculateAgeFromDob } from "../utils/prescriptionHistoryUtils";
  
 type Props = {
-  row: PrescriptionSummaryDto;
-  details: PrescriptionDetailsDto | null;
+  row: PrescriptionSummary;
+  details: PrescriptionDetails | null;
   patient: PatientDetails | null;
   patientLoading: boolean;
 };
@@ -149,9 +149,9 @@ export default function PrescriptionExpandedDetails({
  
             <div className="p-5 space-y-5 flex-1 min-h-0 max-h-96 overflow-auto">
               {details.medicines?.map(
-                (med: PrescriptionMedicineDto, idx) => (
+                (med: PrescriptionLine, idx) => (
                   <div
-                    key={med.prescriptionMedicineId}
+                    key={med.lineId}
                     className="border border-emerald-200 rounded-xl p-5 bg-emerald-50/40 shadow-sm"
                   >
                     <div className="flex justify-between mb-3">
@@ -175,7 +175,7 @@ export default function PrescriptionExpandedDetails({
                           Quantity
                         </div>
                         <div className="font-bold">
-                          {med.prescribedQuantity}
+                          {med.quantityPrescribed}
                         </div>
                       </div>
  
@@ -184,7 +184,7 @@ export default function PrescriptionExpandedDetails({
                           Days
                         </div>
                         <div className="font-bold">
-                          {med.daysSupply}
+                          {med.durationDays}
                         </div>
                       </div>
  
@@ -202,8 +202,8 @@ export default function PrescriptionExpandedDetails({
                           Approved / Fill
                         </div>
                         <div className="font-bold">
-                          {typeof med.approvedQuantityPerFill === "number"
-                            ? med.approvedQuantityPerFill
+                          {typeof med.quantityApprovedPerFill === "number"
+                            ? med.quantityApprovedPerFill
                             : "Pending"}
                         </div>
                       </div>
@@ -213,18 +213,18 @@ export default function PrescriptionExpandedDetails({
                           Review
                         </div>
                         <div className="font-bold">
-                          {med.pharmacistReview?.decision || "Pending"}
+                          {med.review.status}
                         </div>
                       </div>
                     </div>
  
-                    {med.instruction && (
+                    {med.instructions && (
                       <div className="pt-3 border-t">
                         <div className="text-xs font-semibold text-gray-500 mb-1">
                           INSTRUCTIONS
                         </div>
                         <div className="text-sm text-gray-700">
-                          {med.instruction}
+                          {med.instructions}
                         </div>
                       </div>
                     )}

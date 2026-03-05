@@ -14,7 +14,7 @@ import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
 // import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import { formatDateTime, statusStyle } from "@prescription/utils/prescriptionHistoryUtils";
 import type { AppDispatch } from "../../../store";
-import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
+import type { PrescriptionSummary } from "@prescription/domain/model";
 
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
 import { useDashboardData } from "../hooks/useDashboardData";
@@ -23,7 +23,7 @@ import { useDashboardData } from "../hooks/useDashboardData";
 /* Helper Functions */
 /* ---------------------------------- */
 
-function isSameDay(date1: Date | string, date2: Date): boolean {
+function isSameDay(date1: Date, date2: Date): boolean {
   const d1 = new Date(date1);
   return (
     d1.getFullYear() === date2.getFullYear() &&
@@ -60,9 +60,8 @@ export default function PharmacistDashboard() {
   const stats = useMemo(() => ({
     pending: todaysPrescriptions.filter(p => p.status === "Created").length,
     readyForPickup: todaysPrescriptions.filter(
-      p => p.status === "Active" || p.status === "Reviewed"
+      p => p.status === "Active"
     ).length,
-    alerts: todaysPrescriptions.filter(p => Boolean(p.alerts)).length,
     todayTotal: todaysPrescriptions.length
   }), [todaysPrescriptions]);
 
@@ -92,7 +91,7 @@ export default function PharmacistDashboard() {
   /* Table Columns */
   /* ---------------------------------- */
 
-  const columns: Column<PrescriptionSummaryDto>[] = useMemo(
+  const columns: Column<PrescriptionSummary>[] = useMemo(
     () => [
       {
         key: "id",
@@ -135,7 +134,7 @@ export default function PharmacistDashboard() {
         sortable: true,
         width: 180,
         render: (v) => {
-          const { date, time } = formatDateTime(v as string);
+          const { date, time } = formatDateTime(v as Date);
           return (
             <div>
               <div className="font-medium">{date}</div>
@@ -152,11 +151,9 @@ export default function PharmacistDashboard() {
         filterType: "select",
         filterOptions: [
           { label: "Created", value: "Created" },
-          { label: "Reviewed", value: "Reviewed" },
           { label: "Active", value: "Active" },
           { label: "Completed", value: "Completed" },
           { label: "Cancelled", value: "Cancelled" },
-          { label: "Expired", value: "Expired" },
         ],
         render: value => {
           const statusValue = String(value);

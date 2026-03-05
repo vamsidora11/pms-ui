@@ -116,7 +116,7 @@ export function statusStyle(status: string) {
   }
 }
 
-export function formatDateTime(value?: string) {
+export function formatDateTime(value?: string | Date) {
   if (!value) return { date: "-", time: "-" };
 
   const d = new Date(value);

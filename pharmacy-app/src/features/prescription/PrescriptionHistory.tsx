@@ -7,7 +7,7 @@ import type { Column, ServerTableQuery } from "@components/common/Table/Table";
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
 import type { AppDispatch } from "../../store";
 
-import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
+import type { PrescriptionSummary } from "@prescription/domain/model";
 
 import { usePrescriptionHistoryData } from "./hooks/usePrescriptionHistoryData";
 import PrescriptionExpandedDetails from "./components/PrescriptionExpandedDetails";
@@ -34,7 +34,7 @@ export default function PrescriptionHistory() {
     isRowExpanded,
   } = usePrescriptionHistoryData({ pageSize: 10, skipInitialFetch: true });
 
-  const columns: Column<PrescriptionSummaryDto>[] = useMemo(
+  const columns: Column<PrescriptionSummary>[] = useMemo(
     () => [
       {
         key: "id",
@@ -72,7 +72,7 @@ export default function PrescriptionHistory() {
         filterType: "date",
         width: 180,
         render: (v) => {
-          const { date, time } = formatDateTime(v as string);
+          const { date, time } = formatDateTime(v as Date);
           return (
             <div>
               <div className="font-medium">{date}</div>
@@ -89,7 +89,6 @@ export default function PrescriptionHistory() {
         filterType: "select",
         filterOptions: [
           { label: "Created", value: "Created" },
-          { label: "Validated", value: "Validated" },
           { label: "Active", value: "Active" },
           { label: "Completed", value: "Completed" },
           { label: "Cancelled", value: "Cancelled" },
@@ -111,7 +110,7 @@ export default function PrescriptionHistory() {
   );
 
   const renderExpandedRow = useCallback(
-    (row: PrescriptionSummaryDto) => {
+    (row: PrescriptionSummary) => {
       if (expandedRowId !== row.id) return null;
 
       return (
@@ -127,7 +126,7 @@ export default function PrescriptionHistory() {
   );
 
   const handleRowClick = useCallback(
-    (row: PrescriptionSummaryDto) => toggleRow(row.id),
+    (row: PrescriptionSummary) => toggleRow(row.id),
     [toggleRow]
   );
 

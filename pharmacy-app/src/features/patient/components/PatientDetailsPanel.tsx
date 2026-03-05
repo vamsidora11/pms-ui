@@ -14,12 +14,12 @@ import {
 } from "lucide-react";
 import type { ElementType, ReactNode } from "react";
 import type { PatientDetailsDto } from "@patient/types/patienttype";
-import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
+import type { PrescriptionSummary } from "@prescription/domain/model";
 import { formatDate } from "../../../utils/format";
 import clsx from "clsx";
 
 /** Compact, aesthetic card for a single prescription summary */
-function PrescriptionItem({ rx }: { rx: PrescriptionSummaryDto }) {
+function PrescriptionItem({ rx }: { rx: PrescriptionSummary }) {
   const statusClass = clsx(
     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
     {
@@ -82,7 +82,7 @@ type Props = {
   selectedPatient: PatientDetailsDto | null;
   detailsLoading: boolean;
   detailsError: string | null;
-  prescriptions: PrescriptionSummaryDto[];
+  prescriptions: PrescriptionSummary[];
   prescriptionsLoading: boolean;
   prescriptionsError: string | null;
   prescriptionsHasMore: boolean;

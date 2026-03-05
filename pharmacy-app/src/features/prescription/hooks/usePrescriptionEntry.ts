@@ -6,12 +6,7 @@ import { getPatientById } from "@api/patientSearch";
 
 import type { PatientSummary } from "@prescription/types/models";
 import type { PrescriptionDraft, DoctorDetails } from "../types/models";
-
-import type {
-  CreatePrescriptionRequest,
-  CreatePrescriptionMedicineRequest,
-  PrescriberDto,
-} from "@prescription/types/prescription.types";
+import { mapDraftToCreateDto } from "@prescription/domain/mapper";
 
 import {
   validatePatientStep,
@@ -45,32 +40,7 @@ export const PRESCRIPTION_STEPS = [
   { step: 2, label: "Doctor" },
   { step: 3, label: "Medications" },
   { step: 4, label: "Review" },
-] as const;
-
-/* ---------------- MAPPER FUNCTION ---------------- */
-
-function mapDraftToCreatePrescriptionRequest(
-  draft: PrescriptionDraft
-): CreatePrescriptionRequest {
-  if (!draft.patient) throw new Error("Patient is required");
-
-  return {
-    patientId: draft.patient.id,
-    patientName: draft.patient.fullName,
-    prescriber: {
-      id: draft.doctor.id,
-      name: draft.doctor.name,
-    } as PrescriberDto,
-    medicines: draft.medications.map<CreatePrescriptionMedicineRequest>((m) => ({
-      productId: m.drugId!,
-      prescribedQuantity: m.quantity,
-      totalRefillsAuthorized: m.refills,
-      frequency: m.frequency,
-      daysSupply: m.durationDays,
-      instruction: m.instructions || "",
-    })),
-  };
-}
+];
 
 /* ---------------- HOOK ---------------- */
 
@@ -153,12 +123,12 @@ export function usePrescriptionEntry() {
     setIsSubmitting(true);
 
     try {
-      const payload = mapDraftToCreatePrescriptionRequest(draft);
+      const payload = mapDraftToCreateDto(draft);
       const response = await createPrescription(payload);
 
       toast.success(
         "Prescription Created Successfully",
-        `Prescription ID: ${response.id}`
+        `Prescription ID: ${response.data.id}`
       );
 
       reset();

@@ -1,10 +1,9 @@
-export type Severity = "High" | "Moderate" | "Low" | "None";
-export type InteractionLevel = "None" | "Minor" | "Moderate" | "Major";
+import type { ValidationSeverity } from "@validation/domain/model";
 
 export function pillToneBySeverity(
-  s: string | null | undefined
+  severity: ValidationSeverity | string | null | undefined
 ): "red" | "amber" | "yellow" | "green" {
-  switch (s) {
+  switch (severity) {
     case "High":
       return "red";
     case "Moderate":
@@ -17,8 +16,8 @@ export function pillToneBySeverity(
 }
 
 export function mapInteractionLevel(
-  severity: string | null | undefined
-): InteractionLevel {
+  severity: ValidationSeverity | string | null | undefined
+): "None" | "Minor" | "Moderate" | "Major" {
   switch (severity) {
     case "High":
       return "Major";
@@ -32,5 +31,5 @@ export function mapInteractionLevel(
 }
 
 export function isReviewedDecision(decision: string | null | undefined): boolean {
-  return decision === "Accepted" || decision === "Rejected";
+  return decision === "Approved" || decision === "Rejected";
 }
