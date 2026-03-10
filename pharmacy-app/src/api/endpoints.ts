@@ -7,6 +7,9 @@ export const ENDPOINTS = {
   refresh: "/api/auth/refresh",
   logout: "/api/auth/logout",
 
+  // Users
+  users: "/api/users",
+
   // Patients
   patients: "/api/patients",
   patientDetails: "/api/patients",
@@ -17,12 +20,10 @@ export const ENDPOINTS = {
 
   // Products
   products: "/api/products/search",
-  
-  prescriptions: "/api/prescriptions",        
-  
+
+  prescriptions: "/api/prescriptions",
+
   labelQueue: "/api/prescriptions/labels/queue",
 
   prescriptionLabels: (id: string) => `/api/prescriptions/${id}/labels`,
- };
-
-
+};

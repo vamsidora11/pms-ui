@@ -6,15 +6,17 @@ import { lazy, Suspense } from "react";
 
 const LoginPage = lazy(() => import("@auth/components/LoginPage"));
 const PharmacistDashboard = lazy(() => import("@auth/components/PharmacistDashboard"));
+const ManagerDashboard = lazy(() => import("@auth/components/ManagerDashboard"));
+const ManagerUserManagement = lazy(() => import("@auth/components/ManagerUserManagement"));
 
-const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionValidationQueue")); // ✅ new
-const PrescriptionValidationPage = lazy(() => import("@validation/PrescriptionValidationPage"));   // details
+const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionValidationQueue"));
+const PrescriptionValidationPage = lazy(() => import("@validation/PrescriptionValidationPage"));
 
 const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntry"));
 
 const TechnicianDashboard = lazy(() => import("@auth/components/TechnicianDashboard"));
 const LabelGeneration = lazy(() => import("@labels/components/LabelGeneration"));
-const Refill = lazy(() => import ("@refill/Refill"));
+const Refill = lazy(() => import("@refill/Refill"));
 const PrescriptionHistory = lazy(() => import("@prescription/PrescriptionHistory"));
 const PatientProfile = lazy(() => import("@patient/components/PatientProfile"));
 
@@ -26,7 +28,8 @@ export default function AppRoutes() {
 
         <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
           <Route path={ROUTES.MANAGER.BASE} element={<AppLayout />}>
-            <Route path="dashboard" element={<div>Manager Dashboard</div>} />
+            <Route path="dashboard" element={<ManagerDashboard />} />
+            <Route path="users" element={<ManagerUserManagement />} />
           </Route>
         </Route>
 
@@ -36,9 +39,7 @@ export default function AppRoutes() {
             <Route path="dashboard" element={<PharmacistDashboard />} />
             <Route path="entry" element={<ManualPrescriptionView />} />
 
-            {/* ✅ Queue at /pharmacist/validation */}
             <Route path="validation" element={<PrescriptionValidationQueue />} />
-            {/* ✅ Details page at /pharmacist/validation/:id */}
             <Route path="validation/:rxId" element={<PrescriptionValidationPage />} />
 
             <Route path="labels" element={<LabelGeneration />} />

@@ -4,6 +4,7 @@ export const ROUTES = {
   MANAGER: {
     BASE: "/manager",
     DASHBOARD: "/manager/dashboard",
+    USERS: "/manager/users",
   },
 
   PHARMACIST: {

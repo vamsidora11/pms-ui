@@ -76,6 +76,9 @@ export function useLoginFlow(deps?: LoginFlowDeps) {
         }
 
         const payload = decode(res.accessToken);
+        console.log("DECODED TOKEN:", payload);
+console.log("ROLE VALUE:", payload.role);
+console.log("TYPE:", typeof payload.role);
 
         if (!payload?.role) {
           setErrorMessage("Login failed: Invalid token payload.");
