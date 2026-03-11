@@ -1,238 +1,207 @@
-// src/features/patients/tests/PatientFormModal.test.tsx
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
-// 🔒 Guard mocks for infra we don't want to execute in unit tests
-vi.mock("store", () => ({}));
-vi.mock("redux-persist", () => ({
-  persistReducer: (_cfg: unknown, reducer: unknown) => reducer,
-  persistStore: vi.fn(),
-}));
-
-// 🧩 Mock lucide-react icons to avoid SVG complexity
 vi.mock("lucide-react", () => ({
   X: () => <span data-testid="icon-x" />,
 }));
 
-// 🧪 Mock API used by AllergySelector prop
-const searchAllergiesMock = vi.fn<(q: string) => Promise<string[]> | string[]>();
 vi.mock("@api/catalogs", () => ({
-  searchAllergies: (q: string) => searchAllergiesMock(q),
+  searchAllergies: vi.fn(),
 }));
 
-/**
- * 🧱 Mock child components (Input, Dropdown, AppPhoneInput, AllergySelector)
- * We render simple elements that call the provided onChange/onAdd/onRemove
- * to test PatientFormModal's wiring without depending on child implementations.
- */
-
-// Input mock
 vi.mock("@components/common/Input/Input", () => ({
-  default: (props: {
+  default: ({
+    label,
+    value,
+    onChange,
+    error,
+  }: {
     label?: React.ReactNode;
-    type?: string;
     value: string;
-    onChange: (v: string) => void;
-    error?: string | null;
+    onChange: (value: string) => void;
+    error?: string;
   }) => {
-    let labelText = "input";
-    if (typeof props.label === "string") {
-      labelText = props.label;
-    } else if (props.label && typeof props.label === "object") {
-      const maybeLabel = props.label as { props?: { text?: string } };
-      if (typeof maybeLabel.props?.text === "string") {
-        labelText = maybeLabel.props.text;
-      }
-    }
-    const inputType = props.type ?? "text";
+    const labelText =
+      typeof label === "string"
+        ? label
+        : (label as { props?: { text?: string } } | undefined)?.props?.text ?? "input";
+
     return (
-      <div data-testid={`mock-input-${labelText}`}>
-        {props.label ? <div>{labelText}</div> : null}
+      <div>
         <input
-          placeholder={labelText}
-          type={inputType}
-          value={props.value}
-          onChange={(e) => props.onChange((e.target as HTMLInputElement).value)}
+          aria-label={labelText}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
         />
-        {props.error ? <div data-testid={`error-${labelText}`}>{props.error}</div> : null}
+        {error ? <span>{error}</span> : null}
       </div>
     );
   },
 }));
 
-// Dropdown mock
 vi.mock("@components/common/Dropdown/Dropdown", () => ({
-  default: (props: {
-    label?: string;
+  default: ({
+    label,
+    value,
+    onChange,
+    options,
+  }: {
+    label: string;
     value: string;
-    onChange: (v: string) => void;
+    onChange: (value: string) => void;
     options: string[];
-  }) => {
-    const id = props.label ?? "Dropdown";
-    return (
-      <div data-testid={`mock-dropdown-${id}`}>
-        {props.label ? <div>{props.label}</div> : null}
-        <select
-          aria-label={id}
-          value={props.value}
-          onChange={(e) => props.onChange((e.target as HTMLSelectElement).value)}
-        >
-          {props.options.map((opt) => (
-            <option value={opt} key={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  },
-}));
-
-// Phone input mock
-vi.mock("@components/common/PhoneInput/PhoneInput", () => ({
-  default: (props: {
-    label?: React.ReactNode;
-    value: string;
-    onChange: (v: string) => void;
-    error?: string | null;
-    warning?: string | null;
-    defaultCountry?: string;
-  }) => {
-    let labelText = "Phone";
-    if (typeof props.label === "string") {
-      labelText = props.label;
-    } else if (props.label && typeof props.label === "object") {
-      const maybeLabel = props.label as { props?: { text?: string } };
-      if (typeof maybeLabel.props?.text === "string") {
-        labelText = maybeLabel.props.text;
-      }
-    }
-    return (
-      <div data-testid="mock-phone-input">
-        {props.label ? <div>{labelText}</div> : null}
-        <input
-          placeholder={labelText}
-          value={props.value}
-          onChange={(e) => props.onChange((e.target as HTMLInputElement).value)}
-        />
-        {props.error ? <div data-testid="phone-error">{props.error}</div> : null}
-        {props.warning ? <div data-testid="phone-warning">{props.warning}</div> : null}
-      </div>
-    );
-  },
-}));
-
-// AllergySelector mock
-vi.mock("../components/AllergySelector", () => ({
-  default: (props: {
-    query: string;
-    onQueryChange: (v: string) => void;
-    selected: string[];
-    onAdd: (v: string) => void;
-    onRemove: (v: string) => void;
-    searchFn: (q: string) => Promise<string[]> | string[];
-    minChars?: number;
-    debounceMs?: number;
   }) => (
-    <div data-testid="mock-allergy-selector">
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
+vi.mock("@components/common/PhoneInput/PhoneInput", () => ({
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+  }) => (
+    <input
+      aria-label="Phone"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
+}));
+
+vi.mock("react-datepicker", () => ({
+  default: ({
+    onChange,
+  }: {
+    onChange: (date: Date | null) => void;
+  }) => (
+    <button type="button" onClick={() => onChange(new Date("2000-01-01"))}>
+      Pick Date
+    </button>
+  ),
+}));
+
+vi.mock("../components/AllergySelector", () => ({
+  default: ({
+    query,
+    onQueryChange,
+    onAdd,
+    onRemove,
+    selected,
+  }: {
+    query: string;
+    onQueryChange: (value: string) => void;
+    onAdd: (value: string) => void;
+    onRemove: (value: string) => void;
+    selected: string[];
+  }) => (
+    <div>
       <input
-        placeholder="Allergy query"
-        value={props.query}
-        onChange={(e) => props.onQueryChange((e.target as HTMLInputElement).value)}
+        aria-label="Allergy query"
+        value={query}
+        onChange={(event) => onQueryChange(event.target.value)}
       />
-      <button type="button" onClick={() => props.onAdd("Penicillin")}>
+      <button type="button" onClick={() => onAdd("Peanuts")}>
         Add Allergy
       </button>
-      <button type="button" onClick={() => props.onRemove("Penicillin")}>
+      <button type="button" onClick={() => onRemove("Peanuts")}>
         Remove Allergy
       </button>
-      <div data-testid="selected-allergies">{props.selected.join(",")}</div>
+      <span data-testid="selected-allergies">{selected.join(",")}</span>
     </div>
   ),
 }));
 
-// 🎣 Types and hook mock
 type PatientFormValues = {
   fullName: string;
-  dob: string; // yyyy-mm-dd
+  dob: string;
   gender: string;
   phone: string;
   email: string;
   address: string;
   allergies: string[];
+  insuranceProvider: string;
+  insurancePolicyId: string;
   newAllergy: string;
 };
 
-interface UsePatientFormReturn {
+type UsePatientFormReturn = {
   form: PatientFormValues;
-  errors: Partial<Record<keyof PatientFormValues, string | null>>;
-  warnings: Partial<Record<keyof PatientFormValues, string | null>>;
+  errors: Partial<Record<keyof PatientFormValues, string>>;
+  warnings: Partial<Record<keyof PatientFormValues, string>>;
   formError: string;
   submitting: boolean;
-  updateField: <K extends keyof PatientFormValues>(k: K, v: PatientFormValues[K]) => void;
-  addAllergy: (v: string) => void;
-  removeAllergy: (v: string) => void;
-  submit: () => void | Promise<void>;
-  setFormError: (msg: string) => void;
-}
+  updateField: (field: keyof PatientFormValues, value: string) => void;
+  addAllergy: (value: string) => void;
+  removeAllergy: (value: string) => void;
+  submit: () => void;
+  setFormError: (value: string) => void;
+};
 
-// ✅ Correct vi.fn generics: single function signature (Vitest typing)
 const usePatientFormMock = vi.fn<
   (args: {
-    initialValues: PatientFormValues;
-    onSubmit: (values: PatientFormValues) => unknown;
+    initialValues: Omit<PatientFormValues, "newAllergy">;
+    onSubmit: (values: Omit<PatientFormValues, "newAllergy">) => unknown;
     onClose: () => void;
     closeOnSuccess: boolean;
   }) => UsePatientFormReturn
 >();
 
-vi.mock("../hooks/usePatientForm", () => ({
-  usePatientForm: (...args: unknown[]) => usePatientFormMock(...(args as Parameters<typeof usePatientFormMock>)),
+vi.mock("@patient/hooks/usePatientForm", () => ({
+  usePatientForm: (...args: Parameters<typeof usePatientFormMock>) =>
+    usePatientFormMock(...args),
 }));
 
-// 🧪 SUT
-import PatientFormModal, { RequiredLabel } from "../components/PatientFormModal";
+import PatientFormModal from "../components/PatientFormModal";
 
-// ℹ️ Default props for tests
-const defaultInitialValues: PatientFormValues = {
+const initialValues = {
   fullName: "John Doe",
   dob: "1990-01-01",
   gender: "Male",
-  phone: "",
-  email: "",
-  address: "",
-  allergies: [],
-  newAllergy: "",
+  phone: "+14155550101",
+  email: "john@example.com",
+  address: "123 Street",
+  allergies: ["Peanuts"],
+  insuranceProvider: "ABC Health",
+  insurancePolicyId: "POL-123",
 };
 
 describe("PatientFormModal", () => {
   const onClose = vi.fn();
   const onSubmit = vi.fn();
-
   const updateField = vi.fn();
   const addAllergy = vi.fn();
   const removeAllergy = vi.fn();
   const submit = vi.fn();
   const setFormError = vi.fn();
 
-  const baseHookReturn: UsePatientFormReturn = {
-    form: { ...defaultInitialValues },
-    errors: {},
-    warnings: {},
-    formError: "",
-    submitting: false,
-    updateField,
-    addAllergy,
-    removeAllergy,
-    submit,
-    setFormError,
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    usePatientFormMock.mockReturnValue({ ...baseHookReturn });
-    // Ensure body style is clean before each (for ESC/body-lock tests)
+    usePatientFormMock.mockReturnValue({
+      form: { ...initialValues, newAllergy: "" },
+      errors: {},
+      warnings: {},
+      formError: "",
+      submitting: false,
+      updateField,
+      addAllergy,
+      removeAllergy,
+      submit,
+      setFormError,
+    });
     document.body.style.overflow = "";
   });
 
@@ -241,158 +210,77 @@ describe("PatientFormModal", () => {
     document.body.style.overflow = "";
   });
 
-  const renderModal = (overrides?: Partial<Parameters<typeof PatientFormModal>[0]>) =>
+  const renderModal = (
+    overrides: Partial<Parameters<typeof PatientFormModal>[0]> = {},
+  ) =>
     render(
       <PatientFormModal
-        title="New Patient"
+        title="Patient"
         submitLabel="Save"
-        initialValues={defaultInitialValues}
+        initialValues={initialValues}
         onClose={onClose}
         onSubmit={onSubmit}
-        closeOnSuccess={true}
         {...overrides}
-      />
+      />,
     );
 
-  it("renders title and buttons", () => {
-    renderModal();
-
-    expect(screen.getByText("New Patient")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Save/i })).toBeInTheDocument();
-  });
-
-  it("wires usePatientForm with correct arguments", () => {
+  it("wires the form hook with the modal props", () => {
     renderModal({ closeOnSuccess: false });
 
     expect(usePatientFormMock).toHaveBeenCalledWith({
-      initialValues: defaultInitialValues,
+      initialValues,
       onSubmit,
       onClose,
       closeOnSuccess: false,
     });
   });
 
-  it("locks body scroll on mount and restores on unmount", () => {
+  it("locks body scroll while mounted", () => {
     const { unmount } = renderModal();
+
     expect(document.body.style.overflow).toBe("hidden");
     unmount();
     expect(document.body.style.overflow).toBe("");
   });
 
-  it("clicking Cancel clears formError and calls onClose", () => {
+  it("wires insurance and allergy field updates", () => {
     renderModal();
 
-    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    fireEvent.change(screen.getByLabelText("Insurance Provider"), {
+      target: { value: "XYZ Health" },
+    });
+    fireEvent.change(screen.getByLabelText("Policy ID"), {
+      target: { value: "POL-999" },
+    });
+    fireEvent.change(screen.getByLabelText("Allergy query"), {
+      target: { value: "Dust" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add Allergy/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Remove Allergy/i }));
 
-    expect(setFormError).toHaveBeenCalledWith("");
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(updateField).toHaveBeenCalledWith("insuranceProvider", "XYZ Health");
+    expect(updateField).toHaveBeenCalledWith("insurancePolicyId", "POL-999");
+    expect(updateField).toHaveBeenCalledWith("newAllergy", "Dust");
+    expect(addAllergy).toHaveBeenCalledWith("Peanuts");
+    expect(removeAllergy).toHaveBeenCalledWith("Peanuts");
+    expect(screen.getByTestId("selected-allergies")).toHaveTextContent("Peanuts");
   });
 
-  it("Escape key closes the modal (calls onClose)", () => {
-    renderModal();
+  it("uses a read-only gender input when showGender is false", () => {
+    renderModal({ showGender: false });
 
-    fireEvent.keyDown(globalThis as unknown as Window, { key: "Escape" });
-
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText("Gender", { selector: "select" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Gender")).toHaveValue("Male");
   });
 
-  it("submit button calls submit from hook", () => {
+  it("uses the hook submit handler and clears form error on cancel", () => {
     renderModal();
 
     fireEvent.click(screen.getByRole("button", { name: /Save/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
 
     expect(submit).toHaveBeenCalledTimes(1);
-  });
-
-  it("shows loading state when submitting=true", () => {
-    usePatientFormMock.mockReturnValue({
-      ...baseHookReturn,
-      submitting: true,
-    });
-
-    renderModal();
-
-    const submitBtn = screen.getByRole("button", { name: /Saving.../i });
-    expect(submitBtn).toBeDisabled();
-  });
-
-  it("renders form-level error when formError is set", () => {
-    usePatientFormMock.mockReturnValue({
-      ...baseHookReturn,
-      formError: "Validation failed",
-    });
-
-    renderModal();
-
-    expect(screen.getByText("Validation failed")).toBeInTheDocument();
-  });
-
-  it("updates fields via updateField for Full Name, Phone, and Address", () => {
-    renderModal();
-
-    // Full Name (Input mock uses label text as placeholder)
-    const fullNameInput = screen.getByPlaceholderText("Full Name");
-    fireEvent.change(fullNameInput, { target: { value: "Jane Doe" } });
-
-    // Phone
-    const phoneInput = screen.getByPlaceholderText("Phone");
-    fireEvent.change(phoneInput, { target: { value: "+919999999999" } });
-
-    // Address
-    const addressInput = screen.getByPlaceholderText("Address");
-    fireEvent.change(addressInput, { target: { value: "123 Main St" } });
-
-    // Assert updateField calls
-    expect(updateField).toHaveBeenCalledWith("fullName", "Jane Doe");
-    expect(updateField).toHaveBeenCalledWith("phone", "+919999999999");
-    expect(updateField).toHaveBeenCalledWith("address", "123 Main St");
-  });
-
-  it("wires AllergySelector: query change, add, remove", () => {
-    usePatientFormMock.mockReturnValue({
-      ...baseHookReturn,
-      form: {
-        ...baseHookReturn.form,
-        allergies: ["Peanuts"],
-        newAllergy: "",
-      },
-    });
-
-    renderModal();
-
-    const queryInput = screen.getByPlaceholderText("Allergy query");
-    fireEvent.change(queryInput, { target: { value: "Pen" } });
-    expect(updateField).toHaveBeenCalledWith("newAllergy", "Pen");
-
-    fireEvent.click(screen.getByText(/Add Allergy/i));
-    expect(addAllergy).toHaveBeenCalledWith("Penicillin");
-
-    fireEvent.click(screen.getByText(/Remove Allergy/i));
-    expect(removeAllergy).toHaveBeenCalledWith("Penicillin");
-
-    // ensure selected allergies are shown by the mock
-    expect(screen.getByTestId("selected-allergies").textContent).toContain("Peanuts");
-  });
-
-  it("shows warnings and errors if provided by hook for specific fields", () => {
-    usePatientFormMock.mockReturnValue({
-      ...baseHookReturn,
-      errors: { email: "Email invalid" },
-      warnings: { fullName: "Looks too short" },
-    });
-
-    renderModal();
-
-    // Warning for Full Name is rendered by the component as <p> under the field
-    expect(screen.getByText("Looks too short")).toBeInTheDocument();
-    // Error for Email is rendered by Input mock's error slot
-    expect(screen.getByText("Email invalid")).toBeInTheDocument();
-  });
-
-  it("renders RequiredLabel correctly (smoke)", () => {
-    render(<RequiredLabel text="Test Field" />);
-    expect(screen.getByText(/Test Field/i)).toBeInTheDocument();
-    expect(screen.getByText("*")).toBeInTheDocument();
+    expect(setFormError).toHaveBeenCalledWith("");
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

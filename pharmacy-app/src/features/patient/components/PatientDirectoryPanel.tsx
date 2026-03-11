@@ -32,9 +32,18 @@ export default function PatientDirectoryPanel({
         <div className="relative">
           <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
           <input
+            type="search"
+            name="patient-directory-search"
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
             placeholder="Search by name, ID, or phone..."
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            inputMode="search"
+            spellCheck={false}
+            aria-autocomplete="none"
+            data-lpignore="true"
             className="w-full pl-10 pr-3 py-2 bg-gray-50 border rounded-lg"
           />
         </div>

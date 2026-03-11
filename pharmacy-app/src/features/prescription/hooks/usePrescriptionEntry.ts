@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@components/common/Toast/useToast";
 
 import { createPrescription } from "@api/prescription";
-import { getPatientById } from "@api/patientSearch";
+import { getPatientById } from "@api/patient";
 
 import type { PatientSummary } from "@prescription/types/models";
 import type { PrescriptionDraft, DoctorDetails } from "@prescription/types/models";

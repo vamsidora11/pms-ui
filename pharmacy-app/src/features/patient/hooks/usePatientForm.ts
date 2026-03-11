@@ -4,6 +4,7 @@ import {
   validatePatientForm,
   type PatientFormLike,
 } from "@patient/utils/patientFormRules";
+import { hasPartialInsurance } from "@patient/utils/patientPayload";
 
 export type PatientFormValues = {
   fullName: string;
@@ -13,6 +14,8 @@ export type PatientFormValues = {
   email: string;
   address: string;
   allergies: string[];
+  insuranceProvider: string;
+  insurancePolicyId: string;
 };
 
 export type PatientFormState = PatientFormValues & { newAllergy: string };
@@ -113,6 +116,11 @@ export function usePatientForm({
       return;
     }
 
+    if (hasPartialInsurance(form)) {
+      setFormError("Insurance provider and policy ID must both be entered.");
+      return;
+    }
+
     setSubmitting(true);
     setFormError("");
 
@@ -125,6 +133,8 @@ export function usePatientForm({
         email: form.email.trim(),
         address: form.address.trim(),
         allergies: form.allergies,
+        insuranceProvider: form.insuranceProvider.trim(),
+        insurancePolicyId: form.insurancePolicyId.trim(),
       };
 
       await onSubmit(payload);

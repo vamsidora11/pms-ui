@@ -1,7 +1,8 @@
 // src/prescription/hooks/usePatientSearch.ts
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@utils/hooks/useDebouncedValue";
-import { searchPatients as defaultSearchPatients } from "@api/patientSearch";
+import { searchPatients as defaultSearchPatients } from "@api/patient";
+import { extractApiError } from "@utils/httpError";
 import type { PatientSummary } from "@prescription/types/models";
 
 type Options = {
@@ -27,15 +28,6 @@ export function usePatientSearch(options: Options = {}) {
   const debouncedQuery = useDebouncedValue(query, debounceMs);
   const requestIdRef = useRef(0);
 
-  const getErrorMessage = (err: unknown): string => {
-    if (typeof err === "string") return err;
-    if (typeof err === "object" && err !== null) {
-      const errorObj = err as { message?: string };
-      return errorObj.message || "Failed to search patients";
-    }
-    return "Failed to search patients";
-  };
-
   useEffect(() => {
     const q = (debouncedQuery ?? "").trim();
 
@@ -58,7 +50,7 @@ export function usePatientSearch(options: Options = {}) {
         setResults(Array.isArray(data) ? data : []);
       } catch (e) {
         if (requestId !== requestIdRef.current) return;
-        setError(getErrorMessage(e));
+        setError(extractApiError(e) || "Failed to search patients");
         setResults([]);
       } finally {
         if (requestId === requestIdRef.current) setLoading(false);

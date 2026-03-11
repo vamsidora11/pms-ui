@@ -13,7 +13,6 @@ import {
   Search,
   Plus,
 } from "lucide-react";
-import { useSelector } from "react-redux";
 
 import DataTable, { type Column } from "@components/common/Table/Table";
 import Modal from "@components/common/Modal/Modal";
@@ -21,8 +20,8 @@ import Button from "@components/common/Button/Button";
 import InventoryStockList from "../components/InventoryStockList";
 import { useInventoryItems } from "../hooks/useInventoryItems";
 import { useRestockRequests } from "../hooks/useRestockRequests";
-import type { RootState } from "@store/index";
-import type { InventoryItem, RestockRequest } from "../technician.types";
+import type { InventoryItem } from "../technician.types";
+import type { InventoryLotDto } from "@api/inventory";
 
 // ── Tab definition ────────────────────────────────────────────────────────────
 
@@ -37,8 +36,6 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function InventoryManagement() {
-  const technicianName =
-    useSelector((s: RootState) => ((s.auth.user as unknown) as Record<string, string> | null)?.name) ?? "Technician";
 
   const [activeTab, setActiveTab]     = useState<TabKey>("stock");
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,13 +52,14 @@ export default function InventoryManagement() {
     medicineGroups,
     expiryData,
     inventoryStats,
+    isLoading,
     expandedMedicines,
     toggleExpand,
     handleDispose,
   } = useInventoryItems();
 
   const {
-    restockRequests,
+    submittedLots,
     selectedItem,
     isDialogOpen,
     form,
@@ -71,7 +69,7 @@ export default function InventoryManagement() {
     openRestockDialog,
     closeRestockDialog,
     handleCreateRequest,
-  } = useRestockRequests(technicianName);
+  } = useRestockRequests();
 
   // ── Filtered groups ────────────────────────────────────────────────────────
   const filteredGroups = useMemo(() => {
@@ -172,66 +170,38 @@ export default function InventoryManagement() {
   ], [handleDispose, expiryData]);
 
   // ── Restock requests table columns ────────────────────────────────────────
-  const requestColumns = useMemo((): Column<RestockRequest>[] => [
+  const requestColumns = useMemo((): Column<InventoryLotDto>[] => [
     {
-      key: "drugName",
-      header: "Drug Name",
+      key: "productId",
+      header: "Product",
       sortable: true,
       filterable: true,
       filterType: "text" as const,
-      width: 180,
+      width: 200,
       render: (value, row) => (
         <div>
-          <p className="font-semibold text-gray-900">{String(value)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{row.batchNumber}</p>
+          <p className="font-semibold text-gray-900 font-mono text-sm">{String(value)}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Lot: {row.lotNumber}</p>
         </div>
       ),
     },
     {
       key: "requestedQuantity",
-      header: "Quantity",
+      header: "Qty Requested",
       sortable: true,
-      width: 110,
+      width: 130,
       render: (value) => (
         <span className="font-semibold text-gray-900">{String(value)} units</span>
       ),
     },
     {
-      key: "currentStock",
-      header: "Current Stock",
+      key: "quantityAvailable",
+      header: "Approved Qty",
       sortable: true,
       width: 130,
-      render: (value) => {
-        const n = Number(value);
-        return (
-          <span className={`font-medium ${
-            n === 0 ? "text-red-600" : n < 50 ? "text-orange-600" : "text-gray-900"
-          }`}>
-            {n} units
-          </span>
-        );
-      },
-    },
-    {
-      key: "priority",
-      header: "Priority",
-      sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: ["Low", "Medium", "High", "Critical"],
-      width: 120,
-      render: (value) => {
-        const map: Record<string, string> = {
-          Low:      "bg-gray-50 text-gray-700 border-gray-200",
-          Medium:   "bg-blue-50 text-blue-700 border-blue-200",
-          High:     "bg-orange-50 text-orange-700 border-orange-200",
-          Critical: "bg-red-50 text-red-700 border-red-200",
-        };
-        return (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg border text-xs font-semibold ${map[String(value)] ?? map["Medium"]}`}>
-            {String(value)}
-          </span>
-        );
+      render: (value, row) => {
+        if (row.status !== "Approved") return <span className="text-gray-400 text-sm">—</span>;
+        return <span className="font-semibold text-green-600">{String(value)} units</span>;
       },
     },
     {
@@ -240,14 +210,14 @@ export default function InventoryManagement() {
       sortable: true,
       filterable: true,
       filterType: "select",
-      filterOptions: ["Pending", "Approved", "Rejected", "Completed"],
+      filterOptions: ["Pending", "Approved", "Rejected", "Depleted"],
       width: 130,
       render: (value) => {
         const map: Record<string, { cls: string; icon: React.ReactNode }> = {
-          Pending:   { cls: "bg-yellow-50 text-yellow-700 border-yellow-200", icon: <Clock className="w-3 h-3" /> },
-          Approved:  { cls: "bg-green-50 text-green-700 border-green-200",   icon: <CheckCircle className="w-3 h-3" /> },
-          Rejected:  { cls: "bg-red-50 text-red-700 border-red-200",         icon: <XCircle className="w-3 h-3" /> },
-          Completed: { cls: "bg-blue-50 text-blue-700 border-blue-200",      icon: <Archive className="w-3 h-3" /> },
+          Pending:  { cls: "bg-yellow-50 text-yellow-700 border-yellow-200", icon: <Clock className="w-3 h-3" /> },
+          Approved: { cls: "bg-green-50 text-green-700 border-green-200",   icon: <CheckCircle className="w-3 h-3" /> },
+          Rejected: { cls: "bg-red-50 text-red-700 border-red-200",         icon: <XCircle className="w-3 h-3" /> },
+          Depleted: { cls: "bg-blue-50 text-blue-700 border-blue-200",      icon: <Archive className="w-3 h-3" /> },
         };
         const cfg = map[String(value)] ?? map["Pending"];
         return (
@@ -259,21 +229,22 @@ export default function InventoryManagement() {
       },
     },
     {
-      key: "requestedBy",
+      key: "workflow",
       header: "Requested By",
-      filterable: true,
-      filterType: "text" as const,
-      width: 150,
-      render: (value, row) => (
-        <div>
-          <p className="text-sm text-gray-900">{String(value)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {row.requestedAt.toLocaleDateString()}
-          </p>
-        </div>
-      ),
+      width: 160,
+      render: (value) => {
+        const wf = value as import("@api/inventory").InventoryWorkflowDto;
+        return (
+          <div>
+            <p className="text-sm text-gray-900">{wf.requestedBy}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {new Date(wf.requestedAt).toLocaleDateString()}
+            </p>
+          </div>
+        );
+      },
     },
-  ], [restockRequests]);
+  ], [submittedLots]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -356,6 +327,7 @@ export default function InventoryManagement() {
               <InventoryStockList
                 groups={filteredGroups}
                 expandedMedicines={expandedMedicines}
+                isLoading={isLoading}
                 onToggleExpand={toggleExpand}
                 onRequestRestock={openRestockDialog}
               />
@@ -378,7 +350,7 @@ export default function InventoryManagement() {
           {/* Restock Requests tab */}
           {activeTab === "requests" && (
             <DataTable
-              data={restockRequests}
+              data={submittedLots}
               columns={requestColumns}
               pageSize={15}
               pageSizeOptions={[10, 15, 25, 50]}

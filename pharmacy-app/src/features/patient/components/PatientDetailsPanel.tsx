@@ -11,6 +11,8 @@ import {
   UserCircle2,
   CalendarDays,
   Pill,
+  Shield,
+  CreditCard,
 } from "lucide-react";
 import type { ElementType, ReactNode } from "react";
 import type { PatientDetailsDto } from "@patient/types/patienttype";
@@ -197,6 +199,16 @@ export default function PatientDetailsPanel({
               value={selectedPatient.address ?? ""}
             />
             <Info icon={User} label="Gender" value={selectedPatient.gender} />
+            <Info
+              icon={Shield}
+              label="Insurance Provider"
+              value={selectedPatient.insurance?.provider ?? ""}
+            />
+            <Info
+              icon={CreditCard}
+              label="Policy ID"
+              value={selectedPatient.insurance?.policyId ?? ""}
+            />
           </Section>
 
           {/* Known Allergies */}

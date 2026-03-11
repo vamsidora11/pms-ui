@@ -1,94 +1,172 @@
 // src/features/technician/hooks/useDispenseQueue.ts
-import { useMemo } from "react";
+//
+// Fetches the PaymentProcessed dispense queue from the real backend.
+// Technician can execute (mark Dispensed) each item.
+//
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@components/common/Toast/useToast";
 import { logger } from "@utils/logger/logger";
-import type { DispenseItem, DispenseStatus } from "../technician.types";
-
-// ── API stub ──────────────────────────────────────────────────────────────────
-async function updateDispenseStatus(
-  _id: string,
-  _status: "Ready to Dispense" | "Dispensed"
-): Promise<void> {
-  // TODO: replace with real API call
-}
+import {
+  getDispenseQueue,
+  getDispenseById,
+  executeDispense,
+  type DispenseSummaryDto,
+} from "@api/dispense";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface UseDispenseQueueProps {
-  items: DispenseItem[];
-  onUpdateStatus: (id: string, status: DispenseStatus) => void;
-}
+export type { DispenseSummaryDto };
 
 export interface DispenseQueueStats {
-  pendingDispense: number;
-  readyToDispense: number;
-  dispensedToday: number;
+  paymentProcessed: number; // awaiting physical dispense
+  dispensedToday:   number; // completed today
+}
+
+export interface UseDispenseQueueReturn {
+  queueData:           DispenseSummaryDto[];
+  stats:               DispenseQueueStats;
+  isLoading:           boolean;
+  // id of the row currently being executed (shows spinner on that row only)
+  executingId:         string | null;
+  // details fetched for PackingListModal
+  selectedDispense:    { dispense: import("@api/dispense").DispenseDetailsDto; etag: string } | null;
+  isLoadingDetails:    boolean;
+  handleOpenDetails:   (row: DispenseSummaryDto) => Promise<void>;
+  handleCloseDetails:  () => void;
+  handleExecute:       (row: DispenseSummaryDto) => Promise<void>;
+  refetch:             () => Promise<void>;
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useDispenseQueue({ items, onUpdateStatus }: UseDispenseQueueProps) {
-  // ✅ Correct API: showToast(type, title, message?)
+export function useDispenseQueue(): UseDispenseQueueReturn {
   const { showToast } = useToast();
 
-  // ── Derived queue ──────────────────────────────────────────────────────────
+  const [allItems, setAllItems]   = useState<DispenseSummaryDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [executingId, setExecutingId] = useState<string | null>(null);
+
+  const [selectedDispense, setSelectedDispense] = useState<{
+    dispense: import("@api/dispense").DispenseDetailsDto;
+    etag: string;
+  } | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  // ── Fetch queue ────────────────────────────────────────────────────────────
+  const fetchQueue = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await getDispenseQueue(50, 1);
+      setAllItems(result.items);
+    } catch (error) {
+      showToast("error", "Failed to Load Queue", "Could not fetch the dispense queue.");
+      logger.error("fetchQueue failed", { error });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    void fetchQueue();
+  }, [fetchQueue]);
+
+  // ── Derived: only PaymentProcessed visible in the queue ───────────────────
   const queueData = useMemo(
-    () =>
-      items
-        .filter((p) => p.status === "Payment Processed" || p.status === "Ready to Dispense")
-        .sort((a, b) => {
-          if (a.status === "Payment Processed" && b.status === "Ready to Dispense") return -1;
-          if (a.status === "Ready to Dispense"  && b.status === "Payment Processed") return 1;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        }),
-    [items]
+    () => allItems.filter((d) => d.status === "PaymentProcessed"),
+    [allItems]
   );
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const stats = useMemo<DispenseQueueStats>(() => {
-    const today = new Date();
+    const today = new Date().toDateString();
     return {
-      pendingDispense: items.filter((p) => p.status === "Payment Processed").length,
-      readyToDispense: items.filter((p) => p.status === "Ready to Dispense").length,
-      dispensedToday:  items.filter((p) => {
-        if (p.status !== "Dispensed" || !p.dispensedAt) return false;
-        const d = new Date(p.dispensedAt);
-        return (
-          d.getDate()     === today.getDate()    &&
-          d.getMonth()    === today.getMonth()   &&
-          d.getFullYear() === today.getFullYear()
-        );
+      paymentProcessed: queueData.length,
+      dispensedToday: allItems.filter((d) => {
+        if (d.status !== "Dispensed") return false;
+        return new Date(d.dispenseDate).toDateString() === today;
       }).length,
     };
-  }, [items]);
+  }, [queueData, allItems]);
 
-  // ── Mark Ready to Dispense ─────────────────────────────────────────────────
-  const handleMarkReady = async (item: DispenseItem) => {
-    onUpdateStatus(item.id, "Ready to Dispense");
-    // ✅ Correct: showToast(type, title, message?)
-    showToast("success", "Ready to Dispense", `Prescription ${item.id} has been marked ready`);
-    try {
-      await updateDispenseStatus(item.id, "Ready to Dispense");
-    } catch (error) {
-      onUpdateStatus(item.id, "Payment Processed"); // rollback
-      showToast("error", "Update Failed", `Could not update status for ${item.id}`);
-      logger.error("handleMarkReady failed", { id: item.id, error });
-    }
+  // ── Open packing list modal — fetch full details + ETag ───────────────────
+  const handleOpenDetails = useCallback(
+    async (row: DispenseSummaryDto) => {
+      setIsLoadingDetails(true);
+      try {
+        const result = await getDispenseById(row.id, row.patientId);
+        setSelectedDispense(result);
+      } catch (error) {
+        showToast("error", "Failed to Load Details", "Could not load dispense details.");
+        logger.error("handleOpenDetails failed", { id: row.id, error });
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    },
+    [showToast]
+  );
+
+  const handleCloseDetails = useCallback(() => {
+    setSelectedDispense(null);
+  }, []);
+
+  // ── Execute dispense ───────────────────────────────────────────────────────
+  // Requires ETag from the details fetch — always fetch details first.
+  // PUT /api/dispenses/{id}/execute?patientId=  → 204
+  const handleExecute = useCallback(
+    async (row: DispenseSummaryDto) => {
+      setExecutingId(row.id);
+
+      // Fetch fresh details to get the current ETag
+      let etag: string;
+      try {
+        const result = await getDispenseById(row.id, row.patientId);
+        etag = result.etag;
+        // Also update modal details if it's open for this row
+        setSelectedDispense(result);
+      } catch (error) {
+        showToast("error", "Failed to Execute", "Could not fetch dispense details before executing.");
+        logger.error("handleExecute — details fetch failed", { id: row.id, error });
+        setExecutingId(null);
+        return;
+      }
+
+      // Optimistic: remove from queue immediately
+      setAllItems((prev) =>
+        prev.map((d) =>
+          d.id === row.id ? { ...d, status: "Dispensed" } : d
+        )
+      );
+      handleCloseDetails();
+
+      try {
+        await executeDispense(row.id, row.patientId, etag);
+        showToast("success", "Dispensed", `Prescription ${row.prescriptionId} has been dispensed.`);
+      } catch (error) {
+        // Roll back
+        setAllItems((prev) =>
+          prev.map((d) =>
+            d.id === row.id ? { ...d, status: "PaymentProcessed" } : d
+          )
+        );
+        showToast("error", "Execute Failed", `Could not execute dispense for ${row.prescriptionId}.`);
+        logger.error("handleExecute — execute failed", { id: row.id, error });
+      } finally {
+        setExecutingId(null);
+      }
+    },
+    [showToast, handleCloseDetails]
+  );
+
+  return {
+    queueData,
+    stats,
+    isLoading,
+    executingId,
+    selectedDispense,
+    isLoadingDetails,
+    handleOpenDetails,
+    handleCloseDetails,
+    handleExecute,
+    refetch: fetchQueue,
   };
-
-  // ── Mark Dispensed ─────────────────────────────────────────────────────────
-  const handleMarkDispensed = async (item: DispenseItem) => {
-    onUpdateStatus(item.id, "Dispensed");
-    // ✅ Correct: showToast(type, title, message?)
-    showToast("success", "Dispensed", `Prescription ${item.id} has been dispensed successfully`);
-    try {
-      await updateDispenseStatus(item.id, "Dispensed");
-    } catch (error) {
-      onUpdateStatus(item.id, "Ready to Dispense"); // rollback
-      showToast("error", "Dispense Failed", `Could not mark ${item.id} as dispensed`);
-      logger.error("handleMarkDispensed failed", { id: item.id, error });
-    }
-  };
-
-  return { queueData, stats, handleMarkReady, handleMarkDispensed };
 }

@@ -1,11 +1,15 @@
 import type {
-  UpdatePatientRequest,
   PatientDetailsDto,
 } from "@patient/types/patienttype";
 import { updatePatient, getPatientDetails } from "@api/patient";
+import { extractApiError } from "@utils/httpError";
 import { useToast } from "@components/common/Toast/useToast";
 import PatientFormModal from "./PatientFormModal";
 import type { PatientFormValues } from "@patient/hooks/usePatientForm";
+import {
+  toPatientFormValues,
+  toUpdatePatientRequest,
+} from "@patient/utils/patientPayload";
 
 interface UpdatePatientModalProps {
   patient: PatientDetailsDto;
@@ -19,57 +23,18 @@ export default function UpdatePatientModal({
   onSave,
 }: UpdatePatientModalProps) {
   const toast = useToast();
-
-  const getErrorMessage = (err: unknown): string => {
-    if (typeof err === "string") return err;
-    if (typeof err === "object" && err !== null) {
-      const errorObj = err as {
-        response?: { data?: { detail?: string; message?: string; title?: string } };
-        message?: string;
-      };
-      return (
-        errorObj.response?.data?.detail ||
-        errorObj.response?.data?.message ||
-        errorObj.response?.data?.title ||
-        errorObj.message ||
-        "Error updating patient"
-      );
-    }
-    return "Error updating patient";
-  };
-  const initialValues: PatientFormValues = {
-    fullName: patient.fullName,
-    dob: patient.dob ? patient.dob.split("T")[0] : "",
-    gender: patient.gender,
-    phone: patient.phone,
-    email: patient.email ?? "",
-    address: patient.address ?? "",
-    allergies: Array.isArray(patient.allergies)
-      ? patient.allergies
-          .map((s) => (s ?? "").toString().trim())
-          .filter(Boolean)
-      : [],
-  };
+  const initialValues: PatientFormValues = toPatientFormValues(patient);
 
   const handleSubmit = async (values: PatientFormValues) => {
-    const request: UpdatePatientRequest = {
-      fullName: values.fullName,
-      dob: new Date(values.dob).toISOString(),
-      gender: values.gender,
-      phone: values.phone,
-      email: values.email,
-      address: values.address,
-      allergies: values.allergies,
-    };
+    const request = toUpdatePatientRequest(values);
 
     try {
       await updatePatient(patient.id, request);
       const updated = await getPatientDetails(patient.id);
       onSave(updated);
     } catch (e) {
-      const message = getErrorMessage(e);
+      const message = extractApiError(e) || "Error updating patient";
       toast.error("Error updating patient", message);
-      // throw so PatientFormModal shows formError and stays open
       throw new Error(message);
     }
   };
@@ -82,6 +47,7 @@ export default function UpdatePatientModal({
       onClose={onClose}
       onSubmit={handleSubmit}
       closeOnSuccess={true}
+      showGender={false}
     />
   );
 }

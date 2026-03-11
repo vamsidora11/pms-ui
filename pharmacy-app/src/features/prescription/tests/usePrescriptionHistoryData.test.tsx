@@ -34,14 +34,17 @@ vi.mock("@store/prescription/prescriptionSlice", () => {
       type: "prescriptions/fetchAllPrescriptions",
       payload,
     })),
-    fetchPrescriptionDetails: vi.fn((id: string) => ({
+    fetchPrescriptionDetails: vi.fn((payload: {
+      id: string;
+      patientId: string;
+    }) => ({
       type: "prescriptions/fetchPrescriptionDetails",
-      payload: id,
+      payload,
     })),
   };
 });
 
-vi.mock("@api/patientSearch", () => {
+vi.mock("@api/patient", () => {
   return {
     __esModule: true,
     getPatientById: vi.fn(),
@@ -51,7 +54,7 @@ vi.mock("@api/patientSearch", () => {
 /* -------------------- Import mocked modules -------------------- */
 
 import { fetchAllPrescriptions, fetchPrescriptionDetails } from "@store/prescription/prescriptionSlice";
-import { getPatientById } from "@api/patientSearch";
+import { getPatientById } from "@api/patient";
 
 /* -------------------- Helpers -------------------- */
 
@@ -294,10 +297,16 @@ describe("usePrescriptionHistoryData", () => {
       result.current.toggleRow("rx-7");
     });
 
-    expect(fetchPrescriptionDetails).toHaveBeenCalledWith("rx-7");
+    expect(fetchPrescriptionDetails).toHaveBeenCalledWith({
+      id: "rx-7",
+      patientId: "p-1",
+    });
     expect(dispatchSpy).toHaveBeenCalledWith({
       type: "prescriptions/fetchPrescriptionDetails",
-      payload: "rx-7",
+      payload: {
+        id: "rx-7",
+        patientId: "p-1",
+      },
     });
   });
 
@@ -306,7 +315,7 @@ describe("usePrescriptionHistoryData", () => {
     mockState = seedState({
       prescriptions: {
         items: [row],
-        selected: makeDetails({ id: "rx-7" }),
+        selected: { prescription: makeDetails({ id: "rx-7" }) },
         continuationToken: null,
         status: "succeeded",
         error: undefined,
@@ -354,7 +363,7 @@ describe("usePrescriptionHistoryData", () => {
     mockState = seedState({
       prescriptions: {
         items: [row],
-        selected: makeDetails({ id: "rx-OTHER" }),
+        selected: { prescription: makeDetails({ id: "rx-OTHER" }) },
         continuationToken: null,
         status: "succeeded",
         error: undefined,
@@ -374,7 +383,7 @@ describe("usePrescriptionHistoryData", () => {
     mockState = seedState({
       prescriptions: {
         items: [row],
-        selected: makeDetails({ id: "rx-123" }),
+        selected: { prescription: makeDetails({ id: "rx-123" }) },
         continuationToken: null,
         status: "succeeded",
         error: undefined,

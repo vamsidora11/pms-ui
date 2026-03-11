@@ -33,7 +33,7 @@ vi.mock("@components/common/Toast/useToast", () => {
   };
 });
 
-vi.mock("@api/patientSearch", () => {
+vi.mock("@api/patient", () => {
   return {
     __esModule: true,
     getPatientById: vi.fn(),
@@ -65,7 +65,7 @@ vi.mock("@prescription/utils/validation", () => {
 /* -------------------- IMPORT MOCK HANDLES -------------------- */
 
 import * as ToastModule from "@components/common/Toast/useToast";
-import { getPatientById } from "@api/patientSearch";
+import { getPatientById } from "@api/patient";
 import { createPrescription } from "@api/prescription";
 import {
   validatePatientStep,
@@ -121,16 +121,19 @@ function sampleMedications() {
   return meds;
 }
 
-const createdPrescriptionResponse: PrescriptionDetailsDto = {
-  id: "rx-100",
-  patientId: "p-1",
-  patientName: "John Doe",
-  prescriber: { id: "d-99", name: "Dr. Jane Smith" },
-  createdAt: "2025-01-01T00:00:00.000Z",
-  expiresAt: "2025-12-31T00:00:00.000Z",
-  status: "CREATED",
-  isRefillable: false,
-  medicines: [],
+const createdPrescriptionResponse = {
+  data: {
+    id: "rx-100",
+    patientId: "p-1",
+    patientName: "John Doe",
+    prescriber: { id: "d-99", name: "Dr. Jane Smith" },
+    createdAt: "2025-01-01T00:00:00.000Z",
+    expiresAt: "2025-12-31T00:00:00.000Z",
+    status: "CREATED",
+    isRefillable: false,
+    medicines: [],
+  } satisfies PrescriptionDetailsDto,
+  etag: undefined,
 };
 
 /* -------------------- TESTS -------------------- */
@@ -383,19 +386,17 @@ it("computes isNextDisabled based on step-specific validations", () => {
     expect(Array.isArray(calledWith.medicines)).toBe(true);
     expect(calledWith.medicines[0]).toMatchObject({
       productId: "prod-123",
-      name: "Amoxicillin",
-      strength: "500mg",
-      prescribedQuantity: 10,
-      totalRefillsAuthorized: 1,
       frequency: "BID",
-      daysSupply: 5,
-      instruction: "After meals",
+      instructions: "After meals",
+      durationDays: 5,
+      quantityPrescribed: 10,
+      refillsAllowed: 1,
     });
 
     const { toastMock } = ToastModule as unknown as { toastMock: ToastMock };
     expect(toastMock.success).toHaveBeenCalledWith(
       "Prescription Created Successfully",
-      "Prescription ID: rx-100 | Status: CREATED"
+      "Prescription ID: rx-100"
     );
 
     expect(result.current.currentStep).toBe(1);

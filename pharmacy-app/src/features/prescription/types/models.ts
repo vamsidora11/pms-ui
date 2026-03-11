@@ -15,6 +15,10 @@ export interface PatientDetails extends PatientSummary {
   email?: string | null;
   address?: string | null;
   allergies?: string[];
+  insurance?: {
+    provider: string;
+    policyId: string;
+  } | null;
 }
 
 /**

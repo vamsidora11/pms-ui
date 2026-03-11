@@ -10,7 +10,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import "@styles/datepicker.css";
 import { searchAllergies } from "@api/catalogs";
 
-import { usePatientForm, type PatientFormValues } from "@patient/hooks/usePatientForm";
+import {
+  usePatientForm,
+  type PatientFormValues,
+} from "@patient/hooks/usePatientForm";
 import AllergySelector from "./AllergySelector";
 
 export const RequiredLabel: React.FC<{ text: string }> = ({ text }) => (
@@ -24,12 +27,9 @@ type Props = {
   submitLabel: string;
   initialValues: PatientFormValues;
   onClose: () => void;
-
-  /** Return/throw error to keep modal open and show message */
   onSubmit: (values: PatientFormValues) => Promise<void> | void;
-
-  /** default true */
   closeOnSuccess?: boolean;
+  showGender?: boolean;
 };
 
 type DateInputProps = {
@@ -59,6 +59,7 @@ const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
     </div>
   ),
 );
+
 DateInput.displayName = "DateInput";
 
 export default function PatientFormModal({
@@ -68,6 +69,7 @@ export default function PatientFormModal({
   onClose,
   onSubmit,
   closeOnSuccess = true,
+  showGender = true,
 }: Props) {
   const {
     form,
@@ -82,29 +84,37 @@ export default function PatientFormModal({
     setFormError,
   } = usePatientForm({ initialValues, onSubmit, onClose, closeOnSuccess });
 
-  // ESC + lock body scroll (modal responsibility)
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+
+    const onEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
     };
+
     globalThis.addEventListener("keydown", onEsc);
+
     return () => {
       document.body.style.overflow = "";
       globalThis.removeEventListener("keydown", onEsc);
     };
   }, [onClose]);
 
-  // Parse DOB string to Date object for DatePicker
   const parseDobToDate = (dob: string): Date | null => {
-    if (!dob) return null;
+    if (!dob) {
+      return null;
+    }
+
     const parsed = new Date(dob);
-    return isNaN(parsed.getTime()) ? null : parsed;
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
 
-  // Format Date object to YYYY-MM-DD string for form state
   const formatDateToString = (date: Date | null): string => {
-    if (!date) return "";
+    if (!date) {
+      return "";
+    }
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -113,11 +123,18 @@ export default function PatientFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-6 py-4 border-b flex justify-between items-center">
+      <form
+        autoComplete="off"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+        className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b px-6 py-4">
           <h3 className="text-lg font-semibold">{title}</h3>
           <button
+            type="button"
             onClick={onClose}
             className="text-gray-500 hover:text-gray-800"
           >
@@ -125,19 +142,17 @@ export default function PatientFormModal({
           </button>
         </div>
 
-        {/* Global alert */}
         {formError && (
-          <div className="bg-red-100 text-red-700 px-6 py-3">{formError}</div>
+          <div className="bg-red-100 px-6 py-3 text-red-700">{formError}</div>
         )}
 
-        {/* Body */}
-        <div className="px-6 py-4 overflow-y-auto flex-1 space-y-5">
+        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Input
                 label={<RequiredLabel text="Full Name" />}
                 value={form.fullName}
-                onChange={(v) => updateField("fullName", v)}
+                onChange={(value) => updateField("fullName", value)}
                 error={errors.fullName}
               />
               {!errors.fullName && warnings.fullName && (
@@ -146,7 +161,7 @@ export default function PatientFormModal({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-900 mb-1 block">
+              <label className="mb-1 block text-sm font-medium text-gray-900">
                 <RequiredLabel text="Date of Birth" />
               </label>
               <DatePicker
@@ -163,19 +178,18 @@ export default function PatientFormModal({
                 maxDate={new Date()}
                 placeholderText="Select date of birth"
                 autoComplete="off"
-                onKeyDown={(e) => {
-                  // Prevent typing letters, only allow numbers, backspace, delete, tab, and arrow keys
+                onKeyDown={(event) => {
                   if (
-                    !/[0-9]/.test(e.key) &&
-                    e.key !== "Backspace" &&
-                    e.key !== "Delete" &&
-                    e.key !== "Tab" &&
-                    e.key !== "ArrowLeft" &&
-                    e.key !== "ArrowRight" &&
-                    e.key !== "-" &&
-                    e.key !== "/"
+                    !/[0-9]/.test(event.key) &&
+                    event.key !== "Backspace" &&
+                    event.key !== "Delete" &&
+                    event.key !== "Tab" &&
+                    event.key !== "ArrowLeft" &&
+                    event.key !== "ArrowRight" &&
+                    event.key !== "-" &&
+                    event.key !== "/"
                   ) {
-                    e.preventDefault();
+                    event.preventDefault();
                   }
                 }}
                 customInput={<DateInput hasError={!!errors.dob} />}
@@ -188,18 +202,22 @@ export default function PatientFormModal({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Dropdown
-              label="Gender"
-              value={form.gender}
-              onChange={(v) => updateField("gender", v)}
-              options={["Male", "Female", "Other"]}
-            />
+            {showGender ? (
+              <Dropdown
+                label="Gender"
+                value={form.gender}
+                onChange={(value) => updateField("gender", value)}
+                options={["Male", "Female", "Other"]}
+              />
+            ) : (
+              <Input label="Gender" value={form.gender} onChange={() => {}} />
+            )}
 
             <div>
               <AppPhoneInput
                 label={<RequiredLabel text="Phone" />}
                 value={form.phone}
-                onChange={(v) => updateField("phone", v)}
+                onChange={(value) => updateField("phone", value)}
                 error={errors.phone}
                 warning={warnings.phone}
                 defaultCountry="IN"
@@ -211,7 +229,7 @@ export default function PatientFormModal({
             <Input
               label="Email"
               value={form.email}
-              onChange={(v) => updateField("email", v)}
+              onChange={(value) => updateField("email", value)}
               error={errors.email}
             />
             {!errors.email && warnings.email && (
@@ -223,21 +241,40 @@ export default function PatientFormModal({
             <Input
               label="Address"
               value={form.address}
-              onChange={(v) => updateField("address", v)}
+              onChange={(value) => updateField("address", value)}
               error={errors.address}
             />
             {!errors.address && warnings.address && (
               <p className="mt-1 text-xs text-red-600">{warnings.address}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">
-              {form.address.length}/50
-            </p>
+            <p className="mt-1 text-xs text-gray-500">{form.address.length}/50</p>
           </div>
 
-          {/* ✅ Allergies extracted */}
+          <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900">Insurance</h4>
+              <p className="mt-1 text-xs text-gray-500">
+                Enter both fields to attach insurance information to this patient.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Insurance Provider"
+                value={form.insuranceProvider}
+                onChange={(value) => updateField("insuranceProvider", value)}
+              />
+              <Input
+                label="Policy ID"
+                value={form.insurancePolicyId}
+                onChange={(value) => updateField("insurancePolicyId", value)}
+              />
+            </div>
+          </div>
+
           <AllergySelector
             query={form.newAllergy}
-            onQueryChange={(v) => updateField("newAllergy", v)}
+            onQueryChange={(value) => updateField("newAllergy", value)}
             selected={form.allergies}
             onAdd={addAllergy}
             onRemove={removeAllergy}
@@ -247,32 +284,32 @@ export default function PatientFormModal({
           />
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t flex justify-end gap-3">
+        <div className="flex justify-end gap-3 border-t px-6 py-4">
           <button
+            type="button"
             onClick={() => {
               setFormError("");
               onClose();
             }}
-            className="px-4 py-2 rounded-lg border hover:bg-gray-50"
+            className="rounded-lg border px-4 py-2 hover:bg-gray-50"
           >
             Cancel
           </button>
 
           <button
-            onClick={submit}
+            type="submit"
             disabled={submitting}
             className={clsx(
-              "px-5 py-2 rounded-lg text-white",
+              "rounded-lg px-5 py-2 text-white",
               submitting
-                ? "bg-gray-400 cursor-not-allowed"
+                ? "cursor-not-allowed bg-gray-400"
                 : "bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600",
             )}
           >
             {submitting ? "Saving..." : submitLabel}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

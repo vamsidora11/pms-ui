@@ -38,10 +38,11 @@ function StatusBadge({ status }: { status: InventoryStatus }) {
 // ── Props ────────────────────────────────────────────────────────────────────
 
 interface InventoryStockListProps {
-  groups: MedicineGroup[];
+  groups:            MedicineGroup[];
   expandedMedicines: Set<string>;
-  onToggleExpand: (key: string) => void;
-  onRequestRestock: (item: InventoryItem) => void;
+  isLoading?:        boolean;
+  onToggleExpand:    (key: string) => void;
+  onRequestRestock:  (item: InventoryItem) => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -49,9 +50,29 @@ interface InventoryStockListProps {
 export default function InventoryStockList({
   groups,
   expandedMedicines,
+  isLoading = false,
   onToggleExpand,
   onRequestRestock,
 }: InventoryStockListProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="w-5 h-5 bg-gray-200 rounded" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-40" />
+                <div className="h-3 bg-gray-100 rounded w-24" />
+              </div>
+              <div className="h-8 bg-gray-200 rounded w-16" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (groups.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -165,15 +186,13 @@ export default function InventoryStockList({
                             )}
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500">Supplier</p>
-                            <p className="text-gray-900 text-sm">
+                            <p className="text-xs text-gray-500">Requested By</p>
+                            <p className="text-gray-900 text-sm truncate max-w-[120px]" title={lot.supplier}>
                               {lot.supplier}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500">
-                              Last Restocked
-                            </p>
+                            <p className="text-xs text-gray-500">Requested At</p>
                             <p className="text-gray-900 text-sm">
                               {lot.lastRestocked}
                             </p>

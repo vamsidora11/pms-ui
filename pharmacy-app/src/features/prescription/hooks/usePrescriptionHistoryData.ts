@@ -10,7 +10,7 @@ import type {
   PrescriptionSummary,
 } from "@prescription/domain/model";
 import type { PatientDetails } from "@prescription/types/models";
-import { getPatientById } from "@api/patientSearch";
+import { getPatientById } from "@api/patient";
 
 type Options = { pageSize?: number; skipInitialFetch?: boolean };
 

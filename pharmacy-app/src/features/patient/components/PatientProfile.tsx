@@ -4,43 +4,27 @@ import { Plus } from "lucide-react";
 import AddPatientModal from "./addpatient";
 import UpdatePatientModal from "./updatePatient";
 
-import { createPatient, getPatientDetails, searchPatients } from "@api/patient";
-import { getAllPrescriptions } from "@api/prescription.api";
+import {
+  createPatient,
+  getPatientDetails,
+  searchPatients,
+} from "@api/patient";
+import { getPrescriptionsByPatient } from "@api/prescription.api";
 import { mapSummaryDto } from "@prescription/domain/mapper";
 
-import type {
-  PatientDetailsDto
-} from "@patient/types/patienttype";
-import type {
-  PrescriptionSummary
-} from "@prescription/domain/model";
+import type { PatientDetailsDto } from "@patient/types/patienttype";
+import type { PrescriptionSummary } from "@prescription/domain/model";
 
 import { usePatientDirectory } from "@patient/hooks/usePatientDirectory";
 import { usePatientDetails } from "@patient/hooks/usePatientDetails";
 import { usePatientPrescriptions } from "@patient/hooks/usePatientPrescriptions";
 import { useToast } from "@components/common/Toast/useToast";
+import { extractApiError } from "@utils/httpError";
 import PatientDirectoryPanel from "./PatientDirectoryPanel";
 import PatientDetailsPanel from "./PatientDetailsPanel";
 
 export default function PatientProfiles() {
   const toast = useToast();
-  const getErrorMessage = (err: unknown, fallback: string): string => {
-    if (typeof err === "string") return err;
-    if (typeof err === "object" && err !== null) {
-      const errorObj = err as {
-        response?: { data?: { detail?: string; message?: string; title?: string } };
-        message?: string;
-      };
-      return (
-        errorObj.response?.data?.detail ||
-        errorObj.response?.data?.message ||
-        errorObj.response?.data?.title ||
-        errorObj.message ||
-        fallback
-      );
-    }
-    return fallback;
-  };
 
   const directory = usePatientDirectory({
     searchFn: (query, opts) => searchPatients(query, opts),
@@ -50,15 +34,12 @@ export default function PatientProfiles() {
 
   const details = usePatientDetails((id) => getPatientDetails(id));
 
-  // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
 
-  // ✅ Prescriptions (loads automatically when selected patient changes)
   const prescriptionsState = usePatientPrescriptions<PrescriptionSummary>(
     async (id, pageNumber, pageSize) => {
-      const result = await getAllPrescriptions({
-        patientId: id,
+      const result = await getPrescriptionsByPatient(id, {
         pageNumber,
         pageSize,
       });
@@ -73,32 +54,47 @@ export default function PatientProfiles() {
     10,
   );
 
-  // ✅ Auto-select whenever there is no selection
   useEffect(() => {
     const selectedId = details.selectedPatient?.id ?? null;
 
-    // If selection exists but isn't in current list, clear it
-    if (selectedId && !directory.patients.some((p) => p.id === selectedId)) {
+    if (selectedId && !directory.patients.some((patient) => patient.id === selectedId)) {
       details.setSelectedPatient(null);
       prescriptionsState.reset();
     }
 
-    // If no selection, auto-select first result
     if (!details.selectedPatient && directory.patients.length > 0) {
-      details.selectPatient(directory.patients[0].id);
-      // prescriptions hook will auto-load after selection resolves
+      void details.selectPatient(directory.patients[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [directory.patients]);
+  }, [
+    details.selectedPatient,
+    details.selectPatient,
+    details.setSelectedPatient,
+    directory.patients,
+    prescriptionsState.reset,
+  ]);
+
+  const refreshPatients = async () => {
+    const refreshed = await searchPatients((directory.debouncedSearch ?? "").trim());
+    directory.setPatients(refreshed);
+  };
+
+  const focusDirectoryOnPatient = (patient: PatientDetailsDto) => {
+    directory.setSearchTerm(patient.fullName);
+    directory.setPatients([
+      {
+        id: patient.id,
+        fullName: patient.fullName,
+        phone: patient.phone,
+      },
+    ]);
+    details.setSelectedPatient(patient);
+  };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 min-h-screen pb-12 md:pb-16">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="mx-auto min-h-screen max-w-6xl space-y-6 pb-12 md:pb-16">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Patient Profiles
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Patient Profiles</h1>
           <p className="text-gray-500">
             View patient demographics and medical information
           </p>
@@ -106,16 +102,14 @@ export default function PatientProfiles() {
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-xl shadow"
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 px-5 py-3 text-white shadow"
         >
           <Plus size={18} />
           Add New Patient
         </button>
       </div>
 
-      {/* <div className="grid grid-cols-3 gap-6"> */}
-      <div className="grid grid-cols-3 gap-6 items-stretch h-[calc(100vh-220px)]">
-        {/* Left panel */}
+      <div className="grid h-[calc(100vh-220px)] grid-cols-3 items-stretch gap-6">
         <PatientDirectoryPanel
           patients={directory.patients}
           searchTerm={directory.searchTerm}
@@ -123,13 +117,9 @@ export default function PatientProfiles() {
           listLoading={directory.listLoading}
           listError={directory.listError}
           selectedPatientId={details.selectedPatient?.id}
-          onSelectPatient={async (id) => {
-            await details.selectPatient(id);
-            // prescriptions auto-load via hook
-          }}
+          onSelectPatient={details.selectPatient}
         />
 
-        {/* Right panel */}
         <PatientDetailsPanel
           selectedPatient={details.selectedPatient}
           detailsLoading={details.detailsLoading}
@@ -144,44 +134,36 @@ export default function PatientProfiles() {
         />
       </div>
 
-      {/* Add Patient Modal */}
       {showAddModal && (
         <AddPatientModal
           onClose={() => setShowAddModal(false)}
           onSave={async (request) => {
             try {
               const { patientId } = await createPatient(request);
-              const refreshed = await searchPatients(
-                (directory.debouncedSearch ?? "").trim(),
-              );
-              directory.setPatients(refreshed);
-
-              await details.selectPatient(patientId);
+              const createdPatient = await getPatientDetails(patientId);
+              focusDirectoryOnPatient(createdPatient);
               setShowAddModal(false);
-            } catch (err) {
-              console.error("Failed to add patient", err);
+              toast.success("Success", "Patient added successfully.");
+            } catch (error) {
+              const message = extractApiError(error) || "Error adding patient";
+              console.error("Failed to add patient", error);
               toast.error(
                 "Error adding patient",
-                getErrorMessage(err, "Error adding patient")
+                message,
               );
+              throw error instanceof Error ? error : new Error(message);
             }
           }}
         />
       )}
 
-      {/* Update Patient Modal */}
       {showUpdateModal && details.selectedPatient && (
         <UpdatePatientModal
           patient={details.selectedPatient}
           onClose={() => setShowUpdateModal(false)}
           onSave={async (updated: PatientDetailsDto) => {
             details.setSelectedPatient(updated);
-
-            const refreshed = await searchPatients(
-              (directory.debouncedSearch ?? "").trim(),
-            );
-            directory.setPatients(refreshed);
-
+            await refreshPatients();
             setShowUpdateModal(false);
             toast.success("Success", "Patient updated successfully.");
           }}

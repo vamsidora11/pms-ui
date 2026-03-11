@@ -1,8 +1,10 @@
 import api from "./axiosInstance";
+import { ENDPOINTS } from "./endpoints";
 import type {
   CreatePrescriptionRequestDto,
   PrescriptionDetailsDto,
   PrescriptionListResponseDto,
+  PrescriptionSummaryDto,
   ReviewPrescriptionRequestDto,
 } from "./prescription.dto";
 
@@ -25,6 +27,12 @@ export interface ApiEntityResponse<T> {
   data: T;
   etag?: string;
 }
+
+type PatientPrescriptionHistoryResponse =
+  | PrescriptionListResponseDto
+  | PrescriptionSummaryDto[]
+  | PrescriptionDetailsDto
+  | PrescriptionDetailsDto[];
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
@@ -71,10 +79,61 @@ function requireEtag(etag: string): string {
 export async function createPrescription(
   payload: CreatePrescriptionRequestDto
 ): Promise<ApiEntityResponse<PrescriptionDetailsDto>> {
-  const res = await api.post<PrescriptionDetailsDto>("/api/prescriptions", payload);
+  const res = await api.post<PrescriptionDetailsDto>(ENDPOINTS.prescriptions, payload);
   return {
     data: res.data,
     etag: extractEtag(res.headers),
+  };
+}
+
+function toSummaryDto(
+  dto: PrescriptionDetailsDto | PrescriptionSummaryDto
+): PrescriptionSummaryDto {
+  if ("medicineCount" in dto) {
+    return dto;
+  }
+
+  return {
+    id: dto.id,
+    patientId: dto.patientId,
+    patientName: dto.patientName,
+    prescriberName: dto.prescriber.name,
+    createdAt: dto.createdAt,
+    status: dto.status,
+    medicineCount: Array.isArray(dto.medicines) ? dto.medicines.length : 0,
+  };
+}
+
+function normalizePatientPrescriptionHistory(
+  payload: PatientPrescriptionHistoryResponse,
+  fallbackPageNumber: number,
+  fallbackPageSize: number
+): PrescriptionListResponseDto {
+  if (Array.isArray(payload)) {
+    const items = payload.map((item) => toSummaryDto(item));
+    return {
+      items,
+      pageNumber: fallbackPageNumber,
+      pageSize: fallbackPageSize,
+      totalCount: items.length,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    };
+  }
+
+  if ("items" in payload) {
+    return payload;
+  }
+
+  return {
+    items: [toSummaryDto(payload)],
+    pageNumber: fallbackPageNumber,
+    pageSize: fallbackPageSize,
+    totalCount: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
   };
 }
 
@@ -111,18 +170,40 @@ export async function getAllPrescriptions(
     params.sortDirection = query.sortDirection;
   }
 
-  const res = await api.get<PrescriptionListResponseDto>("/api/prescriptions", {
+  const res = await api.get<PrescriptionListResponseDto>(ENDPOINTS.prescriptions, {
     params,
   });
 
   return res.data;
 }
 
+export async function getPrescriptionsByPatient(
+  patientId: string,
+  query: Pick<PrescriptionHistoryQueryParams, "pageNumber" | "pageSize"> = {}
+): Promise<PrescriptionListResponseDto> {
+  const normalizedPatientId = patientId.trim();
+  const pageNumber = query.pageNumber ?? 1;
+  const pageSize = query.pageSize ?? 10;
+
+  const res = await api.get<PatientPrescriptionHistoryResponse>(
+    ENDPOINTS.prescriptionById(normalizedPatientId),
+    {
+      params: {
+        patientId: normalizedPatientId,
+        pageNumber,
+        pageSize,
+      },
+    }
+  );
+
+  return normalizePatientPrescriptionHistory(res.data, pageNumber, pageSize);
+}
+
 export async function getPrescriptionById(
   id: string,
   patientId: string
 ): Promise<ApiEntityResponse<PrescriptionDetailsDto>> {
-  const res = await api.get<PrescriptionDetailsDto>(`/api/prescriptions/${id}`, {
+  const res = await api.get<PrescriptionDetailsDto>(ENDPOINTS.prescriptionById(id), {
     params: { patientId },
   });
   return {

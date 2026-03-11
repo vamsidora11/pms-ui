@@ -1,54 +1,35 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
+import { extractApiError } from "@utils/httpError";
 import type {
   CreatePatientRequest,
-  UpdatePatientRequest,
   PatientDetailsDto,
   PatientSummaryDto,
+  UpdatePatientRequest,
 } from "@patient/types/patienttype";
 
-type ApiErrorShape = {
-  response?: {
-    data?: {
-      detail?: string;
-      message?: string;
-      title?: string;
-    };
-  };
-  message?: string;
+type SearchPatientsOptions = {
+  signal?: AbortSignal;
+  minChars?: number;
+  returnAllOnEmpty?: boolean;
 };
 
-function getPatientApiErrorMessage(
-  error: unknown,
-  fallback: string
-): string {
-  if (typeof error === "string") return error;
-  if (typeof error === "object" && error !== null) {
-    const err = error as ApiErrorShape;
-    return (
-      err.response?.data?.detail ||
-      err.response?.data?.message ||
-      err.response?.data?.title ||
-      err.message ||
-      fallback
-    );
+const isCanceledRequest = (error: unknown): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
   }
-  return fallback;
-}
 
-/**
- * Server-side patient search.
- * @param query The search string (name/id/phone)
- * @param opts Optional { signal } for cancellation
- */
+  const candidate = error as { name?: string; code?: string };
+  return (
+    candidate.name === "CanceledError" ||
+    candidate.code === "ERR_CANCELED" ||
+    candidate.name === "AbortError"
+  );
+};
 
 export const searchPatients = async (
   query?: string,
-  opts?: {
-    signal?: AbortSignal;
-    minChars?: number;          // default: 1 (per-letter search)
-    returnAllOnEmpty?: boolean; // default: false
-  }
+  opts?: SearchPatientsOptions,
 ): Promise<PatientSummaryDto[]> => {
   const q = (query ?? "").trim();
   const minChars = opts?.minChars ?? 2;
@@ -56,71 +37,89 @@ export const searchPatients = async (
 
   try {
     if (!q) {
-      if (returnAllOnEmpty) {
-        const res = await api.get(ENDPOINTS.patientSearch, {
-          signal: opts?.signal,
-        });
-        return res.data as PatientSummaryDto[];
+      if (!returnAllOnEmpty) {
+        return [];
       }
-      // When empty and we don't want "all", return []
+
+      const response = await api.get(ENDPOINTS.patientSearch, {
+        signal: opts?.signal,
+      });
+
+      return response.data as PatientSummaryDto[];
+    }
+
+    if (q.length < minChars) {
       return [];
     }
 
-    if (q.length < minChars) return [];
-
-    const res = await api.get(ENDPOINTS.patientSearch, {
+    const response = await api.get(ENDPOINTS.patientSearch, {
       params: { query: q },
       signal: opts?.signal,
-      // withCredentials: true, // uncomment if you rely on cookie auth
     });
 
-    return res.data as PatientSummaryDto[];
+    return response.data as PatientSummaryDto[];
   } catch (error) {
-    // Axios v1 cancellation markers
-    if (typeof error === "object" && error !== null) {
-      const errObj = error as { name?: string; code?: string };
-      if (
-        errObj.name === "CanceledError" ||
-        errObj.code === "ERR_CANCELED" ||
-        errObj.name === "AbortError"
-      ) {
-        // let caller decide to ignore
-        throw error;
-      }
+    if (isCanceledRequest(error)) {
+      throw error;
     }
+
     console.error("Failed to search patients:", error);
     throw error;
   }
 };
 
-export const getPatientDetails = async (patientId: string, opts?: { signal?: AbortSignal }) => {
-  console.log(patientId);
-  return (await api.get(`${ENDPOINTS.patients}/${patientId}`, { signal: opts?.signal })).data as PatientDetailsDto;
+export const getPatientDetails = async (
+  patientId: string,
+  opts?: { signal?: AbortSignal },
+): Promise<PatientDetailsDto> => {
+  const response = await api.get(`${ENDPOINTS.patients}/${patientId}`, {
+    signal: opts?.signal,
+  });
+
+  return response.data as PatientDetailsDto;
+};
+
+export const getPatientById = async (
+  patientId: string,
+  opts?: { signal?: AbortSignal },
+): Promise<PatientDetailsDto | undefined> => {
+  try {
+    return await getPatientDetails(patientId, opts);
+  } catch (error) {
+    console.error("Fetching patient details failed:", error);
+    return undefined;
+  }
 };
 
 export const createPatient = async (
   request: CreatePatientRequest,
-  opts?: { signal?: AbortSignal }
+  opts?: { signal?: AbortSignal },
 ): Promise<{ patientId: string }> => {
   try {
-    const res = await api.post(ENDPOINTS.patients, request, {
+    const response = await api.post(ENDPOINTS.patients, request, {
       signal: opts?.signal,
     });
-    return res.data;
+
+    return response.data;
   } catch (error) {
     console.error("Failed to create patient:", error);
-    throw new Error(getPatientApiErrorMessage(error, "Error adding patient"));
+    throw new Error(extractApiError(error) || "Error adding patient");
   }
 };
 
-/*update existing patient profile*/
-export const updatePatient = async (id: string, request: UpdatePatientRequest) => {
+export const updatePatient = async (
+  id: string,
+  request: UpdatePatientRequest,
+  opts?: { signal?: AbortSignal },
+) => {
   try {
-    const response = await api.put(`${ENDPOINTS.patientDetails}/${id}`, request);
+    const response = await api.put(`${ENDPOINTS.patients}/${id}`, request, {
+      signal: opts?.signal,
+    });
+
     return response.data;
   } catch (error) {
     console.error(`Failed to update patient ${id}:`, error);
-    throw new Error(getPatientApiErrorMessage(error, "Error updating patient"));
+    throw new Error(extractApiError(error) || "Error updating patient");
   }
 };
-

@@ -1,19 +1,20 @@
-// src/features/patient/tests/AddPatientModal.test.tsx
-/**
- * Unit tests for AddPatientModal.tsx
- *
- * Tests:
- * 1. Modal renders with correct title and submit button.
- * 2. Submitting the form calls onSave with the correct data.
- * 3. Clicking the close button calls onClose.
- */
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 
-import { describe, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
 import AddPatientModal from "../components/addpatient";
-import type { CreatePatientRequest } from "@store/patient/patienttype";
 
-// Mock PatientFormModal to simplify testing
+const formValues = {
+  fullName: "John Doe",
+  dob: "2000-01-01",
+  gender: "Male",
+  phone: "+14155552671",
+  email: "john@example.com",
+  address: "123 Main St",
+  allergies: ["Peanuts"],
+  insuranceProvider: "ABC Health",
+  insurancePolicyId: "POL-123",
+};
+
 vi.mock("../components/PatientFormModal", () => ({
   default: ({
     title,
@@ -24,44 +25,29 @@ vi.mock("../components/PatientFormModal", () => ({
     title: string;
     submitLabel: string;
     onClose: () => void;
-    onSubmit: (values: {
-      fullName: string;
-      dob: string;
-      gender: string;
-      phone: string;
-      email: string;
-      address: string;
-      allergies: string[];
-    }) => void;
+    onSubmit: (values: typeof formValues) => void;
   }) => (
     <div>
       <h3>{title}</h3>
-      <button aria-label="submit-button" onClick={() => onSubmit({
-        fullName: "John Doe",
-        dob: "2000-01-01",
-        gender: "Male",
-        phone: "+14155552671",
-        email: "john@example.com",
-        address: "123 Main St",
-        allergies: [],
-      })}>
+      <button aria-label="submit-button" onClick={() => onSubmit(formValues)}>
         {submitLabel}
       </button>
-      <button aria-label="close-button" onClick={onClose}>X</button>
+      <button aria-label="close-button" onClick={onClose}>
+        Close
+      </button>
     </div>
   ),
 }));
 
 describe("AddPatientModal", () => {
-  let onClose: () => void;
-  let onSave: (request: CreatePatientRequest) => void;
+  const onClose = vi.fn();
+  const onSave = vi.fn().mockResolvedValue(undefined);
 
   beforeEach(() => {
-    onClose = vi.fn();
-    onSave = vi.fn(() => Promise.resolve());
+    vi.clearAllMocks();
   });
 
-  it("renders modal with correct title and submit button", () => {
+  it("renders the modal shell", () => {
     render(<AddPatientModal onClose={onClose} onSave={onSave} />);
 
     expect(screen.getByText("Add New Patient")).toBeInTheDocument();
@@ -69,7 +55,7 @@ describe("AddPatientModal", () => {
     expect(screen.getByRole("button", { name: /close-button/i })).toBeInTheDocument();
   });
 
-  it("calls onSave with correct CreatePatientRequest when submitted", async () => {
+  it("maps insurance fields into the create patient request", async () => {
     render(<AddPatientModal onClose={onClose} onSave={onSave} />);
 
     fireEvent.click(screen.getByRole("button", { name: /submit-button/i }));
@@ -81,15 +67,19 @@ describe("AddPatientModal", () => {
       phone: "+14155552671",
       email: "john@example.com",
       address: "123 Main St",
-      allergies: [],
+      allergies: ["Peanuts"],
+      insurance: {
+        provider: "ABC Health",
+        policyId: "POL-123",
+      },
     });
   });
 
-  it("calls onClose when the close button is clicked", () => {
+  it("closes when the close button is clicked", () => {
     render(<AddPatientModal onClose={onClose} onSave={onSave} />);
 
     fireEvent.click(screen.getByRole("button", { name: /close-button/i }));
 
-    expect(onClose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -20,9 +20,9 @@ vi.mock('@api/patient', () => {
   };
 });
 
-vi.mock('@api/prescription', () => {
+vi.mock('@api/prescription.api', () => {
   return {
-    getPrescriptionsByPatient: vi.fn(),
+    getAllPrescriptions: vi.fn(),
   };
 });
 
@@ -91,18 +91,18 @@ vi.mock('../components/PatientDetailsPanel', () => ({
 }));
 
 // Hooks
-vi.mock('../hooks/usePatientDirectory', () => ({ usePatientDirectory: vi.fn() }));
-vi.mock('../hooks/usePatientDetails', () => ({ usePatientDetails: vi.fn() }));
-vi.mock('../hooks/usePatientPrescriptions', () => ({ usePatientPrescriptions: vi.fn() }));
+vi.mock('@patient/hooks/usePatientDirectory', () => ({ usePatientDirectory: vi.fn() }));
+vi.mock('@patient/hooks/usePatientDetails', () => ({ usePatientDetails: vi.fn() }));
+vi.mock('@patient/hooks/usePatientPrescriptions', () => ({ usePatientPrescriptions: vi.fn() }));
 
 // --------------------------- Imports after mocks ---------------------------
 
 import PatientProfiles from '../components/PatientProfile';
 import { useToast } from '@components/common/Toast/useToast';
 import * as patientApi from '@api/patient';
-import { usePatientDirectory } from '../hooks/usePatientDirectory';
-import { usePatientDetails } from '../hooks/usePatientDetails';
-import { usePatientPrescriptions } from '../hooks/usePatientPrescriptions';
+import { usePatientDirectory } from '@patient/hooks/usePatientDirectory';
+import { usePatientDetails } from '@patient/hooks/usePatientDetails';
+import { usePatientPrescriptions } from '@patient/hooks/usePatientPrescriptions';
 
 // --------------------------- Helpers ---------------------------
 

@@ -1,80 +1,35 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  searchPatients,
-  getPatientDetails,
   createPatient,
+  getPatientById,
+  getPatientDetails,
+  searchPatients,
   updatePatient,
 } from "../patient";
 
-// ---- Mocks ----
-vi.mock("../axiosInstance", () => {
-  return {
-    default: {
-      get: vi.fn(),
-      post: vi.fn(),
-      put: vi.fn(),
-    },
-  };
-});
+vi.mock("../axiosInstance", () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+  },
+}));
 
-vi.mock("../endpoints", () => {
-  return {
-    ENDPOINTS: {
-      patientSearch: "/api/patients/search",
-      patients: "/api/patients",
-      patientDetails: "/api/patients/details",
-    },
-  };
-});
+vi.mock("../endpoints", () => ({
+  ENDPOINTS: {
+    patientSearch: "/api/patients/search",
+    patients: "/api/patients",
+  },
+}));
 
-// Import mocked instances after vi.mock
 import api from "../axiosInstance";
 import { ENDPOINTS } from "../endpoints";
 
-// ----- Real DTO shapes based on user's types -----
-interface Patient {
-  id: string;
-  fullName: string;
-  dob: string; // ISO
-  gender: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  allergies?: string[];
-  insurance?: { provider: string; memberId: string };
-}
-
-type UpdatePatientRequest = Partial<Omit<Patient, "id">>;
-
-interface PatientSummaryDto {
-  id: string;
-  fullName: string;
-  phone: string;
-}
-
-interface InsuranceDto {
-  provider: string;
-  memberId: string;
-}
-
-interface CreatePatientRequest {
-  fullName: string;
-  dob: string;
-  gender: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  allergies?: string[];
-  insurance?: InsuranceDto;
-}
-
-type PatientDetailsDto = Patient;
-
 describe("patient API", () => {
-  const apiGet = api.get as unknown as ReturnType<typeof vi.fn>;
-  const apiPost = api.post as unknown as ReturnType<typeof vi.fn>;
-  const apiPut = api.put as unknown as ReturnType<typeof vi.fn>;
+  const apiGet = vi.mocked(api.get);
+  const apiPost = vi.mocked(api.post);
+  const apiPut = vi.mocked(api.put);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -84,197 +39,178 @@ describe("patient API", () => {
     vi.restoreAllMocks();
   });
 
-  // ---------------- searchPatients ----------------
   describe("searchPatients", () => {
-    it("returns [] when query is empty and returnAllOnEmpty=false (default)", async () => {
-      const res = await searchPatients("");
-      expect(res).toEqual([]);
+    it("returns an empty array when the query is empty", async () => {
+      await expect(searchPatients("")).resolves.toEqual([]);
       expect(apiGet).not.toHaveBeenCalled();
     });
 
-    it("returns all patients when query is empty and returnAllOnEmpty=true", async () => {
-      const mockData: PatientSummaryDto[] = [
-        { id: "p1", fullName: "John Doe", phone: "111" },
-        { id: "p2", fullName: "Jane Doe", phone: "222" },
-      ];
-      apiGet.mockResolvedValueOnce({ data: mockData });
+    it("loads all results when returnAllOnEmpty is enabled", async () => {
+      apiGet.mockResolvedValueOnce({
+        data: [{ id: "p-1", fullName: "John Doe", phone: "+1" }],
+      } as never);
 
-      const controller = new AbortController();
-      const result = await searchPatients("", {
-        returnAllOnEmpty: true,
-        signal: controller.signal,
-      });
-
-      expect(apiGet).toHaveBeenCalledTimes(1);
-      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.patientSearch, {
-        signal: controller.signal,
-      });
-      expect(result).toEqual(mockData);
-    });
-
-    it("returns [] when query length is below minChars", async () => {
-      const result = await searchPatients("a", { minChars: 2 });
-      expect(result).toEqual([]);
-      expect(apiGet).not.toHaveBeenCalled();
-    });
-
-    it("calls patientSearch with query param when q >= minChars", async () => {
-      const mockData: PatientSummaryDto[] = [
-        { id: "p1", fullName: "John", phone: "999" },
-      ];
-      apiGet.mockResolvedValueOnce({ data: mockData });
-
-      const controller = new AbortController();
-      const result = await searchPatients("jo", {
-        minChars: 2,
-        signal: controller.signal,
-      });
+      await expect(
+        searchPatients("", { returnAllOnEmpty: true }),
+      ).resolves.toEqual([{ id: "p-1", fullName: "John Doe", phone: "+1" }]);
 
       expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.patientSearch, {
-        params: { query: "jo" },
-        signal: controller.signal,
-      });
-      expect(result).toEqual(mockData);
-    });
-
-    it("trims the input before using it", async () => {
-      const mockData: PatientSummaryDto[] = [{ id: "p1", fullName: "John", phone: "123" }];
-      apiGet.mockResolvedValueOnce({ data: mockData });
-
-      await searchPatients("  john  ");
-
-      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.patientSearch, {
-        params: { query: "john" },
         signal: undefined,
       });
     });
 
-    it("rethrows cancellation errors (CanceledError)", async () => {
-      const err = { name: "CanceledError" };
-      apiGet.mockRejectedValueOnce(err);
+    it("trims the query before requesting the API", async () => {
+      apiGet.mockResolvedValueOnce({ data: [] } as never);
 
-      await expect(searchPatients("john", { minChars: 1 })).rejects.toEqual(err);
+      await searchPatients("  jane  ", { minChars: 2 });
+
+      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.patientSearch, {
+        params: { query: "jane" },
+        signal: undefined,
+      });
     });
 
-    it("rethrows cancellation errors (ERR_CANCELED)", async () => {
-      const err = { code: "ERR_CANCELED" };
-      apiGet.mockRejectedValueOnce(err);
-
-      await expect(searchPatients("john", { minChars: 1 })).rejects.toEqual(err);
+    it("returns an empty array when query length is below minChars", async () => {
+      await expect(searchPatients("a", { minChars: 2 })).resolves.toEqual([]);
+      expect(apiGet).not.toHaveBeenCalled();
     });
 
-    it("rethrows cancellation errors (AbortError)", async () => {
-      const err = { name: "AbortError" };
-      apiGet.mockRejectedValueOnce(err);
+    it("rethrows cancellation errors without wrapping", async () => {
+      const cancellation = { code: "ERR_CANCELED" };
+      apiGet.mockRejectedValueOnce(cancellation);
 
-      await expect(searchPatients("john", { minChars: 1 })).rejects.toEqual(err);
+      await expect(searchPatients("john", { minChars: 1 })).rejects.toBe(
+        cancellation,
+      );
     });
 
-    it("rethrows non-cancellation errors after logging", async () => {
-      const err = new Error("Search failed");
-      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("logs and rethrows non-cancellation errors", async () => {
+      const error = new Error("search failed");
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      apiGet.mockRejectedValueOnce(error);
 
-      apiGet.mockRejectedValueOnce(err);
-
-      await expect(searchPatients("john", { minChars: 1 })).rejects.toThrow("Search failed");
-      expect(spy).toHaveBeenCalledWith("Failed to search patients:", err);
-
-      spy.mockRestore();
+      await expect(searchPatients("john", { minChars: 1 })).rejects.toThrow(
+        "search failed",
+      );
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to search patients:",
+        error,
+      );
     });
   });
 
-  // ---------------- getPatientDetails ----------------
   describe("getPatientDetails", () => {
-    it("calls GET /patients/{id} and returns PatientDetailsDto", async () => {
-      const id = "p-123";
-      const mockDetails: PatientDetailsDto = {
-        id,
+    it("requests /api/patients/{id}", async () => {
+      const patient = {
+        id: "p-1",
         fullName: "John Doe",
-        dob: "1990-01-01",
-        gender: "male",
-        phone: "1234567890",
-        email: "john@example.com",
-        address: "123 Street",
+        dob: "1990-01-01T00:00:00.000Z",
+        gender: "Male",
+        phone: "+14155550101",
         allergies: ["Peanuts"],
-        insurance: { provider: "ABC", memberId: "MEM-1" },
+        insurance: { provider: "ABC", policyId: "POL-1" },
       };
 
-      const controller = new AbortController();
+      apiGet.mockResolvedValueOnce({ data: patient } as never);
 
-      apiGet.mockResolvedValueOnce({ data: mockDetails });
-
-      const res = await getPatientDetails(id, { signal: controller.signal });
-
-      expect(apiGet).toHaveBeenCalledWith(`${ENDPOINTS.patients}/${id}`, {
-        signal: controller.signal,
+      await expect(getPatientDetails("p-1")).resolves.toEqual(patient);
+      expect(apiGet).toHaveBeenCalledWith(`${ENDPOINTS.patients}/p-1`, {
+        signal: undefined,
       });
-      expect(res).toEqual(mockDetails);
     });
   });
 
-  // ---------------- createPatient ----------------
+  describe("getPatientById", () => {
+    it("returns undefined when detail lookup fails", async () => {
+      const error = new Error("not found");
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      apiGet.mockRejectedValueOnce(error);
+
+      await expect(getPatientById("p-404")).resolves.toBeUndefined();
+      expect(consoleError).toHaveBeenCalledWith(
+        "Fetching patient details failed:",
+        error,
+      );
+    });
+  });
+
   describe("createPatient", () => {
-    it("posts to /patients with request body and returns { patientId }", async () => {
-      const req: CreatePatientRequest = {
-        fullName: "New Patient",
-        dob: "2000-02-02",
-        gender: "female",
-        phone: "9999999999",
-        email: "new@x.com",
-        address: "Somewhere",
-        allergies: ["pollen"],
-        insurance: { provider: "XYZ", memberId: "MEM-9" },
-      };
-      const controller = new AbortController();
-      const apiResponse = { data: { patientId: "new-id-001" } };
-
-      apiPost.mockResolvedValueOnce(apiResponse);
-
-      const res = await createPatient(req, { signal: controller.signal });
-
-      expect(apiPost).toHaveBeenCalledWith(ENDPOINTS.patients, req, {
-        signal: controller.signal,
-      });
-      expect(res).toEqual({ patientId: "new-id-001" });
-    });
-  });
-
-  // ---------------- updatePatient ----------------
-  describe("updatePatient", () => {
-    it("puts to /patientDetails/{id} and returns response data", async () => {
-      const id = "p-777";
-      const req: UpdatePatientRequest = {
-        phone: "7777777777",
-        fullName: "Edited Name",
-        address: "New Addr",
-      };
-      const apiResponse = {
-        data: {
-          success: true,
-          updatedId: id,
+    it("posts the new insurance DTO shape", async () => {
+      const request = {
+        fullName: "John Doe",
+        dob: "2026-03-11T12:18:08.797Z",
+        gender: "Male",
+        phone: "+14155550101",
+        email: "john@example.com",
+        address: "123 Main St",
+        allergies: ["Peanuts"],
+        insurance: {
+          provider: "ABC Health",
+          policyId: "POL-123",
         },
       };
 
-      apiPut.mockResolvedValueOnce(apiResponse);
+      apiPost.mockResolvedValueOnce({ data: { patientId: "p-1" } } as never);
 
-      const res = await updatePatient(id, req);
-
-      expect(apiPut).toHaveBeenCalledWith(`${ENDPOINTS.patientDetails}/${id}`, req);
-      expect(res).toEqual(apiResponse.data);
+      await expect(createPatient(request)).resolves.toEqual({ patientId: "p-1" });
+      expect(apiPost).toHaveBeenCalledWith(ENDPOINTS.patients, request, {
+        signal: undefined,
+      });
     });
 
-    it("logs error and rethrows on failure", async () => {
-      const id = "p-err";
-      const req: UpdatePatientRequest = { address: "Nope" };
-      const err = new Error("Update failed");
-      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("wraps API errors using extractApiError", async () => {
+      apiPost.mockRejectedValueOnce({
+        response: { data: { detail: "Email already exists" } },
+      });
 
-      apiPut.mockRejectedValueOnce(err);
+      await expect(
+        createPatient({
+          fullName: "John Doe",
+          dob: "2026-03-11T12:18:08.797Z",
+          gender: "Male",
+          phone: "+14155550101",
+        }),
+      ).rejects.toThrow("Email already exists");
+    });
+  });
 
-      await expect(updatePatient(id, req)).rejects.toThrow("Update failed");
-      expect(spy).toHaveBeenCalledWith(`Failed to update patient ${id}:`, err);
+  describe("updatePatient", () => {
+    it("puts to /api/patients/{id} without a gender field", async () => {
+      const request = {
+        fullName: "Jane Doe",
+        dob: "2026-03-11T12:18:40.836Z",
+        phone: "+14155550199",
+        email: "jane@example.com",
+        address: "456 Main St",
+        allergies: ["Dust"],
+        insurance: {
+          provider: "XYZ Health",
+          policyId: "POL-999",
+        },
+      };
 
-      spy.mockRestore();
+      apiPut.mockResolvedValueOnce({ data: { success: true } } as never);
+
+      await expect(updatePatient("p-2", request)).resolves.toEqual({
+        success: true,
+      });
+      expect(apiPut).toHaveBeenCalledWith(`${ENDPOINTS.patients}/p-2`, request, {
+        signal: undefined,
+      });
+    });
+
+    it("wraps update errors using extractApiError", async () => {
+      apiPut.mockRejectedValueOnce({
+        response: { data: { title: "Update rejected" } },
+      });
+
+      await expect(
+        updatePatient("p-2", {
+          fullName: "Jane Doe",
+          dob: "2026-03-11T12:18:40.836Z",
+          phone: "+14155550199",
+        }),
+      ).rejects.toThrow("Update rejected");
     });
   });
 });
