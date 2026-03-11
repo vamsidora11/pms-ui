@@ -6,6 +6,8 @@ import { lazy, Suspense } from "react";
 
 const LoginPage = lazy(() => import("@auth/components/LoginPage"));
 const PharmacistDashboard = lazy(() => import("@auth/components/PharmacistDashboard"));
+const ManagerDashboard = lazy(() => import("@auth/components/ManagerDashboard"));
+const ManagerUserManagement = lazy(() => import("@auth/components/ManagerUserManagement"));
 
 const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionValidationQueue"));
 const PrescriptionValidationPage  = lazy(() => import("@validation/PrescriptionValidationPage"));
@@ -31,7 +33,8 @@ export default function AppRoutes() {
         {/* ── Manager ── */}
         <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
           <Route path={ROUTES.MANAGER.BASE} element={<AppLayout />}>
-            <Route path="dashboard" element={<div>Manager Dashboard</div>} />
+            <Route path="dashboard" element={<ManagerDashboard />} />
+            <Route path="users" element={<ManagerUserManagement />} />
           </Route>
         </Route>
 

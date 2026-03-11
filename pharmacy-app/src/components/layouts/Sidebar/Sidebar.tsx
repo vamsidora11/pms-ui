@@ -9,6 +9,7 @@ import {
   ArchiveBoxIcon,
   ArrowRightOnRectangleIcon,
   CubeIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { ChevronLeft, ChevronRight, Pill } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
@@ -27,6 +28,7 @@ const roleNavItems: Record<
 > = {
   manager: [
     { key: "dashboard", label: "Dashboard", to: "/manager/dashboard", icon: HomeIcon },
+    { key: "users", label: "User Management", to: "/manager/users", icon: UserGroupIcon },
   ],
   pharmacist: [
     { key: "dashboard",   label: "Dashboard",               to: "/pharmacist/dashboard",  icon: HomeIcon },
@@ -76,7 +78,7 @@ export default function Sidebar({ user }: SidebarProps) {
               to={item.to}
               className={({ isActive }) =>
                 [
-                  "flex items-center gap-3 px-3 py-2 rounded-md transition text-sm",
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition",
                   isActive
                     ? "bg-green-50 text-green-700 font-medium"
                     : "text-gray-700 hover:bg-gray-100",
@@ -90,14 +92,13 @@ export default function Sidebar({ user }: SidebarProps) {
           );
         })}
 
-        {/* Logout */}
-        <div className="pt-4 mt-4 border-t">
+        <div className="mt-4 border-t pt-4">
           <button
             onClick={() => {
               dispatch(serverLogout());
               navigate("/login");
             }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-red-50 hover:text-red-700"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-700"
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5" />
             {!collapsed && <span>Logout</span>}
@@ -105,9 +106,8 @@ export default function Sidebar({ user }: SidebarProps) {
         </div>
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t text-sm text-gray-500">
-        {!collapsed && "© 2025 Pharmacy App"}
+      <div className="border-t p-3 text-sm text-gray-500">
+        {!collapsed && "Copyright 2025 Pharmacy App"}
       </div>
     </aside>
   );
