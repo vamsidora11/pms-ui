@@ -17,11 +17,11 @@ import Button from "@components/common/Button/Button";
 import Badge from "@components/common/Badge/Badge";
 import Modal from "@components/common/Modal/Modal";
 
-import { useDispense } from "./hooks/useDispense";
-import { useBilling } from "./hooks/useBilling";
+import { useDispense } from "@dispense/hooks/useDispense";
+import { useBilling } from "@dispense/hooks/useBilling";
 import { useToast } from "@components/common/Toast/useToast";
 
-import type { DispenseQueueItem, DispenseRow, ClaimStatus } from "./types/dispense.types";
+import type { DispenseQueueItem, DispenseRow, ClaimStatus } from "../types/dispense.types";
 
 // ─── Mock queue data ──────────────────────────────────────────────────────────
 

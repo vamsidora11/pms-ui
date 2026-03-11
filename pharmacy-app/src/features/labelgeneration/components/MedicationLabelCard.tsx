@@ -1,6 +1,6 @@
 // src/features/labels/components/MedicationLabelCard.tsx
 import type { LabelMedicine, LabelPrescriptionDetails } from "@labels/types/label.types";
-import { getFrequencyLabel } from "../types/label.types";
+import { getFrequencyLabel } from "@labels/types/label.types";
 import { formatDate } from "@utils/format";
 
 type Props = {

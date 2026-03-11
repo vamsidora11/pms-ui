@@ -4,8 +4,48 @@ import { XCircle } from "lucide-react";
 import type { AllergyAlert } from "../types/validation.types";
 import { pillToneBySeverity } from "../utils/prescriptionValidationUtils";
 
-import { Modal } from "./Modal";
-import { Pill } from "./Pill";
+import Modal from "@components/common/Modal/Modal";
+import { Pill } from "@components/common/Pill/Pill";
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  widthClass = "max-w-lg",
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string | React.ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  widthClass?: string;
+}) {
+  return (
+    <Modal isOpen={open} onClose={onClose} className={`${widthClass} w-full`}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-5 border-b">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-5">{children}</div>
+
+      {/* Footer */}
+      {footer && (
+        <div className="p-4 border-t flex justify-end gap-3">{footer}</div>
+      )}
+    </Modal>
+  );
+}
 
 export default function ValidationModals({
   allergyFor,
@@ -47,7 +87,7 @@ export default function ValidationModals({
   return (
     <>
       {/* Allergy modal */}
-      <Modal
+      <ModalShell
         open={!!allergyFor}
         onClose={onCloseAllergy}
         title="Safety Alert Details"
@@ -82,10 +122,10 @@ export default function ValidationModals({
             </div>
           </div>
         )}
-      </Modal>
+      </ModalShell>
 
       {/* Reject line modal */}
-      <Modal
+      <ModalShell
         open={rejectLineOpen}
         onClose={onCloseRejectLine}
         title="Reject Medication"
@@ -117,10 +157,10 @@ export default function ValidationModals({
             onChange={(e) => onRejectLineReasonChange(e.target.value)}
           />
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* Reject all modal */}
-      <Modal
+      <ModalShell
         open={rejectAllOpen}
         onClose={onCloseRejectAll}
         title="Reject Entire Prescription"
@@ -153,7 +193,7 @@ export default function ValidationModals({
             onChange={(e) => onRejectAllReasonChange(e.target.value)}
           />
         </div>
-      </Modal>
+      </ModalShell>
     </>
   );
 }

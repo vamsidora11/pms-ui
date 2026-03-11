@@ -1,5 +1,5 @@
 import { formatDate } from "@utils/format";
-import type { PrescriptionDraft } from "../types/models";
+import type { PrescriptionDraft } from "@prescription/types/models";
 
 interface ReviewStepProps {
   draft: PrescriptionDraft;

@@ -3,19 +3,18 @@ import { useDispatch } from "react-redux";
 
 import DataTable from "@components/common/Table/Table";
 import type { Column, ServerTableQuery } from "@components/common/Table/Table";
-// import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
-import type { AppDispatch } from "../../store";
+import type { AppDispatch } from "store";
 
 import type { PrescriptionSummary } from "@prescription/domain/model";
 
-import { usePrescriptionHistoryData } from "./hooks/usePrescriptionHistoryData";
-import PrescriptionExpandedDetails from "./components/PrescriptionExpandedDetails";
+import { usePrescriptionHistoryData } from "@prescription/hooks/usePrescriptionHistoryData";
+import PrescriptionExpandedDetails from "@prescription/components/PrescriptionExpandedDetails";
 import {
   buildHistoryQueryParams,
   formatDateTime,
   statusStyle,
-} from "./utils/prescriptionHistoryUtils";
+} from "@prescription/utils/prescriptionHistoryUtils";
 
 export default function PrescriptionHistory() {
   const dispatch = useDispatch<AppDispatch>();

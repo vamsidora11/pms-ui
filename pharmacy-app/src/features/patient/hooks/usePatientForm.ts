@@ -3,7 +3,7 @@ import {
   applyPatientRule,
   validatePatientForm,
   type PatientFormLike,
-} from "../utils/patientFormRules";
+} from "@patient/utils/patientFormRules";
 
 export type PatientFormValues = {
   fullName: string;

@@ -1,8 +1,12 @@
 import type {
   CreatePrescriptionRequestDto,
+  PrescriptionDetailsDto,
+  PrescriptionLineDto,
+  PrescriptionSummaryDto,
+  ReviewPrescriptionRequestDto,
 } from "@api/prescription.dto";
+import type { PrescriptionDraft } from "@prescription/types/models";
 import type {
-  PrescriptionCreateDraft,
   PrescriptionDetails,
   PrescriptionLine,
   PrescriptionLineReviewDraft,
@@ -10,70 +14,6 @@ import type {
   PrescriptionSummary,
   ValidationSeverity,
 } from "./model";
-
-type LineTransport = {
-  id?: string;
-  prescriptionLineId?: string;
-  lineId?: string;
-  medicineId?: string;
-  prescriptionMedicineId?: string;
-  productId: string;
-  productName: string;
-  strength: string;
-  frequency: string;
-  instructions?: string | null;
-  durationDays: number;
-  quantityPrescribed: number;
-  quantityApprovedPerFill?: number | null;
-  quantityDispensed?: number;
-  refillsAllowed: number;
-  refillsRemaining?: number;
-  validation?: {
-    drugAllergy?: {
-      isPresent: boolean;
-      overallSeverity: string | null;
-    };
-    drugInteraction?: {
-      isPresent: boolean;
-      overallSeverity: string | null;
-      interactingWith?: Array<{
-        productId?: string;
-        productName?: string;
-        severity?: "High" | "Moderate" | "Low" | "None";
-        message?: string;
-      }>;
-    };
-  };
-  pharmacistReview?: {
-    status: "Pending" | "Approved" | "Rejected";
-    reviewedBy?: string | null;
-    reviewedAt?: string | null;
-    notes?: string | null;
-  };
-};
-
-type SummaryTransport = {
-  id: string;
-  patientId: string;
-  patientName: string;
-  prescriberName: string;
-  createdAt: string;
-  status: string;
-  medicineCount: number;
-};
-
-type DetailsTransport = {
-  id: string;
-  patientId: string;
-  patientName: string;
-  prescriber: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-  status: string;
-  medicines: LineTransport[];
-};
 
 function toDate(value: string): Date {
   const parsed = new Date(value);
@@ -116,19 +56,19 @@ function maxSeverity(...values: Array<unknown>): ValidationSeverity {
   return "None";
 }
 
-function mapLineDto(dto: LineTransport, index: number): PrescriptionLine {
+function getLineId(dto: PrescriptionLineDto, index: number): string {
+  return (
+    dto.prescriptionLineId ??
+    `line:${index + 1}`
+  );
+}
+
+function mapLineDto(dto: PrescriptionLineDto, index: number): PrescriptionLine {
   const allergySeverity = dto.validation?.drugAllergy?.overallSeverity;
   const interactionSeverity = dto.validation?.drugInteraction?.overallSeverity;
-  const lineId =
-    dto.lineId ??
-    dto.prescriptionLineId ??
-    dto.prescriptionMedicineId ??
-    dto.id ??
-    dto.medicineId ??
-    `line:${index + 1}`;
 
   return {
-    lineId,
+    lineId: getLineId(dto, index),
     productId: dto.productId,
     name: dto.productName,
     strength: dto.strength,
@@ -162,7 +102,7 @@ function mapLineDto(dto: LineTransport, index: number): PrescriptionLine {
   };
 }
 
-export function mapSummaryDto(dto: SummaryTransport): PrescriptionSummary {
+export function mapSummaryDto(dto: PrescriptionSummaryDto): PrescriptionSummary {
   return {
     id: dto.id,
     patientId: dto.patientId,
@@ -174,7 +114,7 @@ export function mapSummaryDto(dto: SummaryTransport): PrescriptionSummary {
   };
 }
 
-export function mapDetailsDto(dto: DetailsTransport): PrescriptionDetails {
+export function mapDetailsDto(dto: PrescriptionDetailsDto): PrescriptionDetails {
   const medicines = Array.isArray(dto.medicines)
     ? dto.medicines.map((line, index) => mapLineDto(line, index))
     : [];
@@ -196,7 +136,7 @@ export function mapDetailsDto(dto: DetailsTransport): PrescriptionDetails {
 }
 
 export function mapDraftToCreateDto(
-  draft: PrescriptionCreateDraft
+  draft: PrescriptionDraft
 ): CreatePrescriptionRequestDto {
   if (!draft.patient) {
     throw new Error("Patient is required");
@@ -228,7 +168,7 @@ export function mapDraftToCreateDto(
 
 export function mapReviewToDto(
   reviews: PrescriptionLineReviewDraft[]
-): { reviews: Array<{ prescriptionLineId: string; status: "Approved" | "Rejected"; notes?: string | null }> } {
+): ReviewPrescriptionRequestDto {
   return {
     reviews: reviews
       .map((review) => ({

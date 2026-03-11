@@ -7,7 +7,7 @@ import type {
 } from "@prescription/domain/model";
 import type { PatientDetails } from "@prescription/types/models";
  
-import { calculateAgeFromDob } from "../utils/prescriptionHistoryUtils";
+import { calculateAgeFromDob } from "@prescription/utils/prescriptionHistoryUtils";
  
 type Props = {
   row: PrescriptionSummary;

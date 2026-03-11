@@ -15,7 +15,7 @@ import {
 import type { ElementType, ReactNode } from "react";
 import type { PatientDetailsDto } from "@patient/types/patienttype";
 import type { PrescriptionSummary } from "@prescription/domain/model";
-import { formatDate } from "../../../utils/format";
+import { formatDate } from "@utils/format";
 import clsx from "clsx";
 
 /** Compact, aesthetic card for a single prescription summary */

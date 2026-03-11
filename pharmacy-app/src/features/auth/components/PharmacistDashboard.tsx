@@ -11,26 +11,14 @@ import {
 import DataTable from "@components/common/Table/Table";
 import type { Column } from "@components/common/Table/Table";
 import TrendIndicator from "@components/common/TrendIndicator/TrendIndicator";
-// import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
+
 import { formatDateTime, statusStyle } from "@prescription/utils/prescriptionHistoryUtils";
-import type { AppDispatch } from "../../../store";
+import type { AppDispatch } from "store";
 import type { PrescriptionSummary } from "@prescription/domain/model";
 
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
-import { useDashboardData } from "../hooks/useDashboardData";
-
-/* ---------------------------------- */
-/* Helper Functions */
-/* ---------------------------------- */
-
-function isSameDay(date1: Date, date2: Date): boolean {
-  const d1 = new Date(date1);
-  return (
-    d1.getFullYear() === date2.getFullYear() &&
-    d1.getMonth() === date2.getMonth() &&
-    d1.getDate() === date2.getDate()
-  );
-}
+import { useDashboardData } from "@auth/hooks/useDashboardData";
+import  { isSameDay } from "@auth/utils/Pharmacistdashboardutils"; 
 
 /* ---------------------------------- */
 /* Component */
@@ -177,17 +165,7 @@ export default function PharmacistDashboard() {
   return (
     <div className="space-y-6">
 
-      {/* Breadcrumbs */}
-
-      {/* <Breadcrumbs
-        items={[
-          {
-            label: "Dashboard",
-            onClick: () => {},
-            icon: <Activity className="w-4 h-4" />
-          }
-        ]}
-      /> */}
+      
 
       {/* Header */}
       <div>
@@ -215,11 +193,7 @@ export default function PharmacistDashboard() {
           icon={<Package className="w-5 h-5 text-green-600" />}
         />
 
-        {/* <Kpi
-          title="Active Alerts"
-          value={stats.alerts}
-          icon={<AlertTriangle className="w-5 h-5 text-red-600" />}
-        /> */}
+      
 
         <Kpi
           title="Today's Prescriptions"

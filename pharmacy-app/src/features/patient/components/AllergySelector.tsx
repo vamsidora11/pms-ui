@@ -5,7 +5,7 @@ import clsx from "clsx";
 import {
   useAllergySearch,
   type AllergySearchFn,
-} from "../hooks/useAllergySearch";
+} from "@patient/hooks/useAllergySearch";
 
 type Props = {
   /** Text box value (search query) */

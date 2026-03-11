@@ -5,7 +5,7 @@ import type {
 import { updatePatient, getPatientDetails } from "@api/patient";
 import { useToast } from "@components/common/Toast/useToast";
 import PatientFormModal from "./PatientFormModal";
-import type { PatientFormValues } from "../hooks/usePatientForm";
+import type { PatientFormValues } from "@patient/hooks/usePatientForm";
 
 interface UpdatePatientModalProps {
   patient: PatientDetailsDto;

@@ -5,8 +5,8 @@ import DoctorStep from "@prescription/steps/DoctorStep";
 import MedicationStep from "@prescription/steps/MedicationStep";
 import ReviewStep from "@prescription/steps/ReviewStep";
 
-import { usePrescriptionEntry } from "./hooks/usePrescriptionEntry";
-import type { DoctorDetails } from "./types/models";
+import { usePrescriptionEntry } from "@prescription/hooks/usePrescriptionEntry";
+import type { DoctorDetails } from "@prescription/types/models";
 
 export default function PrescriptionEntry() {
   const {

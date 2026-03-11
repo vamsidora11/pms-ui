@@ -7,10 +7,10 @@ import Dropdown from "@components/common/Dropdown/Dropdown";
 import AppPhoneInput from "@components/common/PhoneInput/PhoneInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import "../../../styles/datepicker.css";
+import "@styles/datepicker.css";
 import { searchAllergies } from "@api/catalogs";
 
-import { usePatientForm, type PatientFormValues } from "../hooks/usePatientForm";
+import { usePatientForm, type PatientFormValues } from "@patient/hooks/usePatientForm";
 import AllergySelector from "./AllergySelector";
 
 export const RequiredLabel: React.FC<{ text: string }> = ({ text }) => (

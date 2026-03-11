@@ -1,4 +1,6 @@
-export type ValidationSeverity = "High" | "Moderate" | "Low" | "None";
+import type { ValidationSeverity } from "@prescription/domain/model";
+
+export type { ValidationSeverity };
 
 export interface LineValidation {
   lineId: string;

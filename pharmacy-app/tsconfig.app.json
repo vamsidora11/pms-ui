@@ -40,7 +40,10 @@
       "@history/*": ["features/history/*"],
       "@assets/*": ["assets/*"],
       "@constants/*": ["constants/*"],
-      "@technician/*": ["features/technician/*"]
+      "@technician/*": ["features/technician/*"],
+        "@dispense/*": ["features/dispense/*"],
+        "@routes/*": ["routes/*"],
+        "@styles/*": ["styles/*"]
 
     }
   },

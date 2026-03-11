@@ -1,6 +1,6 @@
 // src/features/prescription/hooks/useBilling.ts
 import { useState, useCallback } from "react";
-import type { ClaimStatus, PaymentStatus, PaymentMethod } from "../types/dispense.types";
+import type { ClaimStatus, PaymentStatus, PaymentMethod } from "features/dispense/types/dispense.types";
 
 export function useBilling() {
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("pending");

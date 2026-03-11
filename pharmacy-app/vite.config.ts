@@ -18,10 +18,13 @@ export default defineConfig({
       "@validation": path.resolve(__dirname, "src/features/validation"),
       "@labels": path.resolve(__dirname, "src/features/labelgeneration"),
       "@refill": path.resolve(__dirname, "src/features/refillmanagement"),
+      "@dispense": path.resolve(__dirname, "src/features/dispense"),
       "@history": path.resolve(__dirname, "src/features/refillmanagement"),
       "@assets": path.resolve(__dirname, "src/assets"),
          "@technician": path.resolve(__dirname, "src/features/technician"),
       "@constants":  path.resolve(__dirname, "src/constants"),
+        "@routes":  path.resolve(__dirname, "src/routes"),
+        "@styles":  path.resolve(__dirname, "src/styles"),
     },
   },
   test: {

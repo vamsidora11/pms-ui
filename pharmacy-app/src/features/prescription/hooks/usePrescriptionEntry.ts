@@ -5,7 +5,7 @@ import { createPrescription } from "@api/prescription";
 import { getPatientById } from "@api/patientSearch";
 
 import type { PatientSummary } from "@prescription/types/models";
-import type { PrescriptionDraft, DoctorDetails } from "../types/models";
+import type { PrescriptionDraft, DoctorDetails } from "@prescription/types/models";
 import { mapDraftToCreateDto } from "@prescription/domain/mapper";
 
 import {

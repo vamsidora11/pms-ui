@@ -5,7 +5,7 @@ import type {
   AllocationResult,
   DispenseQueueItem,
   ClaimStatus,
-} from "../types/dispense.types";
+} from "features/dispense/types/dispense.types";
 
 const INSURANCE_COVERAGE_RATE = 0.65;
 

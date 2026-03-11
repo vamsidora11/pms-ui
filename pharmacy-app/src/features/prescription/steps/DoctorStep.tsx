@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { DoctorDetails } from "../types/models";
+import type { DoctorDetails } from "@prescription/types/models";
 
 interface DoctorStepProps {
   doctor: DoctorDetails;

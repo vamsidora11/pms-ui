@@ -69,22 +69,3 @@ export interface PrescriptionLineReviewDraft {
   status: "Approved" | "Rejected";
   notes?: string | null;
 }
-
-export interface PrescriptionCreateDraft {
-  patient: {
-    id: string;
-    fullName: string;
-  } | null;
-  doctor: {
-    id: string;
-    name: string;
-  };
-  medications: {
-    drugId?: string;
-    frequency: string;
-    instructions: string;
-    durationDays: number;
-    quantity: number;
-    refills: number;
-  }[];
-}

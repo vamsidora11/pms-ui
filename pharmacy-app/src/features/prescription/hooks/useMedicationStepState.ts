@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { searchInventory as defaultSearchInventory } from "@api/inventory";
 import { useDebouncedValue } from "@utils/hooks/useDebouncedValue";
-import type { MedicationDraft, InventorySearchItem } from "../types/models";
+import type { MedicationDraft, InventorySearchItem } from "@prescription/types/models";
  
 export type MedicationRow = MedicationDraft & {
   uid: string;

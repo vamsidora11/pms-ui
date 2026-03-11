@@ -1,7 +1,7 @@
 import { Plus, X, Search } from "lucide-react";
 import type { MedicationDraft, InventorySearchItem } from "../types/models";
-import { FREQUENCY_OPTIONS } from "../types/models";
-import { useMedicationStepState } from "../hooks/useMedicationStepState";
+import { FREQUENCY_OPTIONS } from "@prescription/types/models";
+import { useMedicationStepState } from "@prescription/hooks/useMedicationStepState";
 import { searchInventory as defaultSearchInventory } from "@api/inventory";
 
 interface Props {

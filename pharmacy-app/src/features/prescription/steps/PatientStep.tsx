@@ -1,6 +1,6 @@
 import { AlertTriangle, Search } from "lucide-react";
-import type { PatientSummary, PatientDetails } from "../types/models";
-import { usePatientSearch } from "../hooks/usePatientSearch";
+import type { PatientSummary, PatientDetails } from "@prescription/types/models";
+import { usePatientSearch } from "@prescription/hooks/usePatientSearch";
 
 interface Props {
   patient: PatientDetails | null;

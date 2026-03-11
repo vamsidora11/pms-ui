@@ -8,7 +8,7 @@ import {
   mapInteractionLevel,
   pillToneBySeverity,
 } from "../utils/prescriptionValidationUtils";
-import { Pill } from "./Pill";
+import { Pill } from "../../../components/common/Pill/Pill";
 
 export default function ValidationTable({
   data,

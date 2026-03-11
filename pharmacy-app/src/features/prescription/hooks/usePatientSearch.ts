@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@utils/hooks/useDebouncedValue";
 import { searchPatients as defaultSearchPatients } from "@api/patientSearch";
-import type { PatientSummary } from "../types/models";
+import type { PatientSummary } from "@prescription/types/models";
 
 type Options = {
   searchFn?: (q: string) => Promise<PatientSummary[] | undefined>;

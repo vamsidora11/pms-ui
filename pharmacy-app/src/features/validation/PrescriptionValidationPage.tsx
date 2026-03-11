@@ -13,7 +13,7 @@ import { getValidationResults } from "@api/validation.api";
 import { mapValidationResultDto } from "@validation/domain/mapper";
 import type { LineValidation } from "@validation/domain/model";
 
-import { Pill } from "./components/Pill";
+import { Pill } from "../../components/common/Pill/Pill";
 import ValidationTable from "./components/ValidationTable";
 import ValidationModals from "./components/ValidationModals";
 

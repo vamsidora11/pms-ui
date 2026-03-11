@@ -15,9 +15,9 @@ import type {
   PrescriptionSummary
 } from "@prescription/domain/model";
 
-import { usePatientDirectory } from "../hooks/usePatientDirectory";
-import { usePatientDetails } from "../hooks/usePatientDetails";
-import { usePatientPrescriptions } from "../hooks/usePatientPrescriptions";
+import { usePatientDirectory } from "@patient/hooks/usePatientDirectory";
+import { usePatientDetails } from "@patient/hooks/usePatientDetails";
+import { usePatientPrescriptions } from "@patient/hooks/usePatientPrescriptions";
 import { useToast } from "@components/common/Toast/useToast";
 import PatientDirectoryPanel from "./PatientDirectoryPanel";
 import PatientDetailsPanel from "./PatientDetailsPanel";
