@@ -36,6 +36,7 @@ function mapLotToItem(lot: InventoryLotDto): InventoryItem {
 
   return {
     id:           lot.id,         // lot ID (used for dispose key)
+    productId:    lot.productId,
     drugName:     lot.productId,  // will be overridden once product names are joined
     batchNumber:  lot.lotNumber,
     strength:     "",             // not in InventoryLotDto — join with product if needed

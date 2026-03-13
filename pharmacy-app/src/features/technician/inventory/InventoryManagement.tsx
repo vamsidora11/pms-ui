@@ -10,15 +10,13 @@ import {
   XCircle,
   Archive,
   AlertTriangle,
-  Search,
-  Plus,
 } from "lucide-react";
 
 import DataTable, { type Column } from "@components/common/Table/Table";
 import Modal from "@components/common/Modal/Modal";
 import Button from "@components/common/Button/Button";
 import InventoryStockList from "../components/InventoryStockList";
-import { useInventoryItems } from "../hooks/useInventoryItems";
+import { useInventoryProducts } from "../hooks/useInventoryProducts";
 import { useRestockRequests } from "../hooks/useRestockRequests";
 import type { InventoryItem } from "../technician.types";
 import type { InventoryLotDto } from "@api/inventory";
@@ -38,7 +36,6 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 export default function InventoryManagement() {
 
   const [activeTab, setActiveTab]     = useState<TabKey>("stock");
-  const [searchQuery, setSearchQuery] = useState("");
   // ── Dispose confirmation modal state ──────────────────────────────────────
   const [itemToDispose, setItemToDispose] = useState<InventoryItem | null>(null);
 
@@ -49,18 +46,19 @@ export default function InventoryManagement() {
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const {
-    medicineGroups,
+    stockRows,
     expiryData,
     inventoryStats,
+    totalCount,
     isLoading,
-    expandedMedicines,
-    toggleExpand,
+    tableQuery,
+    handleServerQueryChange,
     handleDispose,
-  } = useInventoryItems();
+  } = useInventoryProducts();
 
   const {
     submittedLots,
-    selectedItem,
+    selectedProduct,
     isDialogOpen,
     form,
     setForm,
@@ -70,19 +68,6 @@ export default function InventoryManagement() {
     closeRestockDialog,
     handleCreateRequest,
   } = useRestockRequests();
-
-  // ── Filtered groups ────────────────────────────────────────────────────────
-  const filteredGroups = useMemo(() => {
-    if (!searchQuery) return medicineGroups;
-    const q = searchQuery.toLowerCase();
-    return medicineGroups.filter(
-      (g) =>
-        g.drugName.toLowerCase().includes(q) ||
-        g.category.toLowerCase().includes(q) ||
-        g.strength.toLowerCase().includes(q) ||
-        g.lots.some((l: import("../technician.types").InventoryItem) => l.batchNumber.toLowerCase().includes(q))
-    );
-  }, [medicineGroups, searchQuery]);
 
   // ── Expiry table columns ───────────────────────────────────────────────────
   const expiryColumns = useMemo((): Column<InventoryItem>[] => [
@@ -180,8 +165,10 @@ export default function InventoryManagement() {
       width: 200,
       render: (value, row) => (
         <div>
-          <p className="font-semibold text-gray-900 font-mono text-sm">{String(value)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Lot: {row.lotNumber}</p>
+          <p className="font-semibold text-gray-900 text-sm">
+            {row.productName || String(value)}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5 font-mono">{String(value)}</p>
         </div>
       ),
     },
@@ -313,22 +300,13 @@ export default function InventoryManagement() {
         <div className="p-6">
           {/* Stock Levels tab */}
           {activeTab === "stock" && (
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by medicine name, category, lot number…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
+            <div>
               <InventoryStockList
-                groups={filteredGroups}
-                expandedMedicines={expandedMedicines}
+                products={stockRows}
+                totalCount={totalCount}
                 isLoading={isLoading}
-                onToggleExpand={toggleExpand}
+                initialQuery={tableQuery}
+                onServerQueryChange={handleServerQueryChange}
                 onRequestRestock={openRestockDialog}
               />
             </div>

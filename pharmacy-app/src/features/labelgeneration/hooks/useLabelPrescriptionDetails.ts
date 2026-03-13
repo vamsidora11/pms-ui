@@ -1,13 +1,14 @@
 // src/features/labels/hooks/useLabelPrescriptionDetails.ts
 import { useCallback, useRef, useState } from "react";
+import { extractApiError } from "@utils/httpError";
 import type { LabelPrescriptionDetails } from "@labels/types/label.types";
-import { getPrescriptionForLabels } from "@api/label";
+import { getDispenseLabels } from "@api/label";
 
 type UseLabelPrescriptionDetailsResult = {
   selected: LabelPrescriptionDetails | null;
   loading: boolean;
   error: string | null;
-  selectById: (id: string) => Promise<void>;
+  selectById: (dispenseId: string, patientId: string) => Promise<void>;
   clear: () => void;
 };
 
@@ -19,18 +20,18 @@ export function useLabelPrescriptionDetails(): UseLabelPrescriptionDetailsResult
   // prevents out-of-order responses overriding newer selection
   const requestIdRef = useRef(0);
 
-  const selectById = useCallback(async (id: string) => {
+  const selectById = useCallback(async (dispenseId: string, patientId: string) => {
     const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
 
     try {
-      const data = await getPrescriptionForLabels(id);
+      const data = await getDispenseLabels(dispenseId, patientId);
       if (requestId !== requestIdRef.current) return; // ignore stale response
       setSelected(data);
-    } catch {
+    } catch (error) {
       if (requestId !== requestIdRef.current) return;
-      setError("Failed to load prescription details.");
+      setError(extractApiError(error) || "Failed to load prescription details.");
       setSelected(null);
     } finally {
       if (requestId === requestIdRef.current) {

@@ -1,15 +1,15 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useLabelPrescriptionDetails } from "../hooks/useLabelPrescriptionDetails";
-import { getPrescriptionForLabels } from "@api/label";
+import { getDispenseLabels } from "@api/label";
 import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 
 vi.mock("@api/label", () => ({
-  getPrescriptionForLabels: vi.fn(),
+  getDispenseLabels: vi.fn(),
 }));
 
 describe("useLabelPrescriptionDetails", () => {
-  const mockedApi = vi.mocked(getPrescriptionForLabels);
+  const mockedApi = vi.mocked(getDispenseLabels);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,7 +25,7 @@ describe("useLabelPrescriptionDetails", () => {
 
   it("should load prescription successfully", async () => {
     const mockData: LabelPrescriptionDetails = {
-      id: "1",
+      dispenseId: "1",
     } as LabelPrescriptionDetails;
 
     mockedApi.mockResolvedValueOnce(mockData);
@@ -33,13 +33,13 @@ describe("useLabelPrescriptionDetails", () => {
     const { result } = renderHook(() => useLabelPrescriptionDetails());
 
     await act(async () => {
-      await result.current.selectById("1");
+      await result.current.selectById("1", "patient-1");
     });
 
     expect(result.current.selected).toEqual(mockData);
     expect(result.current.error).toBeNull();
     expect(result.current.loading).toBe(false);
-    expect(mockedApi).toHaveBeenCalledWith("1");
+    expect(mockedApi).toHaveBeenCalledWith("1", "patient-1");
   });
 
   it("should handle API failure", async () => {
@@ -48,19 +48,17 @@ describe("useLabelPrescriptionDetails", () => {
     const { result } = renderHook(() => useLabelPrescriptionDetails());
 
     await act(async () => {
-      await result.current.selectById("1");
+      await result.current.selectById("1", "patient-1");
     });
 
     expect(result.current.selected).toBeNull();
-    expect(result.current.error).toBe(
-      "Failed to load prescription details."
-    );
+    expect(result.current.error).toBe("API error");
     expect(result.current.loading).toBe(false);
   });
 
   it("should clear selected and error", async () => {
     const mockData: LabelPrescriptionDetails = {
-      id: "1",
+      dispenseId: "1",
     } as LabelPrescriptionDetails;
 
     mockedApi.mockResolvedValueOnce(mockData);
@@ -68,7 +66,7 @@ describe("useLabelPrescriptionDetails", () => {
     const { result } = renderHook(() => useLabelPrescriptionDetails());
 
     await act(async () => {
-      await result.current.selectById("1");
+      await result.current.selectById("1", "patient-1");
     });
 
     act(() => {
@@ -98,23 +96,23 @@ describe("useLabelPrescriptionDetails", () => {
     const { result } = renderHook(() => useLabelPrescriptionDetails());
 
     act(() => {
-      result.current.selectById("1");
+      result.current.selectById("1", "patient-1");
     });
 
     act(() => {
-      result.current.selectById("2");
+      result.current.selectById("2", "patient-2");
     });
 
     await act(async () => {
-      resolveFirst({ id: "1" } as LabelPrescriptionDetails);
+      resolveFirst({ dispenseId: "1" } as LabelPrescriptionDetails);
     });
 
     await act(async () => {
-      resolveSecond({ id: "2" } as LabelPrescriptionDetails);
+      resolveSecond({ dispenseId: "2" } as LabelPrescriptionDetails);
     });
 
     await waitFor(() => {
-      expect(result.current.selected?.id).toBe("2");
+      expect(result.current.selected?.dispenseId).toBe("2");
     });
   });
 });

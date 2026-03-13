@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { jwtDecode } from "jwt-decode";
 import { loginApi, refreshApi, logoutApi } from "@api/auth";
-import type { User, UserRole } from "./authtype";
+import { extractApiError } from "@utils/httpError";
+import { extractAuthError } from "./authtype";
+import type { AuthState, User, UserRole } from "./authtype";
 type TokenPayload = {
   sub: string;
   username: string;
@@ -9,13 +11,6 @@ type TokenPayload = {
   exp: number;
   avatarUrl?: string;
 };
-
-interface AuthState {
-  user: User | null;
-  accessToken: string | null;
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error?: string;
-}
 
 const initialState: AuthState = { user: null, accessToken: null, status: "idle" };
 // Helper to decode JWT
@@ -45,8 +40,8 @@ export const loginUser = createAsyncThunk(
     try {
       const res = await loginApi(credentials);
       return res;
-    } catch {
-      return rejectWithValue("Incorrect username or password");
+    } catch (error) {
+      return rejectWithValue(extractAuthError(error));
     }
   }
 );
@@ -58,7 +53,7 @@ export const refreshAccess = createAsyncThunk(
       const res = await refreshApi();
       return res; // { accessToken }
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error) || "Refresh failed");
+      return rejectWithValue(extractApiError(error) || getErrorMessage(error) || "Refresh failed");
     }
   }
 );

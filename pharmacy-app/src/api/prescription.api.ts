@@ -186,10 +186,9 @@ export async function getPrescriptionsByPatient(
   const pageSize = query.pageSize ?? 10;
 
   const res = await api.get<PatientPrescriptionHistoryResponse>(
-    ENDPOINTS.prescriptionById(normalizedPatientId),
+    ENDPOINTS.prescriptionsByPatient(normalizedPatientId),
     {
       params: {
-        patientId: normalizedPatientId,
         pageNumber,
         pageSize,
       },

@@ -12,21 +12,20 @@ import type {
 
 export async function getLabelQueue(
   pageSize: number = 20,
-  continuationToken?: string
+  pageNumber: number = 1
 ) {
-  const response = await api.get(
-    ENDPOINTS.labelQueue,
-    {
-      params: {
-        pageSize,
-        continuationToken,
-      },
-    }
-  );
+  const response = await api.get(ENDPOINTS.labelQueue, {
+    params: {
+      pageSize,
+      pageNumber,
+      status: "PaymentProcessed",
+    },
+  });
 
   return response.data as {
     items: LabelQueuePrescription[];
-    continuationToken?: string;
+    pageSize: number;
+    totalCount: number;
   };
 }
 
@@ -34,12 +33,10 @@ export async function getLabelQueue(
    GET PRESCRIPTION FOR LABELS
 ====================================== */
 
-export async function getPrescriptionForLabels(
-  prescriptionId: string
-) {
-  const response = await api.get(
-    ENDPOINTS.prescriptionLabels(prescriptionId)
-  );
+export async function getDispenseLabels(dispenseId: string, patientId: string) {
+  const response = await api.get(ENDPOINTS.dispenseLabel(dispenseId), {
+    params: { patientId },
+  });
 
   return response.data as LabelPrescriptionDetails;
 }

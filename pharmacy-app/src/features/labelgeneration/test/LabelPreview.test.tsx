@@ -5,9 +5,9 @@ import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 
 // Mock child component (unit isolation)
 vi.mock("../components/MedicationLabelCard", () => ({
-  MedicationLabelCard: ({ medicine }: { medicine: { prescriptionMedicineId: string } }) => (
+  MedicationLabelCard: ({ medicine }: { medicine: { prescriptionLineId: string } }) => (
     <div data-testid="medication-card">
-      Medicine: {medicine.prescriptionMedicineId}
+      Medicine: {medicine.prescriptionLineId}
     </div>
   ),
 }));
@@ -17,10 +17,16 @@ describe("LabelPreview", () => {
   const mockOnDownload = vi.fn();
 
   const mockSelected: LabelPrescriptionDetails = {
-    id: "prescription-1",
-    medicines: [
-      { prescriptionMedicineId: "med-1" },
-      { prescriptionMedicineId: "med-2" },
+    dispenseId: "dispense-1",
+    prescriptionId: "prescription-1",
+    patientId: "patient-1",
+    patientName: "John Doe",
+    dispenseDate: "2026-03-11T15:36:46.220Z",
+    status: "PaymentProcessed",
+    pharmacistId: "pharmacist-1",
+    items: [
+      { prescriptionLineId: "med-1" },
+      { prescriptionLineId: "med-2" },
     ],
   } as LabelPrescriptionDetails;
 
@@ -39,7 +45,7 @@ describe("LabelPreview", () => {
     );
 
     expect(
-      screen.getByText("Select a prescription to preview labels")
+      screen.getByText("Select a dispense to preview labels")
     ).toBeInTheDocument();
   });
 
@@ -54,7 +60,7 @@ describe("LabelPreview", () => {
     );
 
     expect(
-      screen.getByText("Loading prescription...")
+      screen.getByText("Loading label details...")
     ).toBeInTheDocument();
   });
 

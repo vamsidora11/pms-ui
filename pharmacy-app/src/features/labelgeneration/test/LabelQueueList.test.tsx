@@ -12,13 +12,13 @@ function createMockPrescription(
 ): LabelQueuePrescription {
   return {
     id: "RX-DEFAULT",
+    prescriptionId: "PR-DEFAULT",
     patientId: "P-DEFAULT",
     patientName: "Default Patient",
-    prescriberName: "Dr. Default",
-    createdAt: "2024-01-01T00:00:00Z",
-    expiresAt: "2024-12-31T00:00:00Z",
+    dispenseDate: "2024-01-01T00:00:00Z",
     status: "READY",
-    medicineCount: 1,
+    itemCount: 1,
+    grandTotal: 15,
     ...overrides,
   };
 }
@@ -29,17 +29,19 @@ describe("LabelQueueList", () => {
   const mockPrescriptions: LabelQueuePrescription[] = [
     createMockPrescription({
       id: "RX-001",
+      prescriptionId: "PR-001",
       patientId: "P-001",
       patientName: "John Doe",
-      prescriberName: "Dr. Smith",
-      medicineCount: 2,
+      itemCount: 2,
+      grandTotal: 32.5,
     }),
     createMockPrescription({
       id: "RX-002",
+      prescriptionId: "PR-002",
       patientId: "P-002",
       patientName: "Jane Smith",
-      prescriberName: "Dr. Adams",
-      medicineCount: 1,
+      itemCount: 1,
+      grandTotal: 18,
     }),
   ];
 
@@ -84,7 +86,7 @@ describe("LabelQueueList", () => {
     );
 
     expect(
-      screen.getByText("No prescriptions ready for labels")
+      screen.getByText("No dispenses ready for labels")
     ).toBeInTheDocument();
   });
 
@@ -98,13 +100,15 @@ describe("LabelQueueList", () => {
       />
     );
 
-    expect(screen.getByText("RX-001")).toBeInTheDocument();
+    expect(screen.getByText("Dispense ID: RX-001")).toBeInTheDocument();
+    expect(screen.getByText("Prescription ID: PR-001")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
-    expect(screen.getByText("2 medication(s)")).toBeInTheDocument();
+    expect(screen.getByText("2 item(s)")).toBeInTheDocument();
 
-    expect(screen.getByText("RX-002")).toBeInTheDocument();
+    expect(screen.getByText("Dispense ID: RX-002")).toBeInTheDocument();
+    expect(screen.getByText("Prescription ID: PR-002")).toBeInTheDocument();
     expect(screen.getByText("Jane Smith")).toBeInTheDocument();
-    expect(screen.getByText("1 medication(s)")).toBeInTheDocument();
+    expect(screen.getByText("1 item(s)")).toBeInTheDocument();
   });
 
   it("calls onSelect when a prescription is clicked", () => {
@@ -124,7 +128,7 @@ describe("LabelQueueList", () => {
     fireEvent.click(firstButton);
 
     expect(mockOnSelect).toHaveBeenCalledTimes(1);
-    expect(mockOnSelect).toHaveBeenCalledWith("RX-001");
+    expect(mockOnSelect).toHaveBeenCalledWith("RX-001", "P-001");
   });
 
   it("applies active styling when selectedId matches", () => {

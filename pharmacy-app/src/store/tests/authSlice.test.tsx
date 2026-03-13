@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { configureStore, type AnyAction } from "@reduxjs/toolkit";
+import { NETWORK_ERROR_MESSAGE } from "@utils/httpError";
 import type { UserRole } from "../auth/authtype";
 
 // ---- Mocks (declare first, then import SUT) ----
@@ -109,13 +110,42 @@ describe("authSlice - end-to-end + reducer coverage", () => {
     it("rejected → sets status=failed, error='Incorrect username or password', clears user/token", async () => {
       const store = makeStore();
 
-      loginApiMock.mockRejectedValue(new Error("Network down"));
+      loginApiMock.mockRejectedValue({
+        code: "ERR_NETWORK",
+        message: "Network Error",
+        request: {},
+      });
 
       const resultAction = await store.dispatch(
         loginUser({ username: "bob", password: "wrong" })
       );
 
-      // Thunk catch path -> rejectWithValue("Incorrect username or password")
+      expect(resultAction.type).toBe(loginUser.rejected.type);
+      expect(resultAction.payload).toBe(NETWORK_ERROR_MESSAGE);
+
+      const state = store.getState().auth;
+      expect(state.status).toBe("failed");
+      expect(state.error).toBe(NETWORK_ERROR_MESSAGE);
+      expect(state.accessToken).toBeNull();
+      expect(state.user).toBeNull();
+    });
+
+    it("rejected with unauthorized response -> keeps invalid credentials message", async () => {
+      const store = makeStore();
+
+      loginApiMock.mockRejectedValue({
+        response: {
+          status: 401,
+          data: {
+            title: "Unauthorized",
+          },
+        },
+      });
+
+      const resultAction = await store.dispatch(
+        loginUser({ username: "bob", password: "wrong" })
+      );
+
       expect(resultAction.type).toBe(loginUser.rejected.type);
       expect(resultAction.payload).toBe("Incorrect username or password");
 

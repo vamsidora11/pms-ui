@@ -2,7 +2,7 @@
 //
 // Types that map to/from the real backend DTOs.
 // DispenseItem / DispenseStatus are removed — use DispenseSummaryDto from @api/dispense.
-// InventoryItem / MedicineGroup / RestockRequest remain for the inventory UI.
+// InventoryItem / MedicineGroup remain for the inventory UI.
 //
 
 // ── Inventory ─────────────────────────────────────────────────────────────────
@@ -15,7 +15,8 @@ export type InventoryStatus =
 
 export interface InventoryItem {
   id:            string; // lot ID
-  drugName:      string; // productId until product names are joined
+  productId:     string;
+  drugName:      string;
   batchNumber:   string; // lot.lotNumber
   strength:      string;
   category:      string;
@@ -44,30 +45,16 @@ export interface MedicineGroup {
 }
 
 // ── Restock Requests ──────────────────────────────────────────────────────────
-// Used only by the Restock Requests table UI.
-// After wiring: maps from InventoryLotDto (status = "Pending").
 
-export type RestockPriority = "Low" | "Medium" | "High" | "Critical";
-export type RestockStatus   = "Pending" | "Approved" | "Rejected" | "Completed";
-
-export interface RestockRequest {
-  id:                string;
-  drugName:          string;
-  batchNumber:       string;
-  requestedQuantity: number;
-  currentStock:      number;
-  reason:            string;
-  priority:          RestockPriority;
-  status:            RestockStatus;
-  requestedBy:       string;
-  requestedAt:       Date;
-  approvedBy?:       string;
-  approvedAt?:       Date;
-  notes?:            string;
+export interface RestockProduct {
+  id: string;
+  name: string;
+  strength: string;
+  form: string;
+  manufacturer: string;
+  totalQuantityAvailable: number;
 }
 
 export interface NewRestockRequestForm {
   quantity: string;
-  reason:   string;
-  priority: RestockPriority;
 }

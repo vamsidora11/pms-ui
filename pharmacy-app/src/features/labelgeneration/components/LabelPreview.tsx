@@ -55,13 +55,13 @@ export function LabelPreview({
       <div className="p-6">
         {!selected && !loading && !error && (
           <div className="text-center py-12 text-gray-500">
-            Select a prescription to preview labels
+            Select a dispense to preview labels
           </div>
         )}
 
         {loading && (
           <div className="text-center py-12 text-gray-500">
-            Loading prescription...
+            Loading label details...
           </div>
         )}
 
@@ -71,9 +71,9 @@ export function LabelPreview({
 
         {!loading &&
           selected &&
-          selected.medicines.map((med) => (
+          selected.items.map((med) => (
             <MedicationLabelCard
-              key={med.prescriptionMedicineId}
+              key={med.prescriptionLineId}
               prescription={selected}
               medicine={med}
             />

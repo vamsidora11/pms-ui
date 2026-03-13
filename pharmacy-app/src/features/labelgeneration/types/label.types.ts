@@ -4,13 +4,13 @@
 
 export interface LabelQueuePrescription {
   id: string;
+  prescriptionId: string;
   patientId: string;
   patientName: string;
-  prescriberName: string;
-  createdAt: string;
-  expiresAt: string;
+  dispenseDate: string;
   status: string;
-  medicineCount: number;
+  itemCount: number;
+  grandTotal: number;
 }
 
 /* ======================================
@@ -18,24 +18,36 @@ export interface LabelQueuePrescription {
 ====================================== */
 
 export interface LabelMedicine {
-  prescriptionMedicineId: string;
-  name: string;
-  strength: string;
-  prescribedQuantity: number;
-  instruction: string;
+  prescriptionLineId: string;
+  productId: string;
+  productName: string;
   frequency: string;
+  instructions: string;
+  refillNumber: number;
+  quantityDispensed: number;
+  isManualAdjustment: boolean;
+  lotsUsed: {
+    lotId: string;
+    quantity: number;
+    expiry: string;
+  }[];
+  pricing: {
+    unitPrice: number;
+    total: number;
+    insurancePaid: number;
+    patientPayable: number;
+  };
 }
 
 export interface LabelPrescriptionDetails {
-  id: string;
+  dispenseId: string;
+  prescriptionId: string;
   patientId: string;
   patientName: string;
-  prescriber: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-  medicines: LabelMedicine[];
+  dispenseDate: string;
+  status: string;
+  pharmacistId: string;
+  items: LabelMedicine[];
 }
 
 /* ======================================

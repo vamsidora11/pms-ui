@@ -12,15 +12,13 @@ import {
   type InventoryLotDto,
   type RequestInventoryLotPayload,
 } from "@api/inventory";
-import type { InventoryItem, NewRestockRequestForm } from "../technician.types";
+import type { NewRestockRequestForm, RestockProduct } from "../technician.types";
 
 // ── Re-export so callers can use InventoryLotDto directly ────────────────────
 export type { InventoryLotDto as RestockLotDto };
 
 const DEFAULT_FORM: NewRestockRequestForm = {
   quantity: "",
-  reason:   "",
-  priority: "Medium",
 };
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -31,39 +29,31 @@ export function useRestockRequests() {
   // Submitted lots returned by the backend (status = "Pending")
   const [submittedLots, setSubmittedLots] = useState<InventoryLotDto[]>([]);
 
-  const [selectedItem, setSelectedItem]   = useState<InventoryItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<RestockProduct | null>(null);
   const [isDialogOpen, setIsDialogOpen]   = useState(false);
   const [form, setForm]                   = useState<NewRestockRequestForm>(DEFAULT_FORM);
   const [isSubmitting, setIsSubmitting]   = useState(false);
 
   // ── Open / close dialog ───────────────────────────────────────────────────
-  const openRestockDialog = useCallback((item: InventoryItem) => {
-    setSelectedItem(item);
+  const openRestockDialog = useCallback((product: RestockProduct) => {
+    setSelectedProduct(product);
     setForm(DEFAULT_FORM);
     setIsDialogOpen(true);
   }, []);
 
   const closeRestockDialog = useCallback(() => {
     setIsDialogOpen(false);
-    setSelectedItem(null);
+    setSelectedProduct(null);
     setForm(DEFAULT_FORM);
   }, []);
 
   // ── Submit — POST /api/inventory/lots/request ─────────────────────────────
-  // Maps InventoryItem (frontend) → RequestInventoryLotRequest (backend)
-  //
-  // Field mapping:
-  //   selectedItem.id         → productId   (InventoryItem.id IS the productId)
-  //   selectedItem.batchNumber → lotNumber
-  //   selectedItem.expiryDate  → expiry (ISO string)
-  //   form.quantity            → requestedQuantity
-  //
   const handleCreateRequest = useCallback(async () => {
-    if (!selectedItem) return;
+    if (!selectedProduct) return;
 
     // ── Validation ─────────────────────────────────────────────────────────
-    if (!form.quantity || !form.reason) {
-      showToast("error", "Missing Fields", "Please fill in all required fields.");
+    if (!form.quantity) {
+      showToast("error", "Missing Quantity", "Please enter a requested quantity.");
       return;
     }
 
@@ -73,25 +63,21 @@ export function useRestockRequests() {
       return;
     }
 
-    // ── Build payload ──────────────────────────────────────────────────────
-    // Backend expects: { productId, lotNumber, expiry (ISO), requestedQuantity }
     const payload: RequestInventoryLotPayload = {
-      productId:         selectedItem.id,
-      lotNumber:         selectedItem.batchNumber,
-      expiry:            new Date(selectedItem.expiryDate).toISOString(),
+      productId:         selectedProduct.id,
       requestedQuantity: qty,
     };
 
     setIsSubmitting(true);
-    closeRestockDialog();
 
     try {
       const created = await requestInventoryLot(payload);
       setSubmittedLots((prev) => [created, ...prev]);
+      closeRestockDialog();
       showToast(
         "success",
         "Request Submitted",
-        `Restock request for ${selectedItem.drugName} submitted — pending manager approval.`
+        `Restock request for ${selectedProduct.name} submitted.`
       );
     } catch (error) {
       showToast(
@@ -99,15 +85,15 @@ export function useRestockRequests() {
         "Submission Failed",
         "Could not submit the restock request. Please try again."
       );
-      logger.error("handleCreateRequest failed", { item: selectedItem.id, error });
+      logger.error("handleCreateRequest failed", { item: selectedProduct.id, error });
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedItem, form, showToast, closeRestockDialog]);
+  }, [closeRestockDialog, form.quantity, selectedProduct, showToast]);
 
   return {
     submittedLots,
-    selectedItem,
+    selectedProduct,
     isDialogOpen,
     form,
     setForm,

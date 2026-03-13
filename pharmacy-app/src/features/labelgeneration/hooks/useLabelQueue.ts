@@ -1,5 +1,6 @@
 // src/features/labels/hooks/useLabelQueue.ts
 import { useCallback, useEffect, useRef, useState } from "react";
+import { extractApiError } from "@utils/httpError";
 import type { LabelQueuePrescription } from "@labels/types/label.types";
 import { getLabelQueue } from "@api/label";
 
@@ -32,9 +33,9 @@ export function useLabelQueue(): UseLabelQueueResult {
       const res = await getLabelQueue();
       if (!mountedRef.current) return;
       setPrescriptions(res.items ?? []);
-    } catch {
+    } catch (error) {
       if (!mountedRef.current) return;
-      setError("Failed to load label queue. Please try again.");
+      setError(extractApiError(error) || "Failed to load label queue. Please try again.");
     } finally {
       if (mountedRef.current) {
         setLoading(false);

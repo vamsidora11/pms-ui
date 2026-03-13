@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { searchInventory } from "../inventory";
+import { getInventoryProducts, searchInventory } from "../inventory";
 
 // --- Mocks ---
 vi.mock("../axiosInstance", () => {
@@ -14,7 +14,8 @@ vi.mock("../axiosInstance", () => {
 vi.mock("../endpoints", () => {
   return {
     ENDPOINTS: {
-      products: "/api/products",
+      products: "/api/products/search",
+      inventoryProducts: "/api/inventory/products",
     },
   };
 });
@@ -34,6 +35,64 @@ vi.mock("@utils/logger/logger", () => {
 import api from "../axiosInstance";
 import { ENDPOINTS } from "../endpoints";
 import { logger } from "@utils/logger/logger";
+
+describe("getInventoryProducts", () => {
+  const apiGet = api.get as unknown as ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("calls the inventory products endpoint with server-side query params", async () => {
+    apiGet.mockResolvedValueOnce({
+      data: {
+        items: [],
+        pageSize: 20,
+        totalCount: 0,
+      },
+    });
+
+    await getInventoryProducts({
+      name: "amo",
+      manufacturer: "Pfizer",
+      isActive: true,
+      sortBy: "name",
+      sortDirection: "asc",
+      pageNumber: 2,
+      pageSize: 20,
+    });
+
+    expect(apiGet).toHaveBeenCalledTimes(1);
+    expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.inventoryProducts, {
+      params: {
+        name: "amo",
+        manufacturer: "Pfizer",
+        isActive: true,
+        sortBy: "name",
+        sortDirection: "asc",
+        pageNumber: 2,
+        pageSize: 20,
+      },
+    });
+  });
+
+  it("normalizes missing items to an empty page", async () => {
+    apiGet.mockResolvedValueOnce({
+      data: {
+        pageSize: 20,
+        totalCount: 7,
+      },
+    });
+
+    const result = await getInventoryProducts({ pageSize: 20, pageNumber: 1 });
+
+    expect(result).toEqual({
+      items: [],
+      pageSize: 20,
+      totalCount: 7,
+    });
+  });
+});
 
 describe("searchInventory", () => {
   const apiGet = api.get as unknown as ReturnType<typeof vi.fn>;

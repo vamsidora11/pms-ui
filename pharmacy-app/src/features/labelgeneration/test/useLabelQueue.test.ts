@@ -54,9 +54,7 @@ describe("useLabelQueue", () => {
     });
 
     expect(result.current.prescriptions).toEqual([]);
-    expect(result.current.error).toBe(
-      "Failed to load label queue. Please try again."
-    );
+    expect(result.current.error).toBe("API error");
   });
 
   it("should refresh manually", async () => {

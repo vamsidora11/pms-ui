@@ -6,8 +6,8 @@ import type { LabelPrescriptionDetails } from "@labels/types/label.types";
 /* ---------------- MOCK CHILD COMPONENTS ---------------- */
 
 vi.mock("@labels/components/LabelQueueList", () => ({
-  LabelQueueList: ({ onSelect }: { onSelect: (id: string) => void }) => (
-    <button onClick={() => onSelect("RX-001")} data-testid="select-btn">
+  LabelQueueList: ({ onSelect }: { onSelect: (dispenseId: string, patientId: string) => void }) => (
+    <button onClick={() => onSelect("RX-001", "P-001")} data-testid="select-btn">
       Select RX
     </button>
   ),
@@ -47,15 +47,14 @@ vi.mock("@labels/hooks/useLabelQueue", () => ({
 vi.mock("@labels/hooks/useLabelPrescriptionDetails", () => ({
   useLabelPrescriptionDetails: () => ({
     selected: {
-  id: "RX-001",
+  dispenseId: "DSP-001",
+  prescriptionId: "RX-001",
   patientId: "P-001",
   patientName: "John Doe",
-  createdAt: "2024-01-01",
-  prescriber: {
-    id: "DR-001",
-    name: "Dr. Smith",
-  },
-  medicines: [],
+  dispenseDate: "2024-01-01",
+  status: "PaymentProcessed",
+  pharmacistId: "PH-001",
+  items: [],
 } satisfies LabelPrescriptionDetails,
 
     loading: false,
@@ -83,7 +82,7 @@ describe("LabelGenerationPage", () => {
 
     fireEvent.click(screen.getByTestId("select-btn"));
 
-    expect(mockSelectById).toHaveBeenCalledWith("RX-001");
+    expect(mockSelectById).toHaveBeenCalledWith("RX-001", "P-001");
   });
 
   it("shows alert if trying to print with no labels in DOM", () => {

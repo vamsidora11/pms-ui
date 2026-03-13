@@ -1,6 +1,7 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
 import { extractApiError } from "@utils/httpError";
+import type { PrescriptionListResponseDto } from "./prescription.dto";
 import type {
   CreatePatientRequest,
   PatientDetailsDto,
@@ -89,6 +90,25 @@ export const getPatientById = async (
     console.error("Fetching patient details failed:", error);
     return undefined;
   }
+};
+
+export const getPatientPrescriptions = async (
+  patientId: string,
+  opts?: { pageNumber?: number; pageSize?: number; signal?: AbortSignal },
+): Promise<PrescriptionListResponseDto> => {
+  const normalizedPatientId = patientId.trim();
+  const pageNumber = opts?.pageNumber ?? 1;
+  const pageSize = opts?.pageSize ?? 10;
+
+  const response = await api.get(ENDPOINTS.prescriptionsByPatient(normalizedPatientId), {
+    params: {
+      pageNumber,
+      pageSize,
+    },
+    signal: opts?.signal,
+  });
+
+  return response.data as PrescriptionListResponseDto;
 };
 
 export const createPatient = async (

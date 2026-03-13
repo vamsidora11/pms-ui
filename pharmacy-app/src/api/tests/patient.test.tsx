@@ -4,6 +4,7 @@ import {
   createPatient,
   getPatientById,
   getPatientDetails,
+  getPatientPrescriptions,
   searchPatients,
   updatePatient,
 } from "../patient";
@@ -20,6 +21,7 @@ vi.mock("../endpoints", () => ({
   ENDPOINTS: {
     patientSearch: "/api/patients/search",
     patients: "/api/patients",
+    prescriptionsByPatient: (patientId: string) => `/api/prescriptions/patient/${patientId}`,
   },
 }));
 
@@ -115,6 +117,31 @@ describe("patient API", () => {
 
       await expect(getPatientDetails("p-1")).resolves.toEqual(patient);
       expect(apiGet).toHaveBeenCalledWith(`${ENDPOINTS.patients}/p-1`, {
+        signal: undefined,
+      });
+    });
+  });
+
+  describe("getPatientPrescriptions", () => {
+    it("requests /api/prescriptions/patient/{id} with page params", async () => {
+      const response = {
+        items: [],
+        pageNumber: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
+
+      apiGet.mockResolvedValueOnce({ data: response } as never);
+
+      await expect(getPatientPrescriptions("p-1")).resolves.toEqual(response);
+      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.prescriptionsByPatient("p-1"), {
+        params: {
+          pageNumber: 1,
+          pageSize: 10,
+        },
         signal: undefined,
       });
     });

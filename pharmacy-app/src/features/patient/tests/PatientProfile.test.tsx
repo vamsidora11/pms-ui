@@ -16,13 +16,8 @@ vi.mock('@api/patient', () => {
   return {
     createPatient: vi.fn(),
     getPatientDetails: vi.fn(),
+    getPatientPrescriptions: vi.fn(),
     searchPatients: vi.fn(),
-  };
-});
-
-vi.mock('@api/prescription.api', () => {
-  return {
-    getAllPrescriptions: vi.fn(),
   };
 });
 
@@ -37,7 +32,7 @@ vi.mock('../components/addpatient', () => ({
   default: (props: { onSave: (req: { some: string }) => void; onClose: () => void }) => (
     <div>
       <div>AddPatientModal</div>
-      <button data-testid="add-save" onClick={() => props.onSave({ some: 'request' })}>save</button>
+      <button data-testid="add-save" onClick={() => void Promise.resolve(props.onSave({ some: 'request' })).catch(() => {})}>save</button>
       <button data-testid="add-close" onClick={() => props.onClose()}>close</button>
     </div>
   ),
@@ -229,15 +224,15 @@ describe('PatientProfiles', () => {
     await waitFor(() => expect(screen.queryByText('AddPatientModal')).not.toBeInTheDocument());
   });
 
-  it('AddPatientModal onSave success: creates patient, refreshes list, selects new patient, closes', async () => {
+  it('AddPatientModal onSave success: creates patient, loads created patient, focuses directory, and closes', async () => {
     const user = userEvent.setup();
     const dir = setDirectoryReturn(makeDir({ debouncedSearch: '  john ', patients: [{ id: 'x' }]}));
     const det = setDetailsReturn(makeDetails());
     setRxReturn(makeRx());
 
     (patientApi.createPatient as Mock).mockResolvedValue({ patientId: 'p-2' });
-    const refreshed = [{ id: 'p-2', fullName: 'P 2' }];
-    (patientApi.searchPatients as Mock).mockResolvedValue(refreshed);
+    const createdPatient = { id: 'p-2', fullName: 'P 2', phone: '999' };
+    (patientApi.getPatientDetails as Mock).mockResolvedValue(createdPatient);
 
     render(<PatientProfiles />);
     await user.click(screen.getByRole('button', { name: /Add New Patient/i }));
@@ -246,9 +241,10 @@ describe('PatientProfiles', () => {
     await user.click(screen.getByTestId('add-save'));
 
     await waitFor(() => expect(patientApi.createPatient).toHaveBeenCalledTimes(1));
-    expect(patientApi.searchPatients).toHaveBeenCalledWith('john'); // trimmed
-    expect(dir.setPatients).toHaveBeenCalledWith(refreshed);
-    expect(det.selectPatient).toHaveBeenCalledWith('p-2');
+    expect(patientApi.getPatientDetails).toHaveBeenCalledWith('p-2');
+    expect(dir.setSearchTerm).toHaveBeenCalledWith('P 2');
+    expect(dir.setPatients).toHaveBeenCalledWith([{ id: 'p-2', fullName: 'P 2', phone: '999' }]);
+    expect(det.setSelectedPatient).toHaveBeenCalledWith(createdPatient);
 
     await waitFor(() => expect(screen.queryByText('AddPatientModal')).not.toBeInTheDocument());
   });

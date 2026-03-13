@@ -29,34 +29,71 @@ export function MedicationLabelCard({ prescription, medicine }: Props) {
         </div>
 
         <div>
-          <div className="text-xs">RX #</div>
-          <div>{prescription.id}</div>
+          <div className="text-xs">DISPENSE #</div>
+          <div>{prescription.dispenseId}</div>
         </div>
 
         <div>
           <div className="text-xs">DATE</div>
-          <div>{formatDate(prescription.createdAt)}</div>
+          <div>{formatDate(prescription.dispenseDate)}</div>
         </div>
 
         <div>
-          <div className="text-xs">DOCTOR</div>
-          <div>{prescription.prescriber.name}</div>
+          <div className="text-xs">PRESCRIPTION #</div>
+          <div>{prescription.prescriptionId}</div>
+        </div>
+
+        <div>
+          <div className="text-xs">STATUS</div>
+          <div>{prescription.status}</div>
+        </div>
+
+        <div>
+          <div className="text-xs">PHARMACIST</div>
+          <div>{prescription.pharmacistId}</div>
         </div>
       </div>
 
       {/* Medication */}
       <div className="mb-4">
-        <div className="font-semibold">
-          {medicine.name} {medicine.strength}
-        </div>
+        <div className="font-semibold">{medicine.productName}</div>
 
-        <div className="mb-2">QTY: {medicine.prescribedQuantity}</div>
+        <div className="mb-2">QTY: {medicine.quantityDispensed}</div>
+        <div className="mb-2">Refill: {medicine.refillNumber}</div>
         <div className="mb-2">Frequency: {getFrequencyLabel(medicine.frequency)}</div>
 
         <div className="bg-yellow-50 border border-yellow-300 rounded p-3">
           <div className="font-semibold">DIRECTIONS:</div>
-          <div>{medicine.instruction}</div>
+          <div>{medicine.instructions}</div>
         </div>
+      </div>
+
+      {medicine.lotsUsed.length > 0 && (
+        <div className="border-t border-gray-300 pt-4 mb-4">
+          <div className="font-semibold mb-2">LOT DETAILS</div>
+          <ul className="space-y-1 text-sm">
+            {medicine.lotsUsed.map((lot) => (
+              <li key={lot.lotId}>
+                {lot.lotId}: {lot.quantity} unit(s), exp {formatDate(lot.expiry)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="border-t border-gray-300 pt-4 mb-4">
+        <div className="font-semibold mb-2">PRICING</div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>Unit Price: ${medicine.pricing.unitPrice.toFixed(2)}</div>
+          <div>Total: ${medicine.pricing.total.toFixed(2)}</div>
+          <div>Insurance: ${medicine.pricing.insurancePaid.toFixed(2)}</div>
+          <div>Patient Payable: ${medicine.pricing.patientPayable.toFixed(2)}</div>
+        </div>
+        {medicine.isManualAdjustment && (
+          <div className="mt-2 text-xs font-semibold text-amber-700">
+            Manual adjustment applied
+          </div>
+        )}
       </div>
 
       {/* Warnings */}

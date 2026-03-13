@@ -8,6 +8,7 @@ import type { AppDispatch } from "store";
 
 import { useToast } from "@components/common/Toast/useToast";
 import { getDashboardRoute } from "../../../routes/roleRedirect";
+import { extractAuthError } from "@store/auth/authtype";
 import type { UserRole } from "@store/auth/authtype";
 
 type TokenPayload = {
@@ -20,29 +21,6 @@ type LoginFlowDeps = {
   /** For testability: allow injecting route mapping */
   getRoute?: (role: UserRole) => string;
 };
-
-function normalizeAuthError(err: unknown): string {
-  // If backend returns string via rejectWithValue / unwrap => often a string
-  if (typeof err === "string") return err;
-
-  // Common shapes: { message }, { error }, Axios style, etc.
-  if (err && typeof err === "object") {
-    const obj = err as {
-      message?: string;
-      error?: string;
-      response?: { data?: string | { message?: string } };
-    };
-    if (typeof obj.message === "string") return obj.message;
-    if (typeof obj.error === "string") return obj.error;
-    if (typeof obj.response?.data === "string") return obj.response.data;
-    if (typeof obj.response?.data === "object") {
-      const dataObj = obj.response.data as { message?: string };
-      if (typeof dataObj.message === "string") return dataObj.message;
-    }
-  }
-
-  return "Incorrect username or password";
-}
 
 export function useLoginFlow(deps?: LoginFlowDeps) {
   const dispatch = useDispatch<AppDispatch>();
@@ -76,9 +54,6 @@ export function useLoginFlow(deps?: LoginFlowDeps) {
         }
 
         const payload = decode(res.accessToken);
-        console.log("DECODED TOKEN:", payload);
-console.log("ROLE VALUE:", payload.role);
-console.log("TYPE:", typeof payload.role);
 
         if (!payload?.role) {
           setErrorMessage("Login failed: Invalid token payload.");
@@ -89,7 +64,7 @@ console.log("TYPE:", typeof payload.role);
         navigate(routeFor(payload.role));
         return { ok: true as const };
       } catch (err: unknown) {
-        setErrorMessage(normalizeAuthError(err));
+        setErrorMessage(extractAuthError(err));
         return { ok: false as const };
       }
     },

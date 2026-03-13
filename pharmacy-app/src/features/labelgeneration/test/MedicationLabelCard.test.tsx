@@ -26,15 +26,14 @@ function createMockPrescription(
   overrides?: Partial<LabelPrescriptionDetails>
 ): LabelPrescriptionDetails {
   return {
-    id: "RX-001",
+    dispenseId: "DSP-001",
+    prescriptionId: "RX-001",
     patientId: "P-001",
     patientName: "John Doe",
-    createdAt: "2024-01-01T00:00:00Z",
-    prescriber: {
-      id: "DR-001",
-      name: "Dr. Smith",
-    },
-    medicines: [],
+    dispenseDate: "2024-01-01T00:00:00Z",
+    status: "PaymentProcessed",
+    pharmacistId: "PH-001",
+    items: [],
     ...overrides,
   };
 }
@@ -43,12 +42,21 @@ function createMockMedicine(
   overrides?: Partial<LabelMedicine>
 ): LabelMedicine {
   return {
-    prescriptionMedicineId: "MED-001",
-    name: "Paracetamol",
-    strength: "500mg",
-    prescribedQuantity: 10,
+    prescriptionLineId: "MED-001",
+    productId: "PROD-001",
+    productName: "Paracetamol",
     frequency: "BID",
-    instruction: "Take after meals",
+    instructions: "Take after meals",
+    refillNumber: 1,
+    quantityDispensed: 10,
+    isManualAdjustment: false,
+    lotsUsed: [],
+    pricing: {
+      unitPrice: 1.5,
+      total: 15,
+      insurancePaid: 5,
+      patientPayable: 10,
+    },
     ...overrides,
   };
 }
@@ -88,10 +96,10 @@ describe("MedicationLabelCard - High Coverage", () => {
     expect(screen.getByText("John Doe")).toBeInTheDocument();
     expect(screen.getByText("RX-001")).toBeInTheDocument();
     expect(screen.getByText("01-Jan-2024")).toBeInTheDocument();
-    expect(screen.getByText("Dr. Smith")).toBeInTheDocument();
+    expect(screen.getByText("PH-001")).toBeInTheDocument();
   });
 
-  it("renders medicine name and strength", () => {
+  it("renders medicine name", () => {
     render(
       <MedicationLabelCard
         prescription={createMockPrescription()}
@@ -99,7 +107,7 @@ describe("MedicationLabelCard - High Coverage", () => {
       />
     );
 
-    expect(screen.getByText("Paracetamol 500mg")).toBeInTheDocument();
+    expect(screen.getByText("Paracetamol")).toBeInTheDocument();
   });
 
   it("renders quantity correctly", () => {
@@ -172,13 +180,7 @@ describe("MedicationLabelCard - High Coverage", () => {
       />
     );
 
-    expect(
-      screen.getByText(/Pharmacist: Dr\. Jane Smith/i)
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(/License: PH-12345/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Pharmacist: Dr\. Jane Smith/i)).toBeInTheDocument();
   });
 
   it("renders correctly with different medicine data", () => {
@@ -188,16 +190,15 @@ describe("MedicationLabelCard - High Coverage", () => {
           patientName: "Alice Johnson",
         })}
         medicine={createMockMedicine({
-          name: "Ibuprofen",
-          strength: "200mg",
-          prescribedQuantity: 20,
-          instruction: "After food",
+          productName: "Ibuprofen",
+          quantityDispensed: 20,
+          instructions: "After food",
         })}
       />
     );
 
     expect(screen.getByText("Alice Johnson")).toBeInTheDocument();
-    expect(screen.getByText("Ibuprofen 200mg")).toBeInTheDocument();
+    expect(screen.getByText("Ibuprofen")).toBeInTheDocument();
     expect(screen.getByText("QTY: 20")).toBeInTheDocument();
     expect(screen.getByText("After food")).toBeInTheDocument();
   });

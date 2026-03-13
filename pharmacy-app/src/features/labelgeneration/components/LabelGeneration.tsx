@@ -254,7 +254,7 @@ export default function LabelGenerationPage() {
           prescriptions={prescriptions}
           loading={queueLoading}
           error={queueError}
-          selectedId={selected?.id ?? null}
+          selectedId={selected?.dispenseId ?? null}
           onSelect={selectById}
         />
 

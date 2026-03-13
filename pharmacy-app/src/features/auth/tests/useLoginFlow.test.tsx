@@ -1,6 +1,7 @@
 // src/features/auth/tests/useLoginFlow.test.tsx
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { NETWORK_ERROR_MESSAGE } from "@utils/httpError";
 
 // 🚧 Guard mocks: prevent real store/slice/persist from executing during unit tests
 vi.mock("@store/auth/authSlice", () => ({
@@ -171,6 +172,32 @@ describe("useLoginFlow (vitest)", () => {
 
   it("error normalization: unknown shape → default message", async () => {
     mockDispatchUnwrapReject({ foo: "bar" });
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.login("user", "pass");
+    });
+
+    expect(result.current.errorMessage).toBe("Request failed");
+  });
+
+  it("error normalization: network failure -> connection message", async () => {
+    mockDispatchUnwrapReject({
+      code: "ERR_NETWORK",
+      message: "Network Error",
+      request: {},
+    });
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.login("user", "pass");
+    });
+
+    expect(result.current.errorMessage).toBe(NETWORK_ERROR_MESSAGE);
+  });
+
+  it("error normalization: unauthorized generic response -> invalid credentials", async () => {
+    mockDispatchUnwrapReject({ response: { status: 401, data: { title: "Unauthorized" } } });
     const { result } = renderHook(() => useLoginFlow());
 
     await act(async () => {

@@ -8,8 +8,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PatientDetailsPanel from "../components/PatientDetailsPanel";
-import type { PatientDetailsDto,  } from "@patient/types/patienttype";
-import type {PrescriptionSummaryDto} from "@prescription/types/prescription.types"
+import type { PatientDetailsDto } from "@patient/types/patienttype";
+import type { PrescriptionSummary } from "@prescription/domain/model";
 describe("PatientDetailsPanel", () => {
   const mockPatient: PatientDetailsDto = {
     id: "p1",
@@ -22,25 +22,26 @@ describe("PatientDetailsPanel", () => {
     allergies: ["Peanuts", "Dust"],
   };
 
-  const mockPrescriptions: PrescriptionSummaryDto[] = [
+  const mockPrescriptions: PrescriptionSummary[] = [
     {
       id: "rx1",
       patientId: "p1",
       patientName: "John Doe",
       prescriberName: "Dr. Smith",
-      createdAt: "2026-02-11T10:00:00Z",
-      expiresAt: "2026-03-11T10:00:00Z",
+      createdAt: new Date("2026-02-11T10:00:00Z"),
       status: "Active",
       medicineCount: 2,
-      validationSummary: {
-        totalIssues: 0,
-        highSeverityCount: 0,
-        moderateCount: 0,
-        lowCount: 0,
-        requiresReview: false,
-      },
     },
   ];
+
+  const baseProps = {
+    prescriptionsLoading: false,
+    prescriptionsError: null,
+    prescriptionsHasMore: false,
+    prescriptionsLoadingMore: false,
+    onLoadMorePrescriptions: vi.fn(),
+    onClickUpdate: vi.fn(),
+  };
 
   it("renders empty state when no patient is selected and not loading", () => {
     render(
@@ -49,7 +50,7 @@ describe("PatientDetailsPanel", () => {
         detailsLoading={false}
         detailsError={null}
         prescriptions={[]}
-        onClickUpdate={vi.fn()}
+        {...baseProps}
       />
     );
 
@@ -64,7 +65,7 @@ describe("PatientDetailsPanel", () => {
         detailsLoading={true}
         detailsError={null}
         prescriptions={[]}
-        onClickUpdate={vi.fn()}
+        {...baseProps}
       />
     );
 
@@ -79,7 +80,7 @@ describe("PatientDetailsPanel", () => {
         detailsLoading={false}
         detailsError="Failed to load patient"
         prescriptions={[]}
-        onClickUpdate={vi.fn()}
+        {...baseProps}
       />
     );
 
@@ -93,7 +94,7 @@ describe("PatientDetailsPanel", () => {
         detailsLoading={false}
         detailsError={null}
         prescriptions={[]}
-        onClickUpdate={vi.fn()}
+        {...baseProps}
       />
     );
 
@@ -120,7 +121,7 @@ describe("PatientDetailsPanel", () => {
         detailsLoading={false}
         detailsError={null}
         prescriptions={mockPrescriptions}
-        onClickUpdate={vi.fn()}
+        {...baseProps}
       />
     );
 
@@ -138,7 +139,7 @@ describe("PatientDetailsPanel", () => {
         detailsLoading={false}
         detailsError={null}
         prescriptions={[]}
-        onClickUpdate={vi.fn()}
+        {...baseProps}
       />
     );
 

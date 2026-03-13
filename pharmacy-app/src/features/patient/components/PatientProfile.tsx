@@ -7,9 +7,9 @@ import UpdatePatientModal from "./updatePatient";
 import {
   createPatient,
   getPatientDetails,
+  getPatientPrescriptions,
   searchPatients,
 } from "@api/patient";
-import { getPrescriptionsByPatient } from "@api/prescription.api";
 import { mapSummaryDto } from "@prescription/domain/mapper";
 
 import type { PatientDetailsDto } from "@patient/types/patienttype";
@@ -39,7 +39,7 @@ export default function PatientProfiles() {
 
   const prescriptionsState = usePatientPrescriptions<PrescriptionSummary>(
     async (id, pageNumber, pageSize) => {
-      const result = await getPrescriptionsByPatient(id, {
+      const result = await getPatientPrescriptions(id, {
         pageNumber,
         pageSize,
       });
