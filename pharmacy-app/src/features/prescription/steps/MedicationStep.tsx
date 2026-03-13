@@ -161,9 +161,9 @@ export default function MedicationStep({
                         <div className="px-4 py-3 text-sm text-gray-500">No results</div>
                       )}
 
-                    {(results[row.uid] ?? []).map((item) => (
+                    {(results[row.uid] ?? []).map((item, index) => (
                       <button
-                        key={item.productId}
+                        key={item.productId || `${row.uid}-result-${index}`}
                         onClick={() => selectDrug(row.uid, item)}
                         className="block w-full text-left px-4 py-3 hover:bg-gray-50"
                       >

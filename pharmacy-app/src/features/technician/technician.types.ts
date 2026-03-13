@@ -56,5 +56,5 @@ export interface RestockProduct {
 }
 
 export interface NewRestockRequestForm {
-  quantity: string;
+  requestedQuantity: string;
 }

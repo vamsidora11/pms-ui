@@ -68,6 +68,17 @@ export interface InventoryProductsPageDto {
   totalCount: number;
 }
 
+export interface InventoryLotsQueryParams {
+  pageSize?: number;
+  pageNumber?: number;
+}
+
+export interface InventoryLotsPageDto {
+  items: InventoryLotDto[];
+  pageSize: number;
+  totalCount: number;
+}
+
 export interface RequestInventoryLotPayload {
   productId:         string;
   requestedQuantity: number;
@@ -138,25 +149,53 @@ export async function searchInventory(query: string): Promise<InventorySearchIte
   try {
     const res = await api.get(`${ENDPOINTS.products}`, { params: { q: query } });
     const data = Array.isArray(res.data) ? res.data : [];
-    return data.map((item: unknown): InventorySearchItem => {
+
+    return data
+      .map((item: unknown): InventorySearchItem => {
       if (typeof item !== "object" || item === null) {
         return { productId: "", name: "", strength: "", availableStock: 0 };
       }
+
       const record = item as {
-        id?:        string;
-        name?:      string;
-        strength?:  string;
+        id?: string;
+        productId?: string;
+        name?: string;
+        strength?: string;
+        availableStock?: number;
         inventory?: { totalQuantity?: number };
       };
+
       return {
-        productId:      record.id       ?? "",
-        name:           record.name     ?? "",
-        strength:       record.strength ?? "",
-        availableStock: record.inventory?.totalQuantity ?? 0,
+        productId: record.productId ?? record.id ?? "",
+        name: record.name ?? "",
+        strength: record.strength ?? "",
+        availableStock: record.availableStock ?? record.inventory?.totalQuantity ?? 0,
       };
-    });
+      })
+      .filter((item) => item.productId.trim().length > 0);
   } catch (error) {
     logger.error("Product search failed", { query, error });
+    throw error;
+  }
+}
+
+export async function getPendingInventoryLots(
+  query: InventoryLotsQueryParams = {}
+): Promise<InventoryLotsPageDto> {
+  try {
+    const res = await api.get<InventoryLotsPageDto>(ENDPOINTS.inventoryPendingLots, {
+      params: query,
+    });
+
+    return {
+      items: Array.isArray(res.data?.items) ? res.data.items : [],
+      pageSize: res.data?.pageSize ?? query.pageSize ?? 20,
+      totalCount:
+        res.data?.totalCount ??
+        (Array.isArray(res.data?.items) ? res.data.items.length : 0),
+    };
+  } catch (error) {
+    logger.error("getPendingInventoryLots failed", { query, error });
     throw error;
   }
 }

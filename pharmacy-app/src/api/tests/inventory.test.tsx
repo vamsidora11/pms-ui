@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { getInventoryProducts, searchInventory } from "../inventory";
+import {
+  getInventoryProducts,
+  getPendingInventoryLots,
+  searchInventory,
+} from "../inventory";
 
 // --- Mocks ---
 vi.mock("../axiosInstance", () => {
@@ -16,6 +20,7 @@ vi.mock("../endpoints", () => {
     ENDPOINTS: {
       products: "/api/products/search",
       inventoryProducts: "/api/inventory/products",
+      inventoryPendingLots: "/api/inventory/lots/pending",
     },
   };
 });
@@ -94,6 +99,50 @@ describe("getInventoryProducts", () => {
   });
 });
 
+describe("getPendingInventoryLots", () => {
+  const apiGet = api.get as unknown as ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("calls the pending inventory lots endpoint with paging params", async () => {
+    apiGet.mockResolvedValueOnce({
+      data: {
+        items: [],
+        pageSize: 20,
+        totalCount: 0,
+      },
+    });
+
+    await getPendingInventoryLots({ pageSize: 20, pageNumber: 1 });
+
+    expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.inventoryPendingLots, {
+      params: {
+        pageSize: 20,
+        pageNumber: 1,
+      },
+    });
+  });
+
+  it("normalizes missing items to an empty page", async () => {
+    apiGet.mockResolvedValueOnce({
+      data: {
+        pageSize: 20,
+        totalCount: 3,
+      },
+    });
+
+    const result = await getPendingInventoryLots({ pageSize: 20 });
+
+    expect(result).toEqual({
+      items: [],
+      pageSize: 20,
+      totalCount: 3,
+    });
+  });
+});
+
 describe("searchInventory", () => {
   const apiGet = api.get as unknown as ReturnType<typeof vi.fn>;
 
@@ -119,20 +168,20 @@ describe("searchInventory", () => {
     });
   });
 
-  it("maps API response items to InventorySearchItem correctly (with inventory present)", async () => {
+  it("maps API response items to InventorySearchItem correctly when backend returns productId", async () => {
     apiGet.mockResolvedValueOnce({
       data: [
         {
-          id: "prod-1",
+          productId: "prod-1",
           name: "Amoxicillin",
           strength: "500 mg",
-          inventory: { totalQuantity: 25 },
+          availableStock: 25,
         },
         {
-          id: "prod-2",
+          productId: "prod-2",
           name: "Ibuprofen",
           strength: "200 mg",
-          inventory: { totalQuantity: 0 },
+          availableStock: 0,
         },
       ],
     });
@@ -187,6 +236,34 @@ describe("searchInventory", () => {
         name: "Cetrizine",
         strength: "10 mg",
         availableStock: 0,
+      },
+    ]);
+  });
+
+  it("supports legacy id-based payloads and filters malformed rows without product identifiers", async () => {
+    apiGet.mockResolvedValueOnce({
+      data: [
+        {
+          id: "prod-legacy",
+          name: "Legacy Drug",
+          strength: "5 mg",
+          inventory: { totalQuantity: 12 },
+        },
+        {
+          name: "Broken Drug",
+          strength: "10 mg",
+        },
+      ],
+    });
+
+    const result = await searchInventory("legacy");
+
+    expect(result).toEqual([
+      {
+        productId: "prod-legacy",
+        name: "Legacy Drug",
+        strength: "5 mg",
+        availableStock: 12,
       },
     ]);
   });

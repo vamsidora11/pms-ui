@@ -8,7 +8,6 @@ import { logger } from "@utils/logger/logger";
 import type { InventoryItem } from "../technician.types";
 import {
   buildInventoryProductsQuery,
-  deriveProductStatus,
   getExpiringInventoryItems,
   isExpiringSoon,
   removeInventoryLot,
@@ -137,17 +136,21 @@ export function useInventoryProducts() {
       product.inventoryLots.some((lot) => isExpiringSoon(lot.expiry))
     ).length;
 
-    const lowStock = summaryProducts.filter(
-      (product) => deriveProductStatus(product) === "Low Stock"
-    ).length;
-
     return {
       totalItems: summaryProducts.length || totalCount,
-      lowStock,
       expiringLots: expiryData.length,
       expiringMedicines,
     };
   }, [expiryData.length, summaryProducts, totalCount]);
+
+  const productDetailsById = useMemo(
+    () =>
+      summaryProducts.reduce<Record<string, InventoryProductDto>>((acc, product) => {
+        acc[product.id] = product;
+        return acc;
+      }, {}),
+    [summaryProducts]
+  );
 
   const handleServerQueryChange = useCallback((query: ServerTableQuery) => {
     setTableQuery((prev) => (areQueriesEqual(prev, query) ? prev : query));
@@ -176,6 +179,7 @@ export function useInventoryProducts() {
     stockRows,
     expiryData,
     inventoryStats,
+    productDetailsById,
     totalCount,
     isLoading,
     tableQuery,

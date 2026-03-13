@@ -57,10 +57,12 @@ function maxSeverity(...values: Array<unknown>): ValidationSeverity {
 }
 
 function getLineId(dto: PrescriptionLineDto, index: number): string {
-  return (
-    dto.prescriptionLineId ??
-    `line:${index + 1}`
+  const candidates = [dto.id, dto.prescriptionLineId];
+  const resolved = candidates.find(
+    (value): value is string => typeof value === "string" && value.trim().length > 0
   );
+
+  return resolved ?? `line:${index + 1}`;
 }
 
 function mapLineDto(dto: PrescriptionLineDto, index: number): PrescriptionLine {

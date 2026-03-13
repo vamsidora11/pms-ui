@@ -37,7 +37,7 @@ export default function TechnicianDashboard() {
   } = useDispenseQueue();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
   // ── Table columns ─────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ export default function TechnicianDashboard() {
       filterType: "select",
       filterOptions: ["PaymentProcessed"],
       width: 185,
-      render: (value) => (
+      render: () => (
         <Badge
           label="Payment Processed"
           variant="default"

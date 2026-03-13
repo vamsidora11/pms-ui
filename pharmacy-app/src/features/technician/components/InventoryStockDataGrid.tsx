@@ -161,7 +161,7 @@ export default function InventoryStockDataGrid({
         );
       },
     },
-  ], [expandedProductIds]);
+  ], [expandedProductIds, onRequestRestock]);
 
   const renderExpandedRow = useCallback(
     (row: InventoryProductRow) => {

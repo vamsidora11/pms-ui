@@ -72,7 +72,8 @@ export interface PrescriptionLineReviewDto {
 }
 
 export interface PrescriptionLineDto {
-  prescriptionLineId: string;
+  id?: string;
+  prescriptionLineId?: string;
   productId: string;
   productName: string;
   strength: string;

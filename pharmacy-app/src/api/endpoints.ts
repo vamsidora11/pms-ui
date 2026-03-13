@@ -38,6 +38,7 @@ export const ENDPOINTS = {
     `/api/inventory/products/${productId}/lots`,
   inventoryProducts: "/api/inventory/products",
   inventoryLotRequest: "/api/inventory/lots/request",
+  inventoryPendingLots: "/api/inventory/lots/pending",
   inventoryLotsAll:    "/api/inventory/lots/all",      
   inventoryExpiring:   "/api/inventory/lots/expiring", 
 };

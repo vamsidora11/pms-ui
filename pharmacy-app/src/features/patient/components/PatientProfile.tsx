@@ -54,40 +54,52 @@ export default function PatientProfiles() {
     10,
   );
 
-  useEffect(() => {
-    const selectedId = details.selectedPatient?.id ?? null;
+  const { patients, debouncedSearch, searchTerm, setPatients, setSearchTerm, listLoading, listError } = directory;
+  const { selectedPatient, detailsLoading, detailsError, selectPatient, setSelectedPatient } = details;
+  const {
+    prescriptions,
+    prescriptionsLoading,
+    prescriptionsError,
+    hasMore,
+    loadMore,
+    prescriptionsLoadingMore,
+    reset,
+  } = prescriptionsState;
 
-    if (selectedId && !directory.patients.some((patient) => patient.id === selectedId)) {
-      details.setSelectedPatient(null);
-      prescriptionsState.reset();
+  useEffect(() => {
+    const selectedId = selectedPatient?.id ?? null;
+
+    if (selectedId && !patients.some((patient) => patient.id === selectedId)) {
+      setSelectedPatient(null);
+      reset();
     }
 
-    if (!details.selectedPatient && directory.patients.length > 0) {
-      void details.selectPatient(directory.patients[0].id);
+    if (!selectedPatient && patients.length > 0) {
+      void selectPatient(patients[0].id);
     }
   }, [
-    details.selectedPatient,
-    details.selectPatient,
-    details.setSelectedPatient,
-    directory.patients,
-    prescriptionsState.reset,
+    patients,
+    reset,
+    selectPatient,
+    selectedPatient,
+    setSelectedPatient,
   ]);
 
   const refreshPatients = async () => {
-    const refreshed = await searchPatients((directory.debouncedSearch ?? "").trim());
-    directory.setPatients(refreshed);
+    const refreshed = await searchPatients((debouncedSearch ?? "").trim());
+    setPatients(refreshed);
   };
 
   const focusDirectoryOnPatient = (patient: PatientDetailsDto) => {
-    directory.setSearchTerm(patient.fullName);
-    directory.setPatients([
+    setSearchTerm(patient.fullName);
+    setPatients([
       {
         id: patient.id,
         fullName: patient.fullName,
         phone: patient.phone,
       },
     ]);
-    details.setSelectedPatient(patient);
+    setSelectedPatient(patient);
   };
 
   return (
@@ -111,25 +123,25 @@ export default function PatientProfiles() {
 
       <div className="grid h-[calc(100vh-220px)] grid-cols-3 items-stretch gap-6">
         <PatientDirectoryPanel
-          patients={directory.patients}
-          searchTerm={directory.searchTerm}
-          onSearchTermChange={directory.setSearchTerm}
-          listLoading={directory.listLoading}
-          listError={directory.listError}
-          selectedPatientId={details.selectedPatient?.id}
-          onSelectPatient={details.selectPatient}
+          patients={patients}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          listLoading={listLoading}
+          listError={listError}
+          selectedPatientId={selectedPatient?.id}
+          onSelectPatient={selectPatient}
         />
 
         <PatientDetailsPanel
-          selectedPatient={details.selectedPatient}
-          detailsLoading={details.detailsLoading}
-          detailsError={details.detailsError}
-          prescriptions={prescriptionsState.prescriptions}
-          prescriptionsLoading={prescriptionsState.prescriptionsLoading}
-          prescriptionsError={prescriptionsState.prescriptionsError}
-          prescriptionsHasMore={prescriptionsState.hasMore}
-          onLoadMorePrescriptions={prescriptionsState.loadMore}
-          prescriptionsLoadingMore={prescriptionsState.prescriptionsLoadingMore}
+          selectedPatient={selectedPatient}
+          detailsLoading={detailsLoading}
+          detailsError={detailsError}
+          prescriptions={prescriptions}
+          prescriptionsLoading={prescriptionsLoading}
+          prescriptionsError={prescriptionsError}
+          prescriptionsHasMore={hasMore}
+          onLoadMorePrescriptions={loadMore}
+          prescriptionsLoadingMore={prescriptionsLoadingMore}
           onClickUpdate={() => setShowUpdateModal(true)}
         />
       </div>
@@ -157,12 +169,12 @@ export default function PatientProfiles() {
         />
       )}
 
-      {showUpdateModal && details.selectedPatient && (
+      {showUpdateModal && selectedPatient && (
         <UpdatePatientModal
-          patient={details.selectedPatient}
+          patient={selectedPatient}
           onClose={() => setShowUpdateModal(false)}
           onSave={async (updated: PatientDetailsDto) => {
-            details.setSelectedPatient(updated);
+            setSelectedPatient(updated);
             await refreshPatients();
             setShowUpdateModal(false);
             toast.success("Success", "Patient updated successfully.");

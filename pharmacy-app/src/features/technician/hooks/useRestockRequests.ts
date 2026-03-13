@@ -1,13 +1,8 @@
-// src/features/technician/hooks/useRestockRequests.ts
-//
-// Restock = requesting a new inventory lot via POST /api/inventory/lots/request
-// The backend's InventoryLotDto is the source of truth.
-// "RestockRequest" in the UI = a pending InventoryLot.
-//
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@components/common/Toast/useToast";
 import { logger } from "@utils/logger/logger";
 import {
+  getPendingInventoryLots,
   requestInventoryLot,
   type InventoryLotDto,
   type RequestInventoryLotPayload,
@@ -18,23 +13,55 @@ import type { NewRestockRequestForm, RestockProduct } from "../technician.types"
 export type { InventoryLotDto as RestockLotDto };
 
 const DEFAULT_FORM: NewRestockRequestForm = {
-  quantity: "",
+  requestedQuantity: "",
 };
 
-// ── Hook ─────────────────────────────────────────────────────────────────────
+const PENDING_REQUESTS_PAGE_SIZE = 20;
+
+function sortLotsByRequestedAt(lots: InventoryLotDto[]): InventoryLotDto[] {
+  return [...lots].sort(
+    (left, right) =>
+      new Date(right.workflow.requestedAt).getTime() -
+      new Date(left.workflow.requestedAt).getTime()
+  );
+}
 
 export function useRestockRequests() {
   const { showToast } = useToast();
 
-  // Submitted lots returned by the backend (status = "Pending")
-  const [submittedLots, setSubmittedLots] = useState<InventoryLotDto[]>([]);
-
+  const [restockRequests, setRestockRequests] = useState<InventoryLotDto[]>([]);
+  const [pendingRequestsTotalCount, setPendingRequestsTotalCount] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<RestockProduct | null>(null);
-  const [isDialogOpen, setIsDialogOpen]   = useState(false);
-  const [form, setForm]                   = useState<NewRestockRequestForm>(DEFAULT_FORM);
-  const [isSubmitting, setIsSubmitting]   = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [form, setForm] = useState<NewRestockRequestForm>(DEFAULT_FORM);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ── Open / close dialog ───────────────────────────────────────────────────
+  const loadRestockRequests = useCallback(async () => {
+    setIsLoadingRequests(true);
+
+    try {
+      const page = await getPendingInventoryLots({ pageSize: PENDING_REQUESTS_PAGE_SIZE });
+      setRestockRequests(sortLotsByRequestedAt(page.items));
+      setPendingRequestsTotalCount(page.totalCount);
+    } catch (error) {
+      setRestockRequests([]);
+      setPendingRequestsTotalCount(0);
+      showToast(
+        "error",
+        "Failed to Load Requests",
+        "Could not fetch restock requests."
+      );
+      logger.error("loadRestockRequests failed", { error });
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    void loadRestockRequests();
+  }, [loadRestockRequests]);
+
   const openRestockDialog = useCallback((product: RestockProduct) => {
     setSelectedProduct(product);
     setForm(DEFAULT_FORM);
@@ -47,17 +74,15 @@ export function useRestockRequests() {
     setForm(DEFAULT_FORM);
   }, []);
 
-  // ── Submit — POST /api/inventory/lots/request ─────────────────────────────
   const handleCreateRequest = useCallback(async () => {
     if (!selectedProduct) return;
 
-    // ── Validation ─────────────────────────────────────────────────────────
-    if (!form.quantity) {
+    if (!form.requestedQuantity.trim()) {
       showToast("error", "Missing Quantity", "Please enter a requested quantity.");
       return;
     }
 
-    const qty = parseInt(form.quantity, 10);
+    const qty = Number.parseInt(form.requestedQuantity, 10);
     if (isNaN(qty) || qty <= 0) {
       showToast("error", "Invalid Quantity", "Please enter a valid quantity greater than 0.");
       return;
@@ -71,8 +96,8 @@ export function useRestockRequests() {
     setIsSubmitting(true);
 
     try {
-      const created = await requestInventoryLot(payload);
-      setSubmittedLots((prev) => [created, ...prev]);
+      await requestInventoryLot(payload);
+      await loadRestockRequests();
       closeRestockDialog();
       showToast(
         "success",
@@ -85,20 +110,26 @@ export function useRestockRequests() {
         "Submission Failed",
         "Could not submit the restock request. Please try again."
       );
-      logger.error("handleCreateRequest failed", { item: selectedProduct.id, error });
+      logger.error("handleCreateRequest failed", { productId: selectedProduct.id, error });
     } finally {
       setIsSubmitting(false);
     }
-  }, [closeRestockDialog, form.quantity, selectedProduct, showToast]);
+  }, [closeRestockDialog, form.requestedQuantity, loadRestockRequests, selectedProduct, showToast]);
+
+  const pendingRequestsCount = useMemo(
+    () => pendingRequestsTotalCount,
+    [pendingRequestsTotalCount]
+  );
 
   return {
-    submittedLots,
+    restockRequests,
     selectedProduct,
     isDialogOpen,
     form,
     setForm,
+    isLoadingRequests,
     isSubmitting,
-    pendingRequestsCount: submittedLots.filter((l) => l.status === "Pending").length,
+    pendingRequestsCount,
     openRestockDialog,
     closeRestockDialog,
     handleCreateRequest,

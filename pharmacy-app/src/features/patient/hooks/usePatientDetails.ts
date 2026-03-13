@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { PatientDetailsDto } from "@patient/types/patienttype";
 
 export type GetPatientDetailsFn = (
@@ -21,7 +21,7 @@ export function usePatientDetails(getDetailsFn: GetPatientDetailsFn) {
     return "Failed to load patient details";
   };
 
-  const selectPatient = async (patientId: string) => {
+  const selectPatient = useCallback(async (patientId: string) => {
     if (!patientId) return;
     if (selectingRef.current) return;
 
@@ -40,7 +40,7 @@ export function usePatientDetails(getDetailsFn: GetPatientDetailsFn) {
       setDetailsLoading(false);
       selectingRef.current = false;
     }
-  };
+  }, [getDetailsFn]);
 
   return {
     selectedPatient,
