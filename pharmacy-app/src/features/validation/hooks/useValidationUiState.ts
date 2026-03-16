@@ -10,11 +10,48 @@ type Action =
   | { type: "CONFIRM_REJECT_LINE"; id: string }
   | { type: "SET_REASON"; key: string; value: string }
   | { type: "CLEAR_REASON"; key: string }
-  | { type: "OPEN_REJECT_ALL" }
+  | { type: "OPEN_REJECT_ALL"; force?: boolean }
   | { type: "CLOSE_REJECT_ALL" }
   | { type: "REJECT_ALL"; reason: string }
   | { type: "OPEN_ALLERGY"; alert: AllergyAlert }
   | { type: "CLOSE_ALLERGY" };
+
+function getPersistedDecision(
+  data: PrescriptionDetails | null,
+  lineId: string,
+): LineDecision | undefined {
+  const line = data?.medicines.find((item) => item.lineId === lineId);
+  if (!line) {
+    return undefined;
+  }
+
+  return line.review.status === "Approved" || line.review.status === "Rejected"
+    ? line.review.status
+    : undefined;
+}
+
+function getDraftDecision(
+  state: ValidationUIState,
+  lineId: string,
+): LineDecision | undefined {
+  return state.decisions[lineId];
+}
+
+function isPersistedLineDecision(state: ValidationUIState, lineId: string): boolean {
+  return Boolean(getPersistedDecision(state.data, lineId));
+}
+
+function hasStartedLineReview(state: ValidationUIState): boolean {
+  if (!state.data) {
+    return Object.keys(state.decisions).length > 0;
+  }
+
+  return state.data.medicines.some(
+    (line) =>
+      Boolean(getDraftDecision(state, line.lineId)) ||
+      Boolean(getPersistedDecision(state.data, line.lineId)),
+  );
+}
 
 function buildInitialDecisions(data: PrescriptionDetails): Record<string, LineDecision> {
   return data.medicines.reduce<Record<string, LineDecision>>((acc, line) => {
@@ -49,6 +86,10 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
       };
 
     case "ACCEPT_LINE": {
+      if (isPersistedLineDecision(state, action.id)) {
+        return state;
+      }
+
       const nextReasons = { ...state.reasons };
       delete nextReasons[action.id];
       return {
@@ -59,12 +100,18 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
     }
 
     case "OPEN_REJECT_LINE":
+      if (isPersistedLineDecision(state, action.id)) {
+        return state;
+      }
       return { ...state, rejectLineId: action.id };
 
     case "CLOSE_REJECT_LINE":
       return { ...state, rejectLineId: null };
 
     case "CONFIRM_REJECT_LINE":
+      if (isPersistedLineDecision(state, action.id)) {
+        return state;
+      }
       return {
         ...state,
         decisions: { ...state.decisions, [action.id]: "Rejected" },
@@ -84,6 +131,9 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
     }
 
     case "OPEN_REJECT_ALL":
+      if (hasStartedLineReview(state) && !action.force) {
+        return state;
+      }
       return { ...state, rejectAllOpen: true };
 
     case "CLOSE_REJECT_ALL":
@@ -91,6 +141,9 @@ function reducer(state: ValidationUIState, action: Action): ValidationUIState {
 
     case "REJECT_ALL": {
       if (!state.data) {
+        return state;
+      }
+      if (hasStartedLineReview(state)) {
         return state;
       }
 
@@ -157,8 +210,8 @@ export function useValidationUiState() {
     dispatch({ type: "CLEAR_REASON", key });
   }, []);
 
-  const openRejectAll = useCallback(() => {
-    dispatch({ type: "OPEN_REJECT_ALL" });
+  const openRejectAll = useCallback((force = false) => {
+    dispatch({ type: "OPEN_REJECT_ALL", force });
   }, []);
 
   const closeRejectAll = useCallback(() => {

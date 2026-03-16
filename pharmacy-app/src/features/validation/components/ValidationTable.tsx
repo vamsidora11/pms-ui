@@ -49,10 +49,14 @@ export default function ValidationTable({
             {data.medicines.map((line: PrescriptionLine) => {
               const id = line.lineId;
               const selectedDecision = decisions[id];
-              const persistedDecision = line.review?.status;
+              const persistedDecision = isReviewedDecision(line.review?.status)
+                ? line.review.status
+                : undefined;
               const reviewDecision =
                 selectedDecision !== undefined ? selectedDecision : persistedDecision;
               const finalized = isReviewedDecision(persistedDecision);
+              const approveDisabled = submitting || finalized;
+              const rejectDisabled = submitting || finalized;
 
               return (
                 <tr key={id} className="align-top">
@@ -115,7 +119,7 @@ export default function ValidationTable({
                     <div className="inline-flex items-center gap-2">
                       <button
                         onClick={() => onAccept(id)}
-                        disabled={submitting}
+                        disabled={approveDisabled}
                         className={clsx(
                           "px-2.5 py-1 rounded-md text-xs border disabled:opacity-50 disabled:cursor-not-allowed",
                           reviewDecision === "Approved"
@@ -127,7 +131,7 @@ export default function ValidationTable({
                       </button>
                       <button
                         onClick={() => onOpenReject(id)}
-                        disabled={submitting}
+                        disabled={rejectDisabled}
                         className={clsx(
                           "px-2.5 py-1 rounded-md text-xs border disabled:opacity-50 disabled:cursor-not-allowed",
                           reviewDecision === "Rejected"

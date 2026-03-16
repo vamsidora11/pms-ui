@@ -1,3 +1,4 @@
+import type { PrescriptionReviewStatus } from "@prescription/domain/model";
 import type { ValidationSeverity } from "@validation/domain/model";
 
 export function pillToneBySeverity(
@@ -30,6 +31,8 @@ export function mapInteractionLevel(
   }
 }
 
-export function isReviewedDecision(decision: string | null | undefined): boolean {
+export function isReviewedDecision(
+  decision: string | null | undefined,
+): decision is Extract<PrescriptionReviewStatus, "Approved" | "Rejected"> {
   return decision === "Approved" || decision === "Rejected";
 }
