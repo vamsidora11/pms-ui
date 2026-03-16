@@ -25,13 +25,17 @@ export const ENDPOINTS = {
   prescriptions:     "/api/prescriptions",
   prescriptionById:  (id: string) => `/api/prescriptions/${id}`,
   prescriptionsByPatient: (patientId: string) => `/api/prescriptions/patient/${patientId}`,
+  prescriptionDispensePreview: (id: string) => `/api/prescriptions/${id}/dispense-preview`,
   labelQueue:        "/api/dispenses",
 
 
   dispenses:        "/api/dispenses",
   dispenseById:     (id: string) => `/api/dispenses/${id}`,
+  dispensesByPrescription: (id: string) => `/api/dispenses/prescription/${id}`,
   dispenseLabel:    (id: string) => `/api/dispenses/${id}/label`,
   dispenseExecute:  (id: string) => `/api/dispenses/${id}/execute`,
+  dispenseInsuranceClaim: (id: string) => `/api/dispenses/${id}/insurance-claim`,
+  dispenseCancel:   (id: string) => `/api/dispenses/${id}/cancel`,
 
 
   inventoryLotsByProduct: (productId: string) =>

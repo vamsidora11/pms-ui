@@ -1,6 +1,7 @@
 // src/features/prescription/hooks/useBilling.ts
 import { useState, useCallback } from "react";
 import type { ClaimStatus, PaymentStatus, PaymentMethod } from "features/dispense/types/dispense.types";
+import { submitInsuranceClaim } from "@api/dispense";
 
 export function useBilling() {
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("pending");
@@ -11,8 +12,9 @@ export function useBilling() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const reset = useCallback((status?: string) => {
-    setClaimStatus(status === "Payment Processed" ? "approved" : "pending");
-    setPaymentStatus(status === "Payment Processed" ? "paid" : "pending");
+    const isPaid = status === "PaymentProcessed" || status === "Dispensed";
+    setClaimStatus(isPaid ? "approved" : "pending");
+    setPaymentStatus(isPaid ? "paid" : "pending");
     setShowPaymentModal(false);
     setPaymentMethod("cash");
     setTransactionId("");
@@ -20,18 +22,29 @@ export function useBilling() {
   }, []);
 
   // Returns true if approved, false on failure
-  const submitClaim = useCallback(async (): Promise<boolean> => {
-    if (claimStatus !== "pending") return false;
-    setClaimStatus("submitting");
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setClaimStatus("approved");
-    return true;
-  }, [claimStatus]);
+  const submitClaim = useCallback(
+    async (
+      dispenseId: string,
+      patientId: string,
+      etag: string
+    ): Promise<{ ok: boolean; etag?: string }> => {
+      if (claimStatus !== "pending") return { ok: false };
+      setClaimStatus("submitting");
+      try {
+        const nextEtag = await submitInsuranceClaim(dispenseId, patientId, etag);
+        setClaimStatus("approved");
+        return { ok: true, etag: nextEtag };
+      } catch {
+        setClaimStatus("rejected");
+        return { ok: false };
+      }
+    },
+    [claimStatus]
+  );
 
   // Returns true on success
   const recordPayment = useCallback(async (): Promise<boolean> => {
     setIsProcessingPayment(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
     setPaymentStatus("paid");
     setIsProcessingPayment(false);
     setShowPaymentModal(false);

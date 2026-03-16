@@ -7,6 +7,8 @@ export type DispenseRowStatus = "ready" | "external" | "blocked" | "completed";
 
 export interface DispenseRow {
   id: string;
+  prescriptionLineId: string;
+  productId: string;
   medicineName: string;
   strength: string;
   frequency: string;
@@ -16,12 +18,11 @@ export interface DispenseRow {
   safeStock: number;
   unitPrice: number;
   status: DispenseRowStatus;
-  isExternal?: boolean;
 }
 
 export interface AllocationResult {
   rowId: string;
-  internalQty: number;
+  quantity: number;
   externalQty: number;
   totalPrice: number;
   patientPayable: number;
@@ -30,26 +31,13 @@ export interface AllocationResult {
   error?: string;
 }
 
-export interface DispenseMedication {
-  drugName: string;
-  strength: string;
-  quantity: number;
-  instructions: string;
-  price: number;
-  refills: number;
-}
-
 export interface DispenseQueueItem {
   id: string;
   patientId: string;
   patientName: string;
-  doctorName: string;
-  insuranceProvider?: string;
-  allergies?: string[];
-  medications: DispenseMedication[];
-  status: string;
-  createdAt: Date;
-  totalAmount: number;
-  paymentStatus: string;
+  prescriberName: string;
+  createdAt: string;
+  status: "Created" | "Active" | "Cancelled" | "Completed";
+  medicineCount: number;
   isUrgent?: boolean;
 }

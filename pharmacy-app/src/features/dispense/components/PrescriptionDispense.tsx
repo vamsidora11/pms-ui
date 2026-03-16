@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle,
-  Shield,
   CreditCard,
   Banknote,
   Wallet,
@@ -20,86 +19,18 @@ import Modal from "@components/common/Modal/Modal";
 import { useDispense } from "@dispense/hooks/useDispense";
 import { useBilling } from "@dispense/hooks/useBilling";
 import { useToast } from "@components/common/Toast/useToast";
+import { getAllPrescriptions } from "@api/prescription";
+import { executeDispense } from "@api/dispense";
 
 import type { DispenseQueueItem, DispenseRow, ClaimStatus } from "../types/dispense.types";
 
-// ─── Mock queue data ──────────────────────────────────────────────────────────
 
-const MOCK_QUEUE: DispenseQueueItem[] = [
-  {
-    id: "RX-DEMO-UX",
-    patientId: "PT-1234",
-    patientName: "John Doe",
-    doctorName: "Dr. Sarah Smith",
-    insuranceProvider: "BlueCross Shield",
-    medications: [
-      { drugName: "Amoxicillin",  strength: "500mg", quantity: 15, instructions: "Take 1 capsule TID",  price: 7.5,  refills: 0 },
-      { drugName: "Atorvastatin", strength: "20mg",  quantity: 30, instructions: "Take 1 tablet Daily", price: 36.0, refills: 3 },
-      { drugName: "Vitamin D",    strength: "10mg",  quantity: 30, instructions: "Take 1 tablet Daily", price: 4.5,  refills: 3 },
-    ],
-    status: "Validated",
-    createdAt: new Date(),
-    totalAmount: 48.0,
-    paymentStatus: "Pending",
-    allergies: ["PENICILLIN"],   // ← clean allergy name only
-  },
-  {
-    id: "RX-2026-010",
-    patientId: "PT-004",
-    patientName: "James Chen",
-    doctorName: "Dr. Sarah Martinez",
-    insuranceProvider: "Aetna Health",
-    medications: [
-      { drugName: "Lisinopril", strength: "10mg", quantity: 30, instructions: "Take 1 tablet daily",             price: 18.75, refills: 2 },
-      { drugName: "Omeprazole", strength: "20mg", quantity: 30, instructions: "Take 1 capsule before breakfast", price: 25.0,  refills: 1 },
-    ],
-    status: "Payment Processed",
-    createdAt: new Date("2026-02-15T11:30:00"),
-    totalAmount: 43.75,
-    paymentStatus: "Paid",
-    allergies: [],
-  },
-  {
-    id: "RX-2026-011",
-    patientId: "PT-002",
-    patientName: "Robert Williams",
-    doctorName: "Dr. Emily Carter",
-    insuranceProvider: "United Healthcare",
-    medications: [
-      { drugName: "Metformin",  strength: "850mg", quantity: 60, instructions: "Take 1 tablet twice daily with meals", price: 12.0, refills: 5 },
-      { drugName: "Amlodipine", strength: "5mg",   quantity: 30, instructions: "Take 1 tablet daily",                  price: 9.5,  refills: 3 },
-    ],
-    status: "Payment Processed",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    totalAmount: 21.5,
-    paymentStatus: "Paid",
-    allergies: ["Aspirin"],
-  },
-  {
-    id: "RX-2026-012",
-    patientId: "PT-009",
-    patientName: "Maria Lopez",
-    doctorName: "Dr. James Patel",
-    insuranceProvider: "Cigna",
-    medications: [
-      { drugName: "Sertraline", strength: "50mg", quantity: 30, instructions: "Take 1 tablet daily in the morning", price: 22.0, refills: 1 },
-    ],
-    status: "Validated",
-    createdAt: new Date(Date.now() - 45 * 60 * 1000),
-    totalAmount: 22.0,
-    paymentStatus: "Pending",
-    allergies: [],
-  },
-];
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
 
-// Compute isUrgent once at module load time — keeps render functions pure
-const _now = new Date().getTime();
-const MOCK_QUEUE_WITH_URGENCY: DispenseQueueItem[] = MOCK_QUEUE.map((item) => ({
-  ...item,
-  isUrgent: item.status === "Validated" && (_now - item.createdAt.getTime()) > 60 * 60 * 1000,
-}));
-
-function formatDateTime(date: Date): string {
   return date.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
@@ -116,14 +47,12 @@ function QtyInput({
   disabled,
   placeholder,
   hasError,
-  isExternal,
   onChange,
 }: {
   value: number;
   disabled: boolean;
   placeholder?: string;
   hasError?: boolean;
-  isExternal?: boolean;
   onChange: (val: number) => void;
 }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,7 +67,7 @@ function QtyInput({
       type="number"
       min={0}
       disabled={disabled}
-      value={isExternal && !value ? "" : value === 0 ? "" : value}
+      value={value === 0 ? "" : value}
       placeholder={placeholder ?? "0"}
       onChange={handleChange}
       onKeyDown={(e) => {
@@ -168,7 +97,7 @@ function QueueCard({
   item: DispenseQueueItem;
   onSelect: (item: DispenseQueueItem) => void;
 }) {
-  const isPaymentProcessed = item.status === "Payment Processed";
+  const isActive = item.status === "Active";
   const isUrgent = item.isUrgent ?? false;
 
   return (
@@ -182,9 +111,9 @@ function QueueCard({
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                isPaymentProcessed
-                  ? "bg-green-100 text-green-700"
-                  : "bg-blue-100 text-blue-700"
+                isActive
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-600"
               }`}
             >
               {item.status}
@@ -210,13 +139,13 @@ function QueueCard({
             <div>
               <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 font-semibold">Details</div>
               <div className="text-gray-900">
-                {item.medications.length} Medication{item.medications.length !== 1 ? "s" : ""}
+                {item.medicineCount} Medication{item.medicineCount !== 1 ? "s" : ""}
               </div>
-              <div className="text-xs text-gray-500">{item.doctorName}</div>
+              <div className="text-xs text-gray-500">{item.prescriberName}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 font-semibold">Est. Total</div>
-              <div className="text-gray-900 font-bold">${item.totalAmount.toFixed(2)}</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 font-semibold">Status</div>
+              <div className="text-gray-900 font-semibold">{item.status}</div>
             </div>
             <div>
               <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 font-semibold">Time</div>
@@ -252,8 +181,8 @@ function DispenseTableRow({
   allocation: ReturnType<typeof useDispense>["allocations"][string];
   claimStatus: ClaimStatus;
   isPaid: boolean;
-  onQtyChange: (row: DispenseRow, val: number, claim: ClaimStatus) => void;
-  onExtQtyChange: (row: DispenseRow, val: number, claim: ClaimStatus) => void;
+  onQtyChange: (row: DispenseRow, val: number) => void;
+  onExtQtyChange: (row: DispenseRow, val: number) => void;
 }) {
   const isError = allocation && !allocation.isValid;
   const stockLow = row.safeStock < row.remaining;
@@ -289,22 +218,15 @@ function DispenseTableRow({
       {/* Dispense qty */}
       <td className="py-4 px-4 align-middle">
         <div className="flex justify-center relative">
-          {row.isExternal ? (
-            // External rows: non-editable dash
-            <div className="w-24 h-10 flex items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-sm">
-              -
-            </div>
-          ) : (
-            <QtyInput
-              value={qty}
-              disabled={isPaid}
-              hasError={isError}
-              onChange={(val) => onQtyChange(row, val, claimStatus)}
-            />
-          )}
+          <QtyInput
+            value={qty}
+            disabled={isPaid}
+            hasError={isError}
+            onChange={(val) => onQtyChange(row, val)}
+          />
 
           {/* Error tooltip — "Max 15" style */}
-          {isError && !row.isExternal && (
+          {isError && (
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 pointer-events-none">
               <div className="relative bg-red-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded shadow-lg whitespace-nowrap">
                 {allocation.error}
@@ -322,7 +244,7 @@ function DispenseTableRow({
           <QtyInput
             value={extQty}
             disabled={isPaid}
-            onChange={(val) => onExtQtyChange(row, val, claimStatus)}
+            onChange={(val) => onExtQtyChange(row, val)}
           />
         </div>
       </td>
@@ -334,11 +256,7 @@ function DispenseTableRow({
 
       {/* Totals / breakdown */}
       <td className="py-4 px-4 align-middle text-right">
-        {row.isExternal ? (
-          <span className="text-xs border border-gray-200 text-gray-400 px-2 py-1 rounded-full">
-            External
-          </span>
-        ) : claimStatus === "approved" ? (
+        {claimStatus === "approved" ? (
           <div className="flex flex-col items-end gap-0.5">
             <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
               <span>Ins</span>
@@ -524,6 +442,60 @@ export default function PrescriptionDispense() {
   const toast    = useToast();
   const dispense = useDispense();
   const billing  = useBilling();
+  const [queue, setQueue] = useState<DispenseQueueItem[]>([]);
+  const [isLoadingQueue, setIsLoadingQueue] = useState(true);
+  const [queueError, setQueueError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchQueue = async () => {
+      setIsLoadingQueue(true);
+      setQueueError(null);
+      try {
+        const response = await getAllPrescriptions({
+          pageNumber: 1,
+          pageSize: 50,
+          status: "Active",
+        });
+        const now = Date.now();
+        const items: DispenseQueueItem[] = response.items.map((item) => {
+          const createdAt = item.createdAt;
+          const createdAtMs = new Date(createdAt).getTime();
+          return {
+            id: item.id,
+            patientId: item.patientId,
+            patientName: item.patientName,
+            prescriberName: item.prescriberName,
+            createdAt,
+            status: item.status,
+            medicineCount: item.medicineCount,
+            isUrgent:
+              item.status === "Active" &&
+              !Number.isNaN(createdAtMs) &&
+              now - createdAtMs > 60 * 60 * 1000,
+          };
+        });
+        if (isMounted) {
+          setQueue(items);
+        }
+      } catch {
+        if (isMounted) {
+          setQueue([]);
+          setQueueError("Failed to load dispense queue.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingQueue(false);
+        }
+      }
+    };
+
+    void fetchQueue();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (dispense.selectedItem) {
@@ -535,33 +507,77 @@ export default function PrescriptionDispense() {
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleSubmitClaim = async () => {
-    const ok = await billing.submitClaim();
-    if (ok) {
-      toast.success("Insurance Claim Approved", "Coverage applied to eligible medications.");
-      dispense.recalculateWithInsurance(
-        dispense.activeRows,
-        dispense.dispenseQuantities,
-        dispense.externalQuantities
+    try {
+      const checkout = await dispense.checkoutDispense();
+      if (!checkout) return;
+      const result = await billing.submitClaim(
+        checkout.dispenseId,
+        checkout.patientId,
+        checkout.etag
       );
+      if (result.ok) {
+        await dispense.refreshDispense(checkout.dispenseId, checkout.patientId);
+        toast.success("Insurance Claim Approved", "Coverage applied to eligible medications.");
+      } else {
+        toast.error("Claim Failed", "Unable to submit insurance claim.");
+      }
+    } catch {
+      toast.error("Claim Failed", "Unable to submit insurance claim.");
     }
   };
 
   const handleRecordPayment = async () => {
+    try {
+      await dispense.checkoutDispense();
+    } catch {
+      const message = error instanceof Error ? error.message : "Unable to checkout.";
+      toast.error("Checkout Required", message);
+      return;
+    }
     const ok = await billing.recordPayment();
     if (ok) toast.success("Payment Recorded Successfully", "");
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (dispense.hasErrors) {
       toast.error("Validation Error", "Please fix quantity errors before completing.");
+      return;
+    }
+    if (!dispense.hasQuantities) {
+      toast.error("Missing Quantities", "Select at least one quantity to dispense.");
       return;
     }
     if (billing.paymentStatus !== "paid") {
       toast.error("Payment Required", "Please collect payment before dispensing.");
       return;
     }
-    toast.success("Transaction Completed", `Prescription ${dispense.selectedItem?.id} dispensed.`);
-    dispense.clearSelection();
+
+    let checkout = dispense.checkoutState;
+    try {
+      checkout = await dispense.checkoutDispense();
+    } catch {
+      const message = error instanceof Error ? error.message : "Unable to checkout.";
+      toast.error("Checkout Required", message);
+      return;
+    }
+    if (!checkout) return;
+
+    try {
+      const latest = await dispense.refreshDispense(checkout.dispenseId, checkout.patientId);
+      await executeDispense(latest.dispenseId, latest.patientId, latest.etag);
+      toast.success("Dispense Completed", `Prescription ${dispense.selectedItem?.id} dispensed.`);
+      dispense.clearSelection();
+    } catch {
+      toast.error("Execute Failed", "Could not execute dispense. Please try again.");
+    }
+  };
+
+  const handleSelect = async (item: DispenseQueueItem) => {
+    try {
+      await dispense.loadItem(item);
+    } catch {
+      toast.error("Load Failed", "Could not load dispense preview.");
+    }
   };
 
   // ── Queue View ─────────────────────────────────────────────────────────────
@@ -572,7 +588,7 @@ export default function PrescriptionDispense() {
         <div>
           <h1 className="text-gray-900 mb-2 font-bold text-2xl">Dispense & Billing Queue</h1>
           <p className="text-gray-500">
-            Process payments and dispense medications for validated prescriptions
+            Process payments and dispense medications for active prescriptions
           </p>
         </div>
 
@@ -581,7 +597,7 @@ export default function PrescriptionDispense() {
             <div>
               <div className="text-gray-500 mb-1">Ready for Dispense</div>
               <div className="text-gray-900 font-semibold">
-                {MOCK_QUEUE_WITH_URGENCY.length} prescriptions awaiting processing
+                {queue.length} prescriptions awaiting processing
               </div>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -594,18 +610,31 @@ export default function PrescriptionDispense() {
           <div className="p-6 border-b border-gray-100">
             <h2 className="text-gray-900 font-semibold">Active Queue</h2>
           </div>
-          {MOCK_QUEUE_WITH_URGENCY.length === 0 ? (
+          {isLoadingQueue ? (
+            <div className="p-12 text-center text-gray-400">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" />
+              <div className="text-sm">Loading dispense queue...</div>
+            </div>
+          ) : queueError ? (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-red-300" />
+              </div>
+              <div className="text-gray-900 mb-2 font-medium">Unable to load queue</div>
+              <div className="text-gray-500">{queueError}</div>
+            </div>
+          ) : queue.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-gray-400" />
               </div>
               <div className="text-gray-900 mb-2 font-medium">No Pending Dispenses</div>
-              <div className="text-gray-500">All validated prescriptions have been processed.</div>
+              <div className="text-gray-500">All active prescriptions have been processed.</div>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {MOCK_QUEUE_WITH_URGENCY.map((item) => (
-                <QueueCard key={item.id} item={item} onSelect={dispense.loadItem} />
+              {queue.map((item) => (
+                <QueueCard key={item.id} item={item} onSelect={handleSelect} />
               ))}
             </div>
           )}
@@ -618,7 +647,44 @@ export default function PrescriptionDispense() {
 
   const item = dispense.selectedItem;
   const claimApproved = billing.claimStatus === "approved";
+  const claimRejected = billing.claimStatus === "rejected";
   const totals = dispense.computeTotals();
+
+  if (dispense.isLoadingDetails) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <button
+          onClick={dispense.clearSelection}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Queue
+        </button>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-gray-400" />
+          <div className="text-sm text-gray-500">Loading dispense details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (dispense.detailsError) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <button
+          onClick={dispense.clearSelection}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Queue
+        </button>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          <div className="text-gray-900 font-semibold mb-2">Unable to load dispense</div>
+          <div className="text-gray-500">{dispense.detailsError}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-6">
@@ -643,10 +709,12 @@ export default function PrescriptionDispense() {
             className={`px-3 py-1 rounded-full text-xs font-bold border ${
               claimApproved
                 ? "bg-green-50 text-green-700 border-green-200"
+                : claimRejected
+                ? "bg-red-50 text-red-700 border-red-200"
                 : "bg-yellow-50 text-yellow-700 border-yellow-200"
             }`}
           >
-            Insurance: {claimApproved ? "Approved" : "Pending"}
+            Insurance: {claimApproved ? "Approved" : claimRejected ? "Rejected" : "Pending"}
           </span>
           <span
             className={`px-3 py-1 rounded-full text-xs font-bold border ${
@@ -674,35 +742,12 @@ export default function PrescriptionDispense() {
             </code>
           </div>
           <div>
-            <div className="text-gray-500 text-sm mb-1">Insurance</div>
-            {item.insuranceProvider ? (
-              <div className="flex items-center gap-2 text-blue-700 font-medium">
-                <Shield className="w-4 h-4" />
-                {item.insuranceProvider}
-              </div>
-            ) : (
-              <span className="text-gray-400">Self-Pay</span>
-            )}
+            <div className="text-gray-500 text-sm mb-1">Prescriber</div>
+            <div className="text-gray-900 font-semibold">{item.prescriberName}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-sm mb-1">Allergies</div>
-            {item.allergies && item.allergies.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {item.allergies.map((a) => (
-                  <span
-                    key={a}
-                    className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-100 font-medium"
-                  >
-                    {a}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-green-700">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-sm">No Known Allergies</span>
-              </div>
-            )}
+            <div className="text-gray-500 text-sm mb-1">Created</div>
+            <div className="text-gray-900">{formatDateTime(item.createdAt)}</div>
           </div>
         </div>
       </div>
@@ -755,8 +800,8 @@ export default function PrescriptionDispense() {
                   allocation={dispense.allocations[row.id]}
                   claimStatus={billing.claimStatus}
                   isPaid={billing.paymentStatus === "paid"}
-                  onQtyChange={(r, val, claim) => dispense.handleQtyChange(r, String(val), claim)}
-                  onExtQtyChange={(r, val, claim) => dispense.handleExternalQtyChange(r, String(val), claim)}
+                  onQtyChange={(r, val) => dispense.handleQtyChange(r, String(val))}
+                  onExtQtyChange={(r, val) => dispense.handleExternalQtyChange(r, String(val))}
                 />
               ))}
             </tbody>
@@ -802,7 +847,11 @@ export default function PrescriptionDispense() {
         <Button
           variant="secondary"
           onClick={handleSubmitClaim}
-          disabled={billing.claimStatus !== "pending" || billing.paymentStatus === "paid"}
+          disabled={
+            billing.claimStatus !== "pending" ||
+            billing.paymentStatus === "paid" ||
+            !dispense.hasQuantities
+          }
           className={`flex items-center gap-2 border border-gray-200 ${
             claimApproved
               ? "!bg-green-50 !text-green-700 !border-green-200 opacity-80"
@@ -823,7 +872,7 @@ export default function PrescriptionDispense() {
         <Button
           variant="secondary"
           onClick={() => billing.setShowPaymentModal(true)}
-          disabled={billing.paymentStatus === "paid"}
+          disabled={billing.paymentStatus === "paid" || !dispense.hasQuantities}
           className={`flex items-center gap-2 border border-gray-200 ${
             billing.paymentStatus === "paid"
               ? "!bg-green-50 !text-green-700 !border-green-200 opacity-80"
@@ -843,11 +892,11 @@ export default function PrescriptionDispense() {
         {/* Step 3: Complete */}
         <Button
           onClick={handleComplete}
-          disabled={billing.paymentStatus !== "paid"}
+          disabled={billing.paymentStatus !== "paid" || !dispense.hasQuantities}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all px-8"
         >
           <Package className="w-4 h-4" />
-          Complete & Mark Ready
+          Complete Dispense
         </Button>
       </div>
 
@@ -867,3 +916,6 @@ export default function PrescriptionDispense() {
     </div>
   );
 }
+
+
+
