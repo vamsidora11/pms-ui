@@ -145,6 +145,42 @@ describe("patient API", () => {
         signal: undefined,
       });
     });
+
+    it("normalizes array responses from /api/prescriptions/patient/{id}", async () => {
+      apiGet.mockResolvedValueOnce({
+        data: [
+          {
+            id: "rx-1",
+            patientId: "p-1",
+            patientName: "John Doe",
+            prescriberName: "Dr. Smith",
+            createdAt: "2026-03-10T00:00:00.000Z",
+            status: "Active",
+            medicineCount: 2,
+          },
+        ],
+      } as never);
+
+      await expect(getPatientPrescriptions("p-1")).resolves.toEqual({
+        items: [
+          {
+            id: "rx-1",
+            patientId: "p-1",
+            patientName: "John Doe",
+            prescriberName: "Dr. Smith",
+            createdAt: "2026-03-10T00:00:00.000Z",
+            status: "Active",
+            medicineCount: 2,
+          },
+        ],
+        pageNumber: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    });
   });
 
   describe("getPatientById", () => {

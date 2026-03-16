@@ -1,275 +1,127 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
 import ValidationTable from "../components/ValidationTable";
-import type {
-  PrescriptionDetailsDto,
-  PrescriptionMedicineDto,
-} from "@prescription/types/prescription.types";
+import type { PrescriptionDetails } from "@prescription/domain/model";
 
-/* ---------------- MOCKS ---------------- */
-
-vi.mock("../prescriptionValidationUtils", () => ({
-  computeValidation: vi.fn(() => "OK"),
-  mapInteractionLevel: vi.fn(() => "Major"),
-  pillToneBySeverity: vi.fn(() => "red"),
+vi.mock("@components/common/Pill/Pill", () => ({
+  Pill: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("../components/Pill", () => ({
-  Pill: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
-}));
-
-/* ---------------- FACTORY ---------------- */
-
-function createMedicine(
-  overrides?: Partial<PrescriptionMedicineDto>
-): PrescriptionMedicineDto {
+function createData(): PrescriptionDetails {
   return {
-    prescriptionMedicineId: "MED-1",
-    productId: "PROD-1",
-    name: "Paracetamol",
-    strength: "500mg",
-    prescribedQuantity: 10,
-    dispensedQuantity: 0,
-    totalRefillsAuthorized: 1,
-    refillsRemaining: 1,
-    frequency: "BID",
-    daysSupply: 5,
-    endDate: null,
-    instruction: "Take after food",
-    pharmacistReview: {
-      decision: "Pending",
-      reviewedBy: null,
-      reviewedAt: null,
-      overrideReason: null,
-    },
-    validation: {
-      drugAllergy: {
-        isPresent: false,
-        overallSeverity: null,
-        allergies: [],
-      },
-      drugInteraction: {
-        isPresent: false,
-        overallSeverity: null,
-        interactingWith: [],
-      },
-      inventory: {
-        isPresent: false,
-        severity: null,
-        requiredQty: 10,
-        reservableNow: 10,
-        message: null,
-      },
-    },
-    ...overrides,
-  };
-}
-
-function createData(): PrescriptionDetailsDto {
-  return {
-    id: "RX-1",
-    patientId: "P-1",
+    id: "rx-1",
+    patientId: "p-1",
     patientName: "John Doe",
-    prescriber: { id: "DR-1", name: "Dr. Smith" },
-    createdAt: "2024-01-01",
-    expiresAt: "2024-12-31",
-    status: "Pending",
-    isRefillable: false,
-    medicines: [createMedicine()],
+    prescriber: { id: "dr-1", name: "Dr. Smith" },
+    prescriberName: "Dr. Smith",
+    createdAt: new Date("2026-03-01T10:00:00Z"),
+    status: "Created",
+    medicineCount: 1,
+    medicines: [
+      {
+        lineId: "line-1",
+        productId: "prod-1",
+        name: "Amoxicillin",
+        strength: "500mg",
+        frequency: "BID",
+        instructions: "",
+        durationDays: 7,
+        quantityPrescribed: 14,
+        quantityApprovedPerFill: null,
+        quantityDispensed: 0,
+        refillsAllowed: 0,
+        refillsRemaining: 0,
+        validation: {
+          hasAllergy: false,
+          hasInteraction: false,
+          severity: "None",
+          interactionDetails: [],
+        },
+        review: {
+          status: "Pending",
+          reviewedBy: null,
+          reviewedAt: null,
+          notes: null,
+        },
+      },
+    ],
   };
 }
-
-/* ---------------- TESTS ---------------- */
 
 describe("ValidationTable", () => {
-  const onAdjust = vi.fn();
-  const onAccept = vi.fn();
-  const onOpenReject = vi.fn();
-  const onOpenAllergy = vi.fn();
+  it("calls handlers when a line is still pending", () => {
+    const onAccept = vi.fn();
+    const onOpenReject = vi.fn();
+    const onOpenAllergy = vi.fn();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("renders medicine row", () => {
     render(
       <ValidationTable
         data={createData()}
-        approved={{}}
+        submitting={false}
         decisions={{}}
-        overallResult="OK"
-        onApprovedChange={onAdjust}
         onAccept={onAccept}
         onOpenReject={onOpenReject}
         onOpenAllergy={onOpenAllergy}
-      />
+      />,
     );
 
-    expect(screen.getByText("Paracetamol")).toBeInTheDocument();
-    expect(screen.getByText("500mg")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
+
+    expect(onAccept).toHaveBeenCalledWith("line-1");
+    expect(onOpenReject).toHaveBeenCalledWith("line-1");
   });
 
-  it("calls onAdjust when quantity changes", () => {
+  it("keeps both decision buttons available while a draft approval can still be changed", () => {
     render(
       <ValidationTable
         data={createData()}
-        approved={{}}
-        decisions={{}}
-        overallResult="OK"
-        onApprovedChange={onAdjust}
-        onAccept={onAccept}
-        onOpenReject={onOpenReject}
-        onOpenAllergy={onOpenAllergy}
-      />
+        submitting={false}
+        decisions={{ "line-1": "Approved" }}
+        onAccept={vi.fn()}
+        onOpenReject={vi.fn()}
+        onOpenAllergy={vi.fn()}
+      />,
     );
 
-    fireEvent.change(screen.getByRole("spinbutton"), {
-      target: { value: "5" },
-    });
-
-    expect(onAdjust).toHaveBeenCalledWith("MED-1", 5);
+    expect(screen.getByRole("button", { name: "Approve" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Reject" })).not.toBeDisabled();
   });
 
-  it("calls onAccept when Accept clicked", () => {
+  it("keeps both decision buttons available while a draft rejection can still be changed", () => {
     render(
       <ValidationTable
         data={createData()}
-        approved={{}}
-        decisions={{}}
-        overallResult="OK"
-        onApprovedChange={onAdjust}
-        onAccept={onAccept}
-        onOpenReject={onOpenReject}
-        onOpenAllergy={onOpenAllergy}
-      />
+        submitting={false}
+        decisions={{ "line-1": "Rejected" }}
+        onAccept={vi.fn()}
+        onOpenReject={vi.fn()}
+        onOpenAllergy={vi.fn()}
+      />,
     );
 
-    fireEvent.click(screen.getByText("Accept"));
-    expect(onAccept).toHaveBeenCalledWith("MED-1");
+    expect(screen.getByRole("button", { name: "Approve" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Reject" })).not.toBeDisabled();
   });
 
-  it("calls onOpenReject when Reject clicked", () => {
-    render(
-      <ValidationTable
-        data={createData()}
-        approved={{}}
-        decisions={{}}
-        overallResult="OK"
-        onApprovedChange={onAdjust}
-        onAccept={onAccept}
-        onOpenReject={onOpenReject}
-        onOpenAllergy={onOpenAllergy}
-      />
-    );
-
-    fireEvent.click(screen.getByText("Reject"));
-    expect(onOpenReject).toHaveBeenCalledWith("MED-1");
-  });
-
-  it("renders Max button when inventory validation is present", () => {
+  it("locks both decision buttons when the line was already finalized", () => {
     const data = createData();
+    data.medicines[0].review.status = "Rejected";
+    data.medicines[0].review.notes = "Interaction risk";
 
     render(
       <ValidationTable
         data={data}
-        approved={{}}
+        submitting={false}
         decisions={{}}
-        overallResult="OK"
-        onApprovedChange={onAdjust}
-        onAccept={onAccept}
-        onOpenReject={onOpenReject}
-        onOpenAllergy={onOpenAllergy}
-      />
+        onAccept={vi.fn()}
+        onOpenReject={vi.fn()}
+        onOpenAllergy={vi.fn()}
+      />,
     );
 
-    expect(screen.getByText("Max")).toBeInTheDocument();
-  });
-
-  it("calls onAdjust with max when Max clicked", () => {
-    const data = createData();
-
-    render(
-      <ValidationTable
-        data={data}
-        approved={{}}
-        decisions={{}}
-        overallResult="OK"
-        onApprovedChange={onAdjust}
-        onAccept={onAccept}
-        onOpenReject={onOpenReject}
-        onOpenAllergy={onOpenAllergy}
-      />
-    );
-
-    fireEvent.click(screen.getByText("Max"));
-    expect(onAdjust).toHaveBeenCalledWith("MED-1", 10);
-  });
-
-  it("opens allergy modal when allergy present", () => {
-    const med = createMedicine({
-      validation: {
-        drugAllergy: {
-          isPresent: true,
-          overallSeverity: "High",
-          allergies: [
-            {
-              allergenCode: "ALG-1",
-              severity: "High",
-              message: "Severe",
-            },
-          ],
-        },
-        drugInteraction: {
-          isPresent: false,
-          overallSeverity: null,
-          interactingWith: [],
-        },
-        inventory: {
-          isPresent: false,
-          severity: null,
-          requiredQty: 10,
-          reservableNow: 10,
-          message: null,
-        },
-      },
-    });
-
-    const data = createData();
-    data.medicines = [med];
-
-    render(
-      <ValidationTable
-        data={data}
-        approved={{}}
-        decisions={{}}
-        overallResult="OK"
-        onApprovedChange={onAdjust}
-        onAccept={onAccept}
-        onOpenReject={onOpenReject}
-        onOpenAllergy={onOpenAllergy}
-      />
-    );
-
-    fireEvent.click(screen.getByText("High"));
-    expect(onOpenAllergy).toHaveBeenCalled();
-  });
-
-  it("renders overall status pill", () => {
-    render(
-      <ValidationTable
-        data={createData()}
-        approved={{}}
-        decisions={{}}
-        overallResult="Blocked"
-        onApprovedChange={onAdjust}
-        onAccept={onAccept}
-        onOpenReject={onOpenReject}
-        onOpenAllergy={onOpenAllergy}
-      />
-    );
-
-    expect(screen.getByText("Blocked")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeDisabled();
   });
 });

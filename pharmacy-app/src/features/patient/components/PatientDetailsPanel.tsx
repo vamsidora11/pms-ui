@@ -106,6 +106,8 @@ export default function PatientDetailsPanel({
   onLoadMorePrescriptions,
   onClickUpdate,
 }: Props) {
+  const prescriptionItems = Array.isArray(prescriptions) ? prescriptions : [];
+
   // Empty state (unchanged)
   if (!detailsLoading && !detailsError && !selectedPatient) {
     return (
@@ -265,8 +267,8 @@ export default function PatientDetailsPanel({
                 <div className="text-red-600 text-center">{prescriptionsError}</div>
               )}
 
-              {!prescriptionsLoading && !prescriptionsError && prescriptions.length ? (
-                prescriptions.map((rx) => (
+              {!prescriptionsLoading && !prescriptionsError && prescriptionItems.length ? (
+                prescriptionItems.map((rx) => (
                   <PrescriptionItem key={rx.id} rx={rx} />
                 ))
               ) : (

@@ -43,11 +43,12 @@ export default function PatientProfiles() {
         pageNumber,
         pageSize,
       });
+      const items = Array.isArray(result.items) ? result.items : [];
 
       return {
-        items: result.items.map(mapSummaryDto),
-        pageNumber: result.pageNumber,
-        totalPages: result.totalPages,
+        items: items.map(mapSummaryDto),
+        pageNumber: result.pageNumber ?? pageNumber ?? 1,
+        totalPages: result.totalPages ?? 1,
       };
     },
     details.selectedPatient?.id ?? null,

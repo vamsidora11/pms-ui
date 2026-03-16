@@ -12,10 +12,13 @@ import { extractApiError } from "@utils/httpError";
 import { getValidationResults } from "@api/validation.api";
 import { mapValidationResultDto } from "@validation/domain/mapper";
 import type { LineValidation } from "@validation/domain/model";
+import type { LineDecision } from "./types/validation.types";
+import type { PrescriptionLine } from "@prescription/domain/model";
 
 import { Pill } from "../../components/common/Pill/Pill";
 import ValidationTable from "./components/ValidationTable";
 import ValidationModals from "./components/ValidationModals";
+import { isReviewedDecision } from "./utils/prescriptionValidationUtils";
 
 type LocationState = { patientId?: string } | null;
 
@@ -57,7 +60,67 @@ export default function PrescriptionValidationDetailsPage() {
   }, [actions, latestSnapshot, rxId]);
 
   const viewData = ui.data ?? data;
-  const hasDecision = Object.keys(ui.decisions).length > 0;
+
+  const getLineDecision = useCallback(
+    (line: PrescriptionLine): LineDecision | undefined => {
+      const selectedDecision = ui.decisions[line.lineId];
+      if (selectedDecision) {
+        return selectedDecision;
+      }
+
+      return isReviewedDecision(line.review?.status) ? line.review.status : undefined;
+    },
+    [ui.decisions],
+  );
+
+  const reviewSummary = useMemo(() => {
+    if (!viewData) {
+      return {
+        hasAnyDecision: false,
+        hasAllDecisions: false,
+        hasMissingRejectedReason: false,
+        hasRejectedDecision: false,
+      };
+    }
+
+    let hasAnyDecision = false;
+    let hasAllDecisions = true;
+    let hasMissingRejectedReason = false;
+    let hasRejectedDecision = false;
+
+    for (const line of viewData.medicines) {
+      const decision = getLineDecision(line);
+      if (decision) {
+        hasAnyDecision = true;
+      } else {
+        hasAllDecisions = false;
+      }
+
+      if (decision === "Rejected") {
+        hasRejectedDecision = true;
+        const notes = (ui.reasons[line.lineId] ?? line.review.notes ?? "").trim();
+        if (!notes) {
+          hasMissingRejectedReason = true;
+        }
+      }
+    }
+
+    return {
+      hasAnyDecision,
+      hasAllDecisions,
+      hasMissingRejectedReason,
+      hasRejectedDecision,
+    };
+  }, [getLineDecision, ui.reasons, viewData]);
+
+  const hasLineReviewStarted = reviewSummary.hasAnyDecision;
+  const isSingleMedicinePrescription = (viewData?.medicines.length ?? 0) === 1;
+  const mustUseRejectEntirePrescription =
+    isSingleMedicinePrescription && reviewSummary.hasRejectedDecision;
+  const canSubmitReview =
+    reviewSummary.hasAllDecisions &&
+    !reviewSummary.hasMissingRejectedReason &&
+    !mustUseRejectEntirePrescription;
 
   const tableData = useMemo(() => {
     if (!viewData) {
@@ -134,8 +197,7 @@ export default function PrescriptionValidationDetailsPage() {
       return;
     }
 
-    const hasAllDecisions = viewData.medicines.every((line) => ui.decisions[line.lineId]);
-    if (!hasAllDecisions) {
+    if (!reviewSummary.hasAllDecisions) {
       toast.error(
         "Incomplete review",
         "Approve or reject every medication before submitting."
@@ -143,15 +205,7 @@ export default function PrescriptionValidationDetailsPage() {
       return;
     }
 
-    const missingReason = viewData.medicines.some((line) => {
-      const decision = ui.decisions[line.lineId];
-      if (decision !== "Rejected") {
-        return false;
-      }
-      return !(ui.reasons[line.lineId] ?? "").trim();
-    });
-
-    if (missingReason) {
+    if (reviewSummary.hasMissingRejectedReason) {
       toast.error("Cannot submit", "Please provide notes for all rejected lines.");
       return;
     }
@@ -166,10 +220,10 @@ export default function PrescriptionValidationDetailsPage() {
 
     const reviews = viewData.medicines.map((line) => ({
       prescriptionLineId: line.lineId,
-      status: ui.decisions[line.lineId],
+      status: getLineDecision(line)!,
       notes:
-        ui.decisions[line.lineId] === "Rejected"
-          ? (ui.reasons[line.lineId] ?? "").trim()
+        getLineDecision(line) === "Rejected"
+          ? (ui.reasons[line.lineId] ?? line.review.notes ?? "").trim()
           : null,
     }));
 
@@ -196,13 +250,22 @@ export default function PrescriptionValidationDetailsPage() {
     resolveReviewEtag,
     submitReview,
     toast,
-    ui.decisions,
+    getLineDecision,
     ui.reasons,
-    viewData
+    reviewSummary.hasAllDecisions,
+    reviewSummary.hasMissingRejectedReason,
+    viewData,
   ]);
 
   const confirmRejectAll = useCallback(async () => {
     if (!viewData) {
+      return;
+    }
+    if (hasLineReviewStarted && !isSingleMedicinePrescription) {
+      toast.error(
+        "Review in progress",
+        "Clear the line-by-line review before rejecting the entire prescription."
+      );
       return;
     }
 
@@ -243,6 +306,8 @@ export default function PrescriptionValidationDetailsPage() {
     resolveReviewEtag,
     submitReview,
     toast,
+    hasLineReviewStarted,
+    isSingleMedicinePrescription,
     ui.reasons._ALL_,
     viewData
   ]);
@@ -322,14 +387,22 @@ export default function PrescriptionValidationDetailsPage() {
         submitting={submitting}
         decisions={ui.decisions}
         onAccept={actions.acceptLine}
-        onOpenReject={actions.openRejectLine}
+        onOpenReject={(lineId) => {
+          if (isSingleMedicinePrescription) {
+            actions.setReason("_ALL_", ui.reasons[lineId] ?? ui.reasons._ALL_ ?? "");
+            actions.openRejectAll(true);
+            return;
+          }
+
+          actions.openRejectLine(lineId);
+        }}
         onOpenAllergy={actions.openAllergy}
       />
 
       <div className="p-5 border rounded-2xl shadow-sm bg-white flex flex-col sm:flex-row gap-3 sm:justify-end">
         <button
-          onClick={actions.openRejectAll}
-          disabled={submitting}
+          onClick={() => actions.openRejectAll()}
+          disabled={submitting || (hasLineReviewStarted && !mustUseRejectEntirePrescription)}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border text-red-700 border-red-300 hover:bg-red-50 disabled:opacity-50"
         >
           <XCircle size={18} />
@@ -346,8 +419,13 @@ export default function PrescriptionValidationDetailsPage() {
 
         <button
           onClick={() => void submitCurrentReview()}
-          disabled={submitting || !hasDecision}
+          disabled={submitting || !canSubmitReview}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          title={
+            mustUseRejectEntirePrescription
+              ? "Use Reject Entire Prescription for a single rejected medicine."
+              : undefined
+          }
         >
           <CheckCircle2 size={18} />
           {submitting ? "Submitting..." : "Submit Review"}

@@ -1,7 +1,11 @@
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
 import { extractApiError } from "@utils/httpError";
-import type { PrescriptionListResponseDto } from "./prescription.dto";
+import type {
+  PrescriptionDetailsDto,
+  PrescriptionListResponseDto,
+  PrescriptionSummaryDto,
+} from "./prescription.dto";
 import type {
   CreatePatientRequest,
   PatientDetailsDto,
@@ -15,6 +19,12 @@ type SearchPatientsOptions = {
   returnAllOnEmpty?: boolean;
 };
 
+type PatientPrescriptionHistoryResponse =
+  | PrescriptionListResponseDto
+  | PrescriptionSummaryDto[]
+  | PrescriptionDetailsDto
+  | PrescriptionDetailsDto[];
+
 const isCanceledRequest = (error: unknown): boolean => {
   if (typeof error !== "object" || error === null) {
     return false;
@@ -27,6 +37,61 @@ const isCanceledRequest = (error: unknown): boolean => {
     candidate.name === "AbortError"
   );
 };
+
+const toSummaryDto = (
+  dto: PrescriptionDetailsDto | PrescriptionSummaryDto,
+): PrescriptionSummaryDto => {
+  if ("medicineCount" in dto) {
+    return dto;
+  }
+
+  return {
+    id: dto.id,
+    patientId: dto.patientId,
+    patientName: dto.patientName,
+    prescriberName: dto.prescriber.name,
+    createdAt: dto.createdAt,
+    status: dto.status,
+    medicineCount: Array.isArray(dto.medicines) ? dto.medicines.length : 0,
+  };
+};
+
+function normalizePatientPrescriptions(
+  payload: PatientPrescriptionHistoryResponse,
+  pageNumber: number,
+  pageSize: number,
+): PrescriptionListResponseDto {
+  if (Array.isArray(payload)) {
+    const items = payload.map((item) => toSummaryDto(item));
+
+    return {
+      items,
+      pageNumber,
+      pageSize,
+      totalCount: items.length,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    };
+  }
+
+  if ("items" in payload) {
+    return {
+      ...payload,
+      items: Array.isArray(payload.items) ? payload.items : [],
+    };
+  }
+
+  return {
+    items: [toSummaryDto(payload)],
+    pageNumber,
+    pageSize,
+    totalCount: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
+}
 
 export const searchPatients = async (
   query?: string,
@@ -100,15 +165,18 @@ export const getPatientPrescriptions = async (
   const pageNumber = opts?.pageNumber ?? 1;
   const pageSize = opts?.pageSize ?? 10;
 
-  const response = await api.get(ENDPOINTS.prescriptionsByPatient(normalizedPatientId), {
-    params: {
-      pageNumber,
-      pageSize,
+  const response = await api.get<PatientPrescriptionHistoryResponse>(
+    ENDPOINTS.prescriptionsByPatient(normalizedPatientId),
+    {
+      params: {
+        pageNumber,
+        pageSize,
+      },
+      signal: opts?.signal,
     },
-    signal: opts?.signal,
-  });
+  );
 
-  return response.data as PrescriptionListResponseDto;
+  return normalizePatientPrescriptions(response.data, pageNumber, pageSize);
 };
 
 export const createPatient = async (

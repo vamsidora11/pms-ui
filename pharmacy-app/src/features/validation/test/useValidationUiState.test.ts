@@ -1,159 +1,134 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+
 import { useValidationUiState } from "../hooks/useValidationUiState";
-import type { PrescriptionDetailsDto } from "@prescription/types/prescription.types";
-import type { AllergyAlert } from "../types/validation.types";
+import type { PrescriptionDetails } from "@prescription/domain/model";
 
-/* ---------- Test Data Factory ---------- */
-
-function createMockPrescription(): PrescriptionDetailsDto {
+function createPrescription(): PrescriptionDetails {
   return {
-    id: "RX-001",
+    id: "rx-1",
+    patientId: "p-1",
+    patientName: "John Doe",
+    prescriber: { id: "dr-1", name: "Dr. Smith" },
+    prescriberName: "Dr. Smith",
+    createdAt: new Date("2026-03-01T10:00:00Z"),
+    status: "Created",
+    medicineCount: 2,
     medicines: [
       {
-        prescriptionMedicineId: "MED-1",
-        prescribedQuantity: 10,
+        lineId: "line-1",
+        productId: "prod-1",
+        name: "Amoxicillin",
+        strength: "500mg",
+        frequency: "BID",
+        instructions: "",
+        durationDays: 7,
+        quantityPrescribed: 14,
+        quantityApprovedPerFill: null,
+        quantityDispensed: 0,
+        refillsAllowed: 0,
+        refillsRemaining: 0,
+        validation: {
+          hasAllergy: false,
+          hasInteraction: false,
+          severity: "None",
+          interactionDetails: [],
+        },
+        review: {
+          status: "Pending",
+          reviewedBy: null,
+          reviewedAt: null,
+          notes: null,
+        },
       },
       {
-        prescriptionMedicineId: "MED-2",
-        prescribedQuantity: 5,
+        lineId: "line-2",
+        productId: "prod-2",
+        name: "Cetirizine",
+        strength: "10mg",
+        frequency: "OD",
+        instructions: "",
+        durationDays: 5,
+        quantityPrescribed: 5,
+        quantityApprovedPerFill: null,
+        quantityDispensed: 0,
+        refillsAllowed: 0,
+        refillsRemaining: 0,
+        validation: {
+          hasAllergy: false,
+          hasInteraction: false,
+          severity: "None",
+          interactionDetails: [],
+        },
+        review: {
+          status: "Approved",
+          reviewedBy: "ph-1",
+          reviewedAt: new Date("2026-03-01T12:00:00Z"),
+          notes: null,
+        },
       },
     ],
-  } as PrescriptionDetailsDto;
-}
-
-function createMockAllergy(
-  overrides?: Partial<AllergyAlert>
-): AllergyAlert {
-  return {
-    issueType: "Drug-Allergy",
-    severity: "High", // must match Severity type
-    affectedBy: "Penicillin",
-    message: "Patient has a severe penicillin allergy",
-    allergenCode: "ALG-001",
-    ...overrides,
   };
 }
 
-/* ---------- Tests ---------- */
-
 describe("useValidationUiState", () => {
-  it("initializes with default state", () => {
+  it("initializes persisted reviewed lines into decisions", () => {
     const { result } = renderHook(() => useValidationUiState());
 
-    expect(result.current.ui.data).toBeNull();
-    expect(result.current.ui.approved).toEqual({});
-    expect(result.current.ui.decisions).toEqual({});
-    expect(result.current.ui.reasons).toEqual({});
+    act(() => {
+      result.current.actions.init(createPrescription());
+    });
+
+    expect(result.current.ui.decisions).toEqual({ "line-2": "Approved" });
+  });
+
+  it("lets a draft approval be changed to rejection before submit", () => {
+    const { result } = renderHook(() => useValidationUiState());
+
+    act(() => {
+      result.current.actions.init(createPrescription());
+      result.current.actions.acceptLine("line-1");
+      result.current.actions.openRejectLine("line-1");
+    });
+
+    expect(result.current.ui.decisions["line-1"]).toBe("Approved");
+    expect(result.current.ui.rejectLineId).toBe("line-1");
+  });
+
+  it("lets a draft rejection be changed back to approval before submit", () => {
+    const { result } = renderHook(() => useValidationUiState());
+
+    act(() => {
+      result.current.actions.init(createPrescription());
+      result.current.actions.confirmRejectLine("line-1");
+      result.current.actions.acceptLine("line-1");
+    });
+
+    expect(result.current.ui.decisions["line-1"]).toBe("Approved");
+  });
+
+  it("does not change a line that was already finalized in the loaded data", () => {
+    const { result } = renderHook(() => useValidationUiState());
+
+    act(() => {
+      result.current.actions.init(createPrescription());
+      result.current.actions.openRejectLine("line-2");
+      result.current.actions.acceptLine("line-2");
+    });
+
+    expect(result.current.ui.decisions["line-2"]).toBe("Approved");
     expect(result.current.ui.rejectLineId).toBeNull();
+  });
+
+  it("does not open reject-all once line review has started", () => {
+    const { result } = renderHook(() => useValidationUiState());
+
+    act(() => {
+      result.current.actions.init(createPrescription());
+      result.current.actions.acceptLine("line-1");
+      result.current.actions.openRejectAll();
+    });
+
     expect(result.current.ui.rejectAllOpen).toBe(false);
-  });
-
-  it("initializes data correctly with INIT", () => {
-    const { result } = renderHook(() => useValidationUiState());
-    const mockRx = createMockPrescription();
-
-    act(() => {
-      result.current.actions.init(mockRx);
-    });
-
-    expect(result.current.ui.data).toEqual(mockRx);
-    expect(result.current.ui.approved).toEqual({
-      "MED-1": 10,
-      "MED-2": 5,
-    });
-    expect(result.current.ui.decisions).toEqual({
-      "MED-1": null,
-      "MED-2": null,
-    });
-  });
-
-  it("sets approved quantity and clamps negative to zero", () => {
-    const { result } = renderHook(() => useValidationUiState());
-    act(() => result.current.actions.init(createMockPrescription()));
-
-    act(() => {
-      result.current.actions.setApproved("MED-1", -5);
-    });
-
-    expect(result.current.ui.approved["MED-1"]).toBe(0);
-  });
-
-  it("accepts a line and clears reason", () => {
-    const { result } = renderHook(() => useValidationUiState());
-    act(() => result.current.actions.init(createMockPrescription()));
-
-    act(() => {
-      result.current.actions.setReason("MED-1", "Some reason");
-    });
-
-    act(() => {
-      result.current.actions.acceptLine("MED-1");
-    });
-
-    expect(result.current.ui.decisions["MED-1"]).toBe("Accepted");
-    expect(result.current.ui.reasons["MED-1"]).toBeUndefined();
-  });
-
-  it("opens and closes reject line modal", () => {
-    const { result } = renderHook(() => useValidationUiState());
-
-    act(() => result.current.actions.openRejectLine("MED-1"));
-    expect(result.current.ui.rejectLineId).toBe("MED-1");
-
-    act(() => result.current.actions.closeRejectLine());
-    expect(result.current.ui.rejectLineId).toBeNull();
-  });
-
-  it("confirms reject line", () => {
-    const { result } = renderHook(() => useValidationUiState());
-    act(() => result.current.actions.init(createMockPrescription()));
-
-    act(() => result.current.actions.openRejectLine("MED-1"));
-    act(() => result.current.actions.confirmRejectLine("MED-1"));
-
-    expect(result.current.ui.decisions["MED-1"]).toBe("Rejected");
-    expect(result.current.ui.rejectLineId).toBeNull();
-  });
-
-  it("sets reason correctly", () => {
-    const { result } = renderHook(() => useValidationUiState());
-
-    act(() => result.current.actions.setReason("MED-1", "Invalid dosage"));
-
-    expect(result.current.ui.reasons["MED-1"]).toBe("Invalid dosage");
-  });
-
-  it("opens and closes reject all modal", () => {
-    const { result } = renderHook(() => useValidationUiState());
-
-    act(() => result.current.actions.openRejectAll());
-    expect(result.current.ui.rejectAllOpen).toBe(true);
-
-    act(() => result.current.actions.closeRejectAll());
-    expect(result.current.ui.rejectAllOpen).toBe(false);
-  });
-
-  it("opens and closes allergy modal", () => {
-    const { result } = renderHook(() => useValidationUiState());
-    const alert = createMockAllergy();
-
-    act(() => result.current.actions.openAllergy(alert));
-    expect(result.current.ui.allergyFor).toEqual(alert);
-
-    act(() => result.current.actions.closeAllergy());
-    expect(result.current.ui.allergyFor).toBeNull();
-  });
-
-  it("actions object is memoized", () => {
-    const { result, rerender } = renderHook(() =>
-      useValidationUiState()
-    );
-
-    const firstActions = result.current.actions;
-
-    rerender();
-
-    expect(result.current.actions).toBe(firstActions);
   });
 });

@@ -282,6 +282,20 @@ describe('PatientProfiles', () => {
     expect(det.selectPatient).toHaveBeenCalledWith('p-2');
   });
 
+  it('loads prescriptions for the currently selected patient id', () => {
+    setDirectoryReturn(makeDir());
+    setDetailsReturn(makeDetails({ selectedPatient: { id: 'p-1', fullName: 'Patient One' } }));
+    setRxReturn(makeRx());
+
+    render(<PatientProfiles />);
+
+    expect(usePatientPrescriptions).toHaveBeenCalledWith(
+      expect.any(Function),
+      'p-1',
+      10,
+    );
+  });
+
   it('wires PatientDetailsPanel: load more triggers prescriptions.loadMore and open update shows UpdatePatientModal', async () => {
     const user = userEvent.setup();
     setDirectoryReturn(makeDir());
