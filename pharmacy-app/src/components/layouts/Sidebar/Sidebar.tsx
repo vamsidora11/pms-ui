@@ -29,6 +29,7 @@ const roleNavItems: Record<
   manager: [
     { key: "dashboard", label: "Dashboard", to: "/manager/dashboard", icon: HomeIcon },
     { key: "users", label: "User Management", to: "/manager/users", icon: UserGroupIcon },
+    { key: "inventory", label: "Inventory Management", to: "/manager/inventory", icon: CubeIcon },
     { key: "audit", label: "Audit Logs", to: "/manager/audit", icon: ClipboardDocumentListIcon },
     { key: "payment", label: "Payment Dashboard", to: "/manager/payment", icon: CheckBadgeIcon },
   ],

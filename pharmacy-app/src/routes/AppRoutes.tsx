@@ -8,6 +8,7 @@ const LoginPage = lazy(() => import("@auth/components/LoginPage"));
 const PharmacistDashboard = lazy(() => import("@auth/components/PharmacistDashboard"));
 const ManagerDashboard = lazy(() => import("@auth/components/ManagerDashboard"));
 const ManagerUserManagement = lazy(() => import("@auth/components/ManagerUserManagement"));
+const ManagerInventoryManagement = lazy(() => import("@auth/components/ManagerInventoryManagement"));
 
 const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionValidationQueue"));
 const PrescriptionValidationPage  = lazy(() => import("@validation/PrescriptionValidationPage"));
@@ -39,6 +40,7 @@ export default function AppRoutes() {
             <Route path="users" element={<ManagerUserManagement />} />
             <Route path="audit" element={<AuditLogs />} />
             <Route path="payment" element={<PaymentDashboard />} />
+            <Route path="inventory" element={<ManagerInventoryManagement />} />
           </Route>
         </Route>
 

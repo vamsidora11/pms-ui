@@ -11,7 +11,6 @@ import {
   Users as UsersIcon,
 } from "lucide-react";
 
-import Breadcrumbs from "@components/common/BreadCrumps/Breadcrumbs";
 import Button from "@components/common/Button/Button";
 import Checkbox from "@components/common/Checkbox/Checkbox";
 import DataTable from "@components/common/Table/Table";
@@ -484,7 +483,6 @@ export default function ManagerUserManagement() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <Breadcrumbs items={[{ label: "Manager" }, { label: "User Management" }]} />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
