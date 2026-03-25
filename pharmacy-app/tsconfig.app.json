@@ -41,6 +41,8 @@
       "@assets/*": ["assets/*"],
       "@constants/*": ["constants/*"],
       "@technician/*": ["features/technician/*"],
+      "@audit/*": ["features/manager/audit/*"],
+      "@payment/*": ["features/manager/payment/*"],
         "@dispense/*": ["features/dispense/*"],
         "@routes/*": ["routes/*"],
         "@styles/*": ["styles/*"]

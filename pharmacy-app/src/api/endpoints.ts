@@ -45,4 +45,21 @@ export const ENDPOINTS = {
   inventoryPendingLots: "/api/inventory/lots/pending",
   inventoryLotsAll:    "/api/inventory/lots/all",      
   inventoryExpiring:   "/api/inventory/lots/expiring", 
+
+  
+// ── Payments ────────────────────────────────────────────────────────────────
+  // Controller: Pms.Api.Controllers.Payments.PaymentController
+  paymentRecord:           "/api/payments",                            // POST
+  paymentById:             (id: string) => `/api/payments/${id}`,      // GET
+  paymentsByDispense:      (dispenseId: string) => `/api/payments/dispense/${dispenseId}`, // GET
+  paymentsSummary:         "/api/payments/summary",                    // GET ?period=
+  paymentsTrend:           "/api/payments/trend",                      // GET ?period=
+  paymentsModeBreakdown:   "/api/payments/mode-breakdown",             // GET ?period=&type=
+  paymentsTransactions:    "/api/payments/transactions",               // GET paging/sort/filter
+
+  
+  auditList: "/api/audit",
+  auditById: (id: string) => `/api/audit/${id}`,
+
+
 };

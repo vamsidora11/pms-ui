@@ -24,6 +24,8 @@ const LabelGeneration     = lazy(() => import("@labels/components/LabelGeneratio
 const PrescriptionHistory = lazy(() => import("@prescription/PrescriptionHistory"));
 const PatientProfile      = lazy(() => import("@patient/components/PatientProfile"));
 
+const AuditLogs = lazy(() => import("@audit/components/AuditLog"));
+const PaymentDashboard = lazy(() => import("@payment/components/PaymentDashboard"));
 export default function AppRoutes() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -35,6 +37,8 @@ export default function AppRoutes() {
           <Route path={ROUTES.MANAGER.BASE} element={<AppLayout />}>
             <Route path="dashboard" element={<ManagerDashboard />} />
             <Route path="users" element={<ManagerUserManagement />} />
+            <Route path="audit" element={<AuditLogs />} />
+            <Route path="payment" element={<PaymentDashboard />} />
           </Route>
         </Route>
 
