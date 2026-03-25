@@ -496,12 +496,35 @@ export default function ManagerUserManagement() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total Users" value={totalUsers} icon={<UsersIcon className="h-6 w-6 text-blue-600" />} iconBg="bg-blue-50" />
-        <StatCard title="Active Users" value={activeUsers} icon={<UserCheck className="h-6 w-6 text-green-600" />} iconBg="bg-green-50" />
-        <StatCard title="Inactive Users" value={inactiveUsers} icon={<UserX className="h-6 w-6 text-gray-600" />} iconBg="bg-gray-50" />
-        <StatCard title="Managers" value={managers} icon={<Shield className="h-6 w-6 text-orange-600" />} iconBg="bg-orange-50" />
-      </div>
+    <div className="grid grid-cols-4 gap-4">
+  <StatCard
+    title="Total Users"
+    value={totalUsers}
+    icon={<UsersIcon className="text-blue-600 mb-2" />}
+    iconBg="bg-blue-50"
+  />
+
+  <StatCard
+    title="Active Users"
+    value={activeUsers}
+    icon={<UserCheck className="text-green-600 mb-2" />}
+    iconBg="bg-green-50"
+  />
+
+  <StatCard
+    title="Inactive Users"
+    value={inactiveUsers}
+    icon={<UserX className="text-gray-600 mb-2" />}
+    iconBg="bg-gray-50"
+  />
+
+  <StatCard
+    title="Managers"
+    value={managers}
+    icon={<Shield className="text-orange-600 mb-2" />}
+    iconBg="bg-orange-50"
+  />
+</div>
 
       <DataTable
         data={users}
