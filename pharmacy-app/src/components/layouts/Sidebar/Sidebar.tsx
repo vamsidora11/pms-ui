@@ -29,6 +29,7 @@ const roleNavItems: Record<
   manager: [
     { key: "dashboard", label: "Dashboard", to: "/manager/dashboard", icon: HomeIcon },
     { key: "users", label: "User Management", to: "/manager/users", icon: UserGroupIcon },
+    { key: "inventory", label: "Inventory Management", to: "/manager/inventory", icon: CubeIcon },
   ],
   pharmacist: [
     { key: "dashboard",   label: "Dashboard",               to: "/pharmacist/dashboard",  icon: HomeIcon },
