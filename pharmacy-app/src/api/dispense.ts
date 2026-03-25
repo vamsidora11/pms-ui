@@ -1,25 +1,24 @@
 // src/api/dispense.ts
-//
-// All technician dispense API calls.
-// Matches DispenseController.cs routes exactly.
-//
+// All dispense API calls — matches DispenseController.cs exactly.
+
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
+import { extractEtag } from "./prescription";
 import { logger } from "@utils/logger/logger";
 
-// ── DTOs (mirrors C# records exactly) ────────────────────────────────────────
+// ── DTOs ──────────────────────────────────────────────────────────────────────
 
 export interface DispenseLotUsageDto {
-  lotNumber: string;
+  lotId:     string;
   quantity:  number;
-  expiry:    string; // ISO string
+  expiry:    string;
 }
 
 export interface DispenseItemPricingDto {
-  unitPrice:       number;
-  total:           number;
-  insurancePaid:   number;
-  patientPayable:  number;
+  unitPrice:      number;
+  total:          number;
+  insurancePaid:  number;
+  patientPayable: number;
 }
 
 export interface DispenseItemDto {
@@ -38,23 +37,22 @@ export interface DispenseBillingSummaryDto {
   totalPatientPayable: number;
 }
 
-// Summary — used in the queue list
 export interface DispenseSummaryDto {
   id:             string;
   prescriptionId: string;
   patientId:      string;
-  dispenseDate:   string; // ISO string
-  // "Created" | "InsuranceApproved" | "PaymentProcessed" | "Dispensed" | "Cancelled"
+  patientName:    string;
+  dispenseDate:   string;
   status:         string;
   itemCount:      number;
   grandTotal:     number;
 }
 
-// Details — used in PackingListModal
 export interface DispenseDetailsDto {
   id:             string;
   prescriptionId: string;
   patientId:      string;
+  patientName:    string;
   dispenseDate:   string;
   status:         string;
   pharmacistId:   string;
@@ -62,31 +60,123 @@ export interface DispenseDetailsDto {
   billingSummary: DispenseBillingSummaryDto;
 }
 
-// Paged wrapper (mirrors PagedResult<T>)
 export interface PagedResult<T> {
   items:      T[];
   pageSize:   number;
   totalCount: number;
 }
 
-// ── Get dispense queue (PaymentProcessed) ─────────────────────────────────────
-// GET /api/dispenses?status=PaymentProcessed&pageSize=50&pageNumber=1
-// Used by TechnicianDashboard to populate the queue table
+// ── Preview DTOs ──────────────────────────────────────────────────────────────
+
+export interface InsuranceInfoDto {
+  provider: string;
+  policyId: string;
+}
+
+export interface DispensePreviewItemDto {
+  prescriptionLineId: string;
+  productId:          string;
+  productName:        string;
+  activeRefillNumber: number;
+  remainingQty:       number;
+  safeStockAvailable: number;
+ unitPrice: number; 
+}
+
+export interface DispensePreviewDto {
+  prescriptionId: string;
+  patientId:      string;
+  patientName:    string;
+  insurance:      InsuranceInfoDto | null;
+  items:          DispensePreviewItemDto[];
+  
+}
+
+// ── Checkout Request DTOs ─────────────────────────────────────────────────────
+
+export interface CreateDispenseItemRequest {
+  prescriptionLineId: string;
+  productId:          string;
+  quantityToDispense: number;
+  isManualAdjustment?: boolean;
+}
+
+export interface CreateDispenseRequest {
+  prescriptionId: string;
+  items:          CreateDispenseItemRequest[];
+}
+
+// ── API Functions ─────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/prescriptions/{prescriptionId}/dispense-preview?patientId={patientId}
+ * Returns eligible dispense lines with safe stock + unit price from inventory/product.
+ */
+export async function getDispensePreview(
+  prescriptionId: string,
+  patientId:      string
+): Promise<DispensePreviewDto> {
+  try {
+    const res = await api.get<DispensePreviewDto>(
+      ENDPOINTS.dispensePreview(prescriptionId),
+      { params: { patientId } }
+    );
+    return res.data;
+  } catch (error) {
+    logger.error("getDispensePreview failed", { prescriptionId, patientId, error });
+    throw error;
+  }
+}
+
+/**
+ * POST /api/dispenses?patientId={patientId}
+ */
+export async function createDispense(
+  patientId: string,
+  request:   CreateDispenseRequest
+): Promise<{ dispense: DispenseDetailsDto; etag: string }> {
+  try {
+    const res = await api.post<DispenseDetailsDto>(ENDPOINTS.dispenses, request, {
+      params: { patientId },
+    });
+    return { dispense: res.data, etag: extractEtag(res.headers) ?? "" };
+  } catch (error) {
+    logger.error("createDispense failed", { patientId, prescriptionId: request.prescriptionId, error });
+    throw error;
+  }
+}
+
+/**
+ * POST /api/dispenses/{dispenseId}/insurance-claim?patientId={patientId}
+ */
+export async function submitInsuranceClaim(
+  dispenseId: string,
+  patientId:  string,
+  etag:       string
+): Promise<void> {
+  try {
+    await api.post(
+      ENDPOINTS.dispenseInsuranceClaim(dispenseId),
+      null,
+      { params: { patientId }, headers: { "If-Match": etag } }
+    );
+  } catch (error) {
+    logger.error("submitInsuranceClaim failed", { dispenseId, patientId, error });
+    throw error;
+  }
+}
+
+/**
+ * GET /api/dispenses?status=PaymentProcessed — technician queue
+ */
 export async function getDispenseQueue(
   pageSize   = 50,
   pageNumber = 1
 ): Promise<PagedResult<DispenseSummaryDto>> {
   try {
-    const res = await api.get<PagedResult<DispenseSummaryDto>>(
-      ENDPOINTS.dispenses,
-      {
-        params: {
-          status:     "PaymentProcessed",
-          pageSize,
-          pageNumber,
-        },
-      }
-    );
+    const res = await api.get<PagedResult<DispenseSummaryDto>>(ENDPOINTS.dispenses, {
+      params: { status: "PaymentProcessed", pageSize, pageNumber },
+    });
     return res.data;
   } catch (error) {
     logger.error("getDispenseQueue failed", { error });
@@ -94,46 +184,58 @@ export async function getDispenseQueue(
   }
 }
 
-// ── Get dispense details (packing list) ──────────────────────────────────────
-// GET /api/dispenses/{dispenseId}?patientId={patientId}
-// Used by PackingListModal
+/**
+ * GET /api/dispenses/{dispenseId}?patientId={patientId}
+ */
 export async function getDispenseById(
   dispenseId: string,
   patientId:  string
 ): Promise<{ dispense: DispenseDetailsDto; etag: string }> {
   try {
-    const res = await api.get<DispenseDetailsDto>(
-      ENDPOINTS.dispenseById(dispenseId),
-      { params: { patientId } }
-    );
-    const etag = (res.headers["etag"] as string | undefined) ?? "";
-    return { dispense: res.data, etag };
+    const res = await api.get<DispenseDetailsDto>(ENDPOINTS.dispenseById(dispenseId), {
+      params: { patientId },
+    });
+    return { dispense: res.data, etag: extractEtag(res.headers) ?? "" };
   } catch (error) {
     logger.error("getDispenseById failed", { dispenseId, patientId, error });
     throw error;
   }
 }
 
-// ── Execute dispense (technician marks as Dispensed) ─────────────────────────
-// PUT /api/dispenses/{dispenseId}/execute?patientId={patientId}
-// Requires If-Match header with the ETag from getDispenseById
-// Returns 204 NoContent on success
+/**
+ * PUT /api/dispenses/{dispenseId}/execute?patientId={patientId}
+ */
 export async function executeDispense(
   dispenseId: string,
   patientId:  string,
   etag:       string
 ): Promise<void> {
   try {
-    await api.put(
-      ENDPOINTS.dispenseExecute(dispenseId),
-      null, // no body
-      {
-        params:  { patientId },
-        headers: { "If-Match": etag },
-      }
-    );
+    await api.put(ENDPOINTS.dispenseExecute(dispenseId), null, {
+      params:  { patientId },
+      headers: { "If-Match": etag },
+    });
   } catch (error) {
     logger.error("executeDispense failed", { dispenseId, patientId, error });
+    throw error;
+  }
+}
+
+/**
+ * PUT /api/dispenses/{dispenseId}/cancel?patientId={patientId}
+ */
+export async function cancelDispense(
+  dispenseId: string,
+  patientId:  string,
+  etag:       string
+): Promise<void> {
+  try {
+    await api.put(ENDPOINTS.dispenseCancel(dispenseId), null, {
+      params:  { patientId },
+      headers: { "If-Match": etag },
+    });
+  } catch (error) {
+    logger.error("cancelDispense failed", { dispenseId, patientId, error });
     throw error;
   }
 }

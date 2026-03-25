@@ -6,19 +6,23 @@ import type {
   LabelPrescriptionDetails,
 } from "@labels/types/label.types";
 
+const LABEL_QUEUE_STATUS = "PaymentProcessed";
+const DEFAULT_LABEL_QUEUE_PAGE_SIZE = 10;
+const DEFAULT_LABEL_QUEUE_PAGE_NUMBER = 1;
+
 /* ======================================
    GET LABEL QUEUE
 ====================================== */
 
 export async function getLabelQueue(
-  pageSize: number = 20,
-  pageNumber: number = 1
+  pageSize: number = DEFAULT_LABEL_QUEUE_PAGE_SIZE,
+  pageNumber: number = DEFAULT_LABEL_QUEUE_PAGE_NUMBER
 ) {
-  const response = await api.get(ENDPOINTS.labelQueue, {
+  const response = await api.get(ENDPOINTS.dispenses, {
     params: {
       pageSize,
       pageNumber,
-      status: "PaymentProcessed",
+      status: LABEL_QUEUE_STATUS,
     },
   });
 

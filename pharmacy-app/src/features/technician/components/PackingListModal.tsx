@@ -3,7 +3,7 @@
 // Receives real DispenseDetailsDto from the backend.
 // Shows actual lot numbers and expiry dates from dispense items.
 //
-import { Package, User, Calendar, Pill, FileBarChart, CheckCircle, X, RefreshCw } from "lucide-react";
+import { Package, User, Calendar, Pill, CheckCircle, X, RefreshCw } from "lucide-react";
 import Modal from "@components/common/Modal/Modal";
 import Button from "@components/common/Button/Button";
 import type { DispenseDetailsDto, DispenseSummaryDto } from "@api/dispense";
@@ -95,7 +95,7 @@ export default function PackingListModal({
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-blue-400 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400">Patient ID</p>
+                    <p className="text-xs text-gray-400">Patient</p>
                     <p className="font-semibold text-gray-900 text-sm font-mono">
                       {dispense.patientId}
                     </p>
@@ -139,128 +139,39 @@ export default function PackingListModal({
 
             {/* Medication Cards — real lot data from backend */}
             <div className="space-y-3">
-              {dispense.items.map((item, idx) => {
-                // Items can have multiple lots used (FEFO split across lots)
-                const hasLots = item.lotsUsed.length > 0;
-
-                return (
+              {dispense.items.map((item, idx) => (
                   <div
                     key={item.prescriptionLineId}
                     className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
                   >
-                    <div className="p-4">
-                      {/* Drug header row */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-base flex-shrink-0">
-                            {idx + 1}
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900 font-mono text-sm">
-                              {item.productId}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              Refill #{item.refillNumber}
-                              {item.isManualAdjustment && (
-                                <span className="ml-2 text-orange-500">• Manual Adjustment</span>
-                              )}
-                            </p>
-                          </div>
+                    <div className="p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-base flex-shrink-0">
+                          {idx + 1}
                         </div>
-                        <div className="text-right">
-                          <p className="text-4xl font-bold text-blue-600 leading-none">
-                            {item.quantityDispensed}
+                        <div>
+                          <p className="font-bold text-gray-900 font-mono text-sm">
+                            {item.productId}
                           </p>
-                          <p className="text-xs text-gray-400 uppercase tracking-wide mt-0.5">
-                            Units
+                          <p className="text-xs text-gray-400">
+                            Refill #{item.refillNumber}
+                            {item.isManualAdjustment && (
+                              <span className="ml-2 text-orange-500">• Manual Adjustment</span>
+                            )}
                           </p>
                         </div>
                       </div>
-
-                      {/* Lot retrieval section */}
-                      <div className="bg-blue-50 rounded-xl p-3">
-                        <div className="flex items-center gap-2 mb-2.5">
-                          <FileBarChart className="w-3.5 h-3.5 text-blue-500" />
-                          <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
-                            Retrieve From
-                          </span>
-                        </div>
-
-                        {hasLots ? (
-                          // Real lot data — one row per lot used (FEFO split)
-                          <div className="space-y-2">
-                            {item.lotsUsed.map((lot) => (
-                              <div
-                                key={lot.lotNumber}
-                                className="grid grid-cols-3 gap-2"
-                              >
-                                {[
-                                  {
-                                    label: "LOT NUMBER",
-                                    value: lot.lotNumber,
-                                    cls: "font-bold text-gray-900 font-mono",
-                                  },
-                                  {
-                                    label: "QUANTITY",
-                                    value: `${lot.quantity} units`,
-                                    cls: "font-bold text-blue-600",
-                                  },
-                                  {
-                                    label: "EXPIRY",
-                                    value: new Date(lot.expiry).toLocaleDateString("en-US", {
-                                      month: "short", day: "numeric", year: "numeric",
-                                    }),
-                                    cls: "font-medium text-gray-900",
-                                  },
-                                ].map(({ label, value, cls }) => (
-                                  <div
-                                    key={label}
-                                    className="bg-white rounded-lg p-2.5 border border-blue-100"
-                                  >
-                                    <p className="text-xs text-gray-400 mb-1">{label}</p>
-                                    <p className={`text-sm ${cls} break-words`}>{value}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          // No lots yet — dispense is in PaymentProcessed state,
-                          // lots are assigned when ExecuteDispense runs
-                          <div className="bg-white rounded-lg p-3 border border-blue-100 text-center">
-                            <p className="text-sm text-gray-500">
-                              {item.isManualAdjustment
-                                ? "Manual adjustment — no lot required"
-                                : "Lots will be assigned when dispensed (FEFO)"}
-                            </p>
-                          </div>
-                        )}
+                      <div className="text-right">
+                        <p className="text-4xl font-bold text-blue-600 leading-none">
+                          {item.quantityDispensed}
+                        </p>
+                        <p className="text-xs text-gray-400 uppercase tracking-wide mt-0.5">
+                          Units
+                        </p>
                       </div>
-
-                      {/* Pricing summary (non-zero items only) */}
-                      {!item.isManualAdjustment && item.pricing.total > 0 && (
-                        <div className="mt-3 flex items-center justify-between text-xs text-gray-500 px-1">
-                          <span>Patient pays</span>
-                          <span className="font-semibold text-gray-900">
-                            ${item.pricing.patientPayable.toFixed(2)}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Ready to Proceed banner */}
-            <div className="bg-purple-50 rounded-2xl p-4 flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-purple-400 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">Ready to proceed?</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Click "Complete Dispense" once all items are packed and ready for pickup
-                </p>
-              </div>
+                ))}
             </div>
 
             {/* Billing summary */}

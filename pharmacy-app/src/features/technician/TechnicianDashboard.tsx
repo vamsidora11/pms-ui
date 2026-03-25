@@ -13,8 +13,8 @@ import { useNavigate } from "react-router-dom";
 import DataTable, { type Column } from "@components/common/Table/Table";
 import Button from "@components/common/Button/Button";
 import Badge from "@components/common/Badge/Badge";
-import PackingListModal from "./components/PackingListModal";
-import { useDispenseQueue } from "./hooks/useDispenseQueue";
+import PackingListModal from "@technician/components/PackingListModal";
+import { useDispenseQueue } from "@technician/hooks/useDispenseQueue";
 import { ROUTES } from "@constants/routes";
 import type { DispenseSummaryDto } from "@api/dispense";
 
@@ -37,7 +37,7 @@ export default function TechnicianDashboard() {
   } = useDispenseQueue();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   // ── Table columns ─────────────────────────────────────────────────────────
@@ -50,7 +50,10 @@ export default function TechnicianDashboard() {
       filterable: true,
       width: 160,
       render: (value) => (
-        <span className="font-mono text-sm font-semibold text-blue-600 break-all">
+        <span
+          className="font-mono text-sm font-semibold text-blue-600 block truncate max-w-[140px]"
+          title={String(value)}
+        >
           {String(value)}
         </span>
       ),
@@ -61,10 +64,10 @@ export default function TechnicianDashboard() {
       sortable: true,
       filterable: true,
       width: 170,
-      render: (value, row) => (
+      render: (_, row) => (
         <div>
-          <div className="font-medium text-gray-900 text-sm font-mono">{String(value)}</div>
-          <div className="text-xs text-gray-500">Rx: {row.prescriptionId}</div>
+          <div className="font-medium text-gray-900 text-sm">{row.patientName}</div>
+          <div className="text-xs text-gray-400 mt-0.5">Rx: {row.prescriptionId}</div>
         </div>
       ),
     },
@@ -97,7 +100,7 @@ export default function TechnicianDashboard() {
       filterType: "select",
       filterOptions: ["PaymentProcessed"],
       width: 185,
-      render: () => (
+      render: (value) => (
         <Badge
           label="Payment Processed"
           variant="default"

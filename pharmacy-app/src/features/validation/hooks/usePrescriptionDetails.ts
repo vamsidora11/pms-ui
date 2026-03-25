@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getPrescriptionById } from "@api/prescription.api";
+import { getPrescriptionById } from "@api/prescription.ts";
 import { mapDetailsDto } from "@prescription/domain/mapper";
 import type { PrescriptionDetails } from "@prescription/domain/model";
 

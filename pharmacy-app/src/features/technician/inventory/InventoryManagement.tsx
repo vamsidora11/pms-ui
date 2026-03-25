@@ -12,7 +12,7 @@ import {
 import DataTable, { type Column } from "@components/common/Table/Table";
 import Modal from "@components/common/Modal/Modal";
 import Button from "@components/common/Button/Button";
-import InventoryStockList from "../components/InventoryStockList";
+import InventoryStockDataGrid from "../components/InventoryStockDataGrid";
 import { useInventoryProducts } from "../hooks/useInventoryProducts";
 import { useRestockRequests } from "../hooks/useRestockRequests";
 import type { InventoryItem } from "../technician.types";
@@ -286,7 +286,7 @@ export default function InventoryManagement() {
         <div className="p-6">
           {activeTab === "stock" && (
             <div>
-              <InventoryStockList
+              <InventoryStockDataGrid
                 products={stockRows}
                 totalCount={totalCount}
                 isLoading={isLoading}

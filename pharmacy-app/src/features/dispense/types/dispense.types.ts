@@ -1,55 +1,61 @@
-// src/features/prescription/types/dispense.types.ts
+// src/features/dispense/types/dispense.types.ts
 
-export type ClaimStatus = "pending" | "submitting" | "approved" | "rejected";
-export type PaymentStatus = "pending" | "paid";
-export type PaymentMethod = "cash" | "card" | "upi";
-export type DispenseRowStatus = "ready" | "external" | "blocked" | "completed";
+export type WorkflowStep   = 1 | 2;
+export type ClaimStatus    = "idle" | "submitting" | "approved" | "rejected";
+export type PaymentStatus  = "idle" | "processing" | "done";
+export type PaymentMethod  = "cash" | "card" | "upi";
 
+/** A single row in the Step 1 dispense table — built from DispensePreviewItemDto */
 export interface DispenseRow {
-  id: string;
-  medicineName: string;
-  strength: string;
-  frequency: string;
-  refillLabel: string;
-  remaining: number;
-  maxPrescribed: number;
-  safeStock: number;
-  unitPrice: number;
-  status: DispenseRowStatus;
-  isExternal?: boolean;
+  id:               string; // prescriptionLineId
+  productId:        string;
+  medicineName:     string;
+  strength:         string;
+  frequency:        string;
+  refillLabel:      string;
+  remaining:        number; // remainingQty from preview
+  maxPrescribed:    number;
+  safeStock:        number; // safeStockAvailable from preview (real inventory)
+  unitPrice:        number; // from DispenseItemPricingDto after checkout; 0 before
+  isExternal?:      boolean;
 }
 
-export interface AllocationResult {
-  rowId: string;
-  internalQty: number;
-  externalQty: number;
-  totalPrice: number;
-  patientPayable: number;
-  insuranceCovered: number;
-  isValid: boolean;
-  error?: string;
+/** Billing totals computed from dispense billing summary */
+export interface BillTotals {
+  subtotal:          number;
+  insuranceCovered:  number;
+  patientDue:        number;
 }
 
-export interface DispenseMedication {
-  drugName: string;
-  strength: string;
-  quantity: number;
-  instructions: string;
-  price: number;
-  refills: number;
-}
-
+/** Queue item built from PrescriptionSummaryDto */
 export interface DispenseQueueItem {
-  id: string;
-  patientId: string;
-  patientName: string;
-  doctorName: string;
+  prescriptionId:    string;
+  patientId:         string;
+  patientName:       string;
+  doctorName:        string;
+  medicineCount:     number;
+  status:            string;
+  createdAt:         string; // ISO string from API
+  insuranceProvider? : string;
+  insuranceId?:      string;
+  allergies?:        string[];
+}
+
+/** Workspace state — loaded after selecting a queue item */
+export interface DispenseWorkspace {
+  prescriptionId:   string;
+  patientId:        string;
+  patientName:      string;
+  doctorName:       string;
   insuranceProvider?: string;
-  allergies?: string[];
-  medications: DispenseMedication[];
-  status: string;
-  createdAt: Date;
-  totalAmount: number;
-  paymentStatus: string;
-  isUrgent?: boolean;
+  insuranceId?:     string;
+  allergies?:       string[];
+  rows:             DispenseRow[];
+  // Set after checkout succeeds
+  dispenseId?:      string;
+  dispenseEtag?:    string;
+  grandTotal?:      number;
+  // Set after insurance claim — real amounts from backend
+  backendPatientPayable?: number;
+  backendInsurancePaid?:  number;
 }

@@ -1,172 +1,253 @@
-// src/features/prescription/hooks/useDispense.ts
+// src/features/dispense/hooks/useDispense.ts
 import { useState, useCallback } from "react";
+import { getDispensePreview } from "@api/dispense";
+import type { DispensePreviewDto } from "@api/dispense";
 import type {
   DispenseRow,
-  AllocationResult,
+  DispenseWorkspace,
+  WorkflowStep,
   DispenseQueueItem,
-  ClaimStatus,
-} from "features/dispense/types/dispense.types";
+} from "../types/dispense.types";
 
-const INSURANCE_COVERAGE_RATE = 0.65;
+// ── Build rows from preview — unitPrice now comes from the API ────────────────
 
-export function calculateAllocation(
-  row: DispenseRow,
-  internalQty: number,
-  externalQty: number,
-  claimStatus: ClaimStatus
-): AllocationResult {
-  const totalQty = internalQty + externalQty;
-  const totalPrice = internalQty * row.unitPrice;
-
-  const result: AllocationResult = {
-    rowId: row.id,
-    internalQty,
-    externalQty,
-    isValid: true,
-    totalPrice,
-    insuranceCovered: 0,
-    patientPayable: totalPrice,
-  };
-
-  // Apply insurance only after claim approved, not for external rows
-  if (!row.isExternal && claimStatus === "approved") {
-    result.insuranceCovered = totalPrice * INSURANCE_COVERAGE_RATE;
-    result.patientPayable = totalPrice - result.insuranceCovered;
-  }
-
-  if (totalQty > row.remaining) {
-    result.isValid = false;
-    result.error = `Max ${row.remaining}`;
-  } else if (internalQty > row.safeStock) {
-    result.isValid = false;
-    result.error = `Stock Low`;
-  }
-
-  return result;
-}
-
-function buildRowsFromQueueItem(item: DispenseQueueItem): DispenseRow[] {
-  return item.medications.map((m, i) => ({
-    id: `${item.id}-${i}`,
-    medicineName: m.drugName,
-    strength: m.strength,
-    frequency: m.instructions,
-    refillLabel: m.refills === 0 ? "Original Fill" : `Refill 1 of ${m.refills}`,
-    remaining: m.quantity,
-    maxPrescribed: m.quantity,
-    safeStock: 100,
-    unitPrice: m.quantity > 0 ? m.price / m.quantity : 0,
-    status: "ready" as const,
+function buildRows(preview: DispensePreviewDto): DispenseRow[] {
+  return preview.items.map((item) => ({
+    id:            item.prescriptionLineId,
+    productId:     item.productId,
+    medicineName:  item.productName,
+    strength:      "",
+    frequency:     "",
+    refillLabel:   item.activeRefillNumber === 0
+      ? "Original Fill"
+      : `Refill ${item.activeRefillNumber}`,
+    remaining:     item.remainingQty,
+    maxPrescribed: item.remainingQty,
+    safeStock:     item.safeStockAvailable,
+    unitPrice:     item.unitPrice,    // ← real price from Product.BasePricing.UnitPrice
   }));
 }
 
-export function useDispense() {
-  const [selectedItem, setSelectedItem] = useState<DispenseQueueItem | null>(null);
-  const [activeRows, setActiveRows] = useState<DispenseRow[]>([]);
-  const [dispenseQuantities, setDispenseQuantities] = useState<Record<string, number>>({});
-  const [externalQuantities, setExternalQuantities] = useState<Record<string, number>>({});
-  const [allocations, setAllocations] = useState<Record<string, AllocationResult>>({});
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
-  const loadItem = useCallback((item: DispenseQueueItem) => {
-    const rows = buildRowsFromQueueItem(item);
-    const initialAllocations: Record<string, AllocationResult> = {};
-    rows.forEach((r) => {
-      initialAllocations[r.id] = calculateAllocation(r, 0, 0, "pending");
-    });
-    setActiveRows(rows);
-    setDispenseQuantities({});
-    setExternalQuantities({});
-    setAllocations(initialAllocations);
-    setSelectedItem(item);
+export function useDispense() {
+  const [workspace, setWorkspace]             = useState<DispenseWorkspace | null>(null);
+  const [step, setStep]                       = useState<WorkflowStep>(1);
+  const [isLoadingPreview, setLoadingPreview] = useState(false);
+  const [previewError, setPreviewError]       = useState<string | null>(null);
+
+  const [dispenseQty, setDispenseQty]   = useState<Record<string, number>>({});
+  const [externalQty, setExternalQty]   = useState<Record<string, number>>({});
+  const [qtyErrors, setQtyErrors]       = useState<Record<string, string>>({});
+  const [extQtyErrors, setExtQtyErrors] = useState<Record<string, string>>({});
+
+  // ── Load preview from API ──────────────────────────────────────────────────
+
+  const loadItem = useCallback(async (item: DispenseQueueItem) => {
+    setLoadingPreview(true);
+    setPreviewError(null);
+    try {
+      const preview = await getDispensePreview(item.prescriptionId, item.patientId);
+      const rows    = buildRows(preview);
+
+      setWorkspace({
+        prescriptionId:    item.prescriptionId,
+        patientId:         item.patientId,
+        patientName:       preview.patientName,
+        doctorName:        item.doctorName,
+        insuranceProvider: preview.insurance?.provider,
+        insuranceId:       preview.insurance?.policyId,
+        allergies:         item.allergies,
+        rows,
+      });
+
+      // Pre-fill dispense qty = remaining for each non-external row
+      const initialQty: Record<string, number> = {};
+      rows.forEach((r) => { initialQty[r.id] = r.remaining; });
+      setDispenseQty(initialQty);
+      setExternalQty({});
+      setQtyErrors({});
+      setExtQtyErrors({});
+      setStep(1);
+    } catch (err) {
+      setPreviewError("Failed to load prescription details. Please try again.");
+      console.error("useDispense.loadItem:", err);
+    } finally {
+      setLoadingPreview(false);
+    }
   }, []);
 
   const clearSelection = useCallback(() => {
-    setSelectedItem(null);
-    setActiveRows([]);
-    setDispenseQuantities({});
-    setExternalQuantities({});
-    setAllocations({});
+    setWorkspace(null);
+    setStep(1);
+    setDispenseQty({});
+    setExternalQty({});
+    setQtyErrors({});
+    setExtQtyErrors({});
+    setPreviewError(null);
   }, []);
 
-  // Called after claim approved — recalculate all allocations with insurance
-  const recalculateWithInsurance = useCallback(
-    (
-      rows: DispenseRow[],
-      qty: Record<string, number>,
-      extQty: Record<string, number>
-    ) => {
-      const newAllocations: Record<string, AllocationResult> = {};
-      rows.forEach((row) => {
-        newAllocations[row.id] = calculateAllocation(
-          row,
-          qty[row.id] || 0,
-          extQty[row.id] || 0,
-          "approved"
-        );
-      });
-      setAllocations(newAllocations);
-    },
-    []
-  );
+  // ── Qty change handlers ────────────────────────────────────────────────────
 
-  // Accepts a number directly — clamped to 0+ by QtyInput before calling
   const handleQtyChange = useCallback(
-    (row: DispenseRow, value: string, claimStatus: ClaimStatus) => {
-      const qty = Math.max(0, parseInt(value, 10) || 0);
-      const extQty = externalQuantities[row.id] || 0;
-      setDispenseQuantities((prev) => ({ ...prev, [row.id]: qty }));
-      setAllocations((prev) => ({
-        ...prev,
-        [row.id]: calculateAllocation(row, qty, extQty, claimStatus),
-      }));
+    (rowId: string, val: string) => {
+      if (!workspace) return;
+      const qty = Math.max(0, parseInt(val) || 0);
+      setDispenseQty((prev) => ({ ...prev, [rowId]: qty }));
+
+      const row = workspace.rows.find((r) => r.id === rowId);
+      if (!row || row.isExternal) return;
+      const ext      = externalQty[rowId] || 0;
+      const combined = qty + ext;
+
+      setQtyErrors((prev) => {
+        const e = { ...prev };
+        if (qty > row.safeStock)
+          e[rowId] = `Only ${row.safeStock} in stock`;
+        else if (qty > row.remaining)
+          e[rowId] = `Max allowed: ${row.remaining}`;
+        else if (combined > row.remaining)
+          e[rowId] = `Combined max: ${row.remaining}`;
+        else
+          delete e[rowId];
+        return e;
+      });
+
+      setExtQtyErrors((prev) => {
+        const e = { ...prev };
+        if (combined > row.remaining)
+          e[rowId] = `Combined max: ${row.remaining}`;
+        else
+          delete e[rowId];
+        return e;
+      });
     },
-    [externalQuantities]
+    [workspace, externalQty]
   );
 
   const handleExternalQtyChange = useCallback(
-    (row: DispenseRow, value: string, claimStatus: ClaimStatus) => {
-      const extQty = Math.max(0, parseInt(value, 10) || 0);
-      const qty = dispenseQuantities[row.id] || 0;
-      setExternalQuantities((prev) => ({ ...prev, [row.id]: extQty }));
-      setAllocations((prev) => ({
-        ...prev,
-        [row.id]: calculateAllocation(row, qty, extQty, claimStatus),
-      }));
+    (rowId: string, val: string) => {
+      if (!workspace) return;
+      const qty = Math.max(0, parseInt(val) || 0);
+      setExternalQty((prev) => ({ ...prev, [rowId]: qty }));
+
+      const row = workspace.rows.find((r) => r.id === rowId);
+      if (!row) return;
+
+      if (row.isExternal) {
+        setExtQtyErrors((prev) => {
+          const e = { ...prev };
+          if (qty > row.remaining) e[rowId] = `Max: ${row.remaining}`;
+          else delete e[rowId];
+          return e;
+        });
+      } else {
+        const dQty     = dispenseQty[rowId] || 0;
+        const combined = dQty + qty;
+        setExtQtyErrors((prev) => {
+          const e = { ...prev };
+          if (combined > row.remaining) e[rowId] = `Combined max: ${row.remaining}`;
+          else delete e[rowId];
+          return e;
+        });
+        setQtyErrors((prev) => {
+          const e = { ...prev };
+          if (combined > row.remaining)
+            e[rowId] = `Combined max: ${row.remaining}`;
+          else if (e[rowId]?.startsWith("Combined"))
+            delete e[rowId];
+          return e;
+        });
+      }
     },
-    [dispenseQuantities]
+    [workspace, dispenseQty]
   );
 
-  const hasErrors = activeRows.some(
-    (r) => !r.isExternal && allocations[r.id] && !allocations[r.id].isValid
-  );
+  // ── Validation ─────────────────────────────────────────────────────────────
 
-  // Compute totals — grand is always the raw sum, insurance and patient depend on claim
-  const computeTotals = () => {
-    return Object.values(allocations).reduce(
-      (acc, curr) => {
-        if (curr.isValid) {
-          acc.insurance += curr.insuranceCovered;
-          acc.patient += curr.patientPayable;
-          acc.grand += curr.totalPrice;
-        }
-        return acc;
-      },
-      { insurance: 0, patient: 0, grand: 0 }
+  const validateAndProceed = useCallback((): boolean => {
+    if (!workspace) return false;
+    const errors:    Record<string, string> = {};
+    const extErrors: Record<string, string> = {};
+
+    workspace.rows.forEach((row) => {
+      if (row.isExternal) {
+        const ext = externalQty[row.id] || 0;
+        if (ext > row.remaining) extErrors[row.id] = `Max: ${row.remaining}`;
+        return;
+      }
+      const qty      = dispenseQty[row.id] || 0;
+      const ext      = externalQty[row.id] || 0;
+      const combined = qty + ext;
+
+      if (qty > row.safeStock)
+        errors[row.id] = `Only ${row.safeStock} in stock`;
+      else if (qty > row.remaining)
+        errors[row.id] = `Max allowed: ${row.remaining}`;
+      else if (combined > row.remaining) {
+        errors[row.id]    = `Combined max: ${row.remaining}`;
+        extErrors[row.id] = `Combined max: ${row.remaining}`;
+      }
+    });
+
+    setQtyErrors(errors);
+    setExtQtyErrors(extErrors);
+    return Object.keys(errors).length === 0 && Object.keys(extErrors).length === 0;
+  }, [workspace, dispenseQty, externalQty]);
+
+  // ── Subtotal — now correctly uses real unitPrice from preview ──────────────
+
+  const computeSubtotal = useCallback((): number => {
+    if (!workspace) return 0;
+    return workspace.rows.reduce((sum, row) => {
+      if (row.isExternal) return sum;
+      const qty = dispenseQty[row.id] || 0;
+      return sum + qty * row.unitPrice; // unitPrice is now real, not 0
+    }, 0);
+  }, [workspace, dispenseQty]);
+
+  // ── After checkout — store dispenseId + etag ───────────────────────────────
+
+  const setCheckoutResult = useCallback((
+    dispenseId: string,
+    etag:        string,
+    grandTotal:  number
+  ) => {
+    setWorkspace((prev) =>
+      prev ? { ...prev, dispenseId, dispenseEtag: etag, grandTotal } : prev
     );
-  };
+  }, []);
+
+  // Store real patient payable + insurance paid from backend after claim
+  const setBackendBilling = useCallback((
+    etag:               string,
+    patientPayable:     number,
+    insurancePaid:      number
+  ) => {
+    setWorkspace((prev) =>
+      prev
+        ? { ...prev, dispenseEtag: etag, backendPatientPayable: patientPayable, backendInsurancePaid: insurancePaid }
+        : prev
+    );
+  }, []);
 
   return {
-    selectedItem,
-    activeRows,
-    dispenseQuantities,
-    externalQuantities,
-    allocations,
-    hasErrors,
-    computeTotals,
+    workspace,
+    step,
+    setStep,
+    isLoadingPreview,
+    previewError,
+    dispenseQty,
+    externalQty,
+    qtyErrors,
+    extQtyErrors,
     loadItem,
     clearSelection,
-    recalculateWithInsurance,
     handleQtyChange,
     handleExternalQtyChange,
+    validateAndProceed,
+    computeSubtotal,
+    setCheckoutResult,
+    setBackendBilling,
   };
 }
