@@ -15,9 +15,9 @@ const PrescriptionValidationPage  = lazy(() => import("@validation/PrescriptionV
 const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntry"));
 const PrescriptionDispense = lazy(() => import("@dispense/components/PrescriptionDispense"));
 
-// ── Technician — moved from @auth/components into their own feature folder
-const TechnicianDashboard = lazy(() => import("@technician/TechnicianDashboard"));
-const InventoryManagement = lazy(() => import("@technician/inventory/InventoryManagement")); 
+
+const TechnicianDashboard = lazy(() => import("@pages/TechnicianDashboard"));
+const InventoryManagement = lazy(() => import("@inventory/InventoryManagement")); 
 
 const LabelGeneration     = lazy(() => import("@labels/components/LabelGeneration"));
 
