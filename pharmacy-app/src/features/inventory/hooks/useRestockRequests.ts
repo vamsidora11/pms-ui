@@ -7,15 +7,11 @@ import {
   type InventoryLotDto,
   type RequestInventoryLotPayload,
 } from "@api/inventory";
-import type { NewRestockRequestForm, RestockProduct } from "../technician.types";
+import type { NewRestockRequestForm, RestockProduct } from "@inventory/types/inventory.types";
 
-// ── Re-export so callers can use InventoryLotDto directly ────────────────────
 export type { InventoryLotDto as RestockLotDto };
 
-const DEFAULT_FORM: NewRestockRequestForm = {
-  requestedQuantity: "",
-};
-
+const DEFAULT_FORM: NewRestockRequestForm = { requestedQuantity: "" };
 const PENDING_REQUESTS_PAGE_SIZE = 20;
 
 function sortLotsByRequestedAt(lots: InventoryLotDto[]): InventoryLotDto[] {
@@ -29,17 +25,16 @@ function sortLotsByRequestedAt(lots: InventoryLotDto[]): InventoryLotDto[] {
 export function useRestockRequests() {
   const { showToast } = useToast();
 
-  const [restockRequests, setRestockRequests] = useState<InventoryLotDto[]>([]);
+  const [restockRequests, setRestockRequests]                   = useState<InventoryLotDto[]>([]);
   const [pendingRequestsTotalCount, setPendingRequestsTotalCount] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState<RestockProduct | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [form, setForm] = useState<NewRestockRequestForm>(DEFAULT_FORM);
-  const [isLoadingRequests, setIsLoadingRequests] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedProduct, setSelectedProduct]                   = useState<RestockProduct | null>(null);
+  const [isDialogOpen, setIsDialogOpen]                         = useState(false);
+  const [form, setForm]                                         = useState<NewRestockRequestForm>(DEFAULT_FORM);
+  const [isLoadingRequests, setIsLoadingRequests]               = useState(true);
+  const [isSubmitting, setIsSubmitting]                         = useState(false);
 
   const loadRestockRequests = useCallback(async () => {
     setIsLoadingRequests(true);
-
     try {
       const page = await getPendingInventoryLots({ pageSize: PENDING_REQUESTS_PAGE_SIZE });
       setRestockRequests(sortLotsByRequestedAt(page.items));
@@ -47,20 +42,14 @@ export function useRestockRequests() {
     } catch (error) {
       setRestockRequests([]);
       setPendingRequestsTotalCount(0);
-      showToast(
-        "error",
-        "Failed to Load Requests",
-        "Could not fetch restock requests."
-      );
+      showToast("error", "Failed to Load Requests", "Could not fetch restock requests.");
       logger.error("loadRestockRequests failed", { error });
     } finally {
       setIsLoadingRequests(false);
     }
   }, [showToast]);
 
-  useEffect(() => {
-    void loadRestockRequests();
-  }, [loadRestockRequests]);
+  useEffect(() => { void loadRestockRequests(); }, [loadRestockRequests]);
 
   const openRestockDialog = useCallback((product: RestockProduct) => {
     setSelectedProduct(product);
@@ -94,22 +83,13 @@ export function useRestockRequests() {
     };
 
     setIsSubmitting(true);
-
     try {
       await requestInventoryLot(payload);
       await loadRestockRequests();
       closeRestockDialog();
-      showToast(
-        "success",
-        "Request Submitted",
-        `Restock request for ${selectedProduct.name} submitted.`
-      );
+      showToast("success", "Request Submitted", `Restock request for ${selectedProduct.name} submitted.`);
     } catch (error) {
-      showToast(
-        "error",
-        "Submission Failed",
-        "Could not submit the restock request. Please try again."
-      );
+      showToast("error", "Submission Failed", "Could not submit the restock request. Please try again.");
       logger.error("handleCreateRequest failed", { productId: selectedProduct.id, error });
     } finally {
       setIsSubmitting(false);

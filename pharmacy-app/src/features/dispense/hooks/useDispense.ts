@@ -1,327 +1,253 @@
-// src/features/prescription/hooks/useDispense.ts
+// src/features/dispense/hooks/useDispense.ts
 import { useState, useCallback } from "react";
+import { getDispensePreview } from "@api/dispense";
+import type { DispensePreviewDto } from "@api/dispense";
 import type {
   DispenseRow,
-  AllocationResult,
+  DispenseWorkspace,
+  WorkflowStep,
   DispenseQueueItem,
-} from "features/dispense/types/dispense.types";
-import {
-  createDispense,
-  getDispenseById,
-  getDispensePreview,
-  type DispenseBillingSummaryDto,
-  type DispenseDetailsDto,
-} from "@api/dispense";
-import { getPrescriptionById } from "@api/prescription";
-import type { PrescriptionDetailsDto, PrescriptionLineDto } from "@api/prescription.dto";
+} from "../types/dispense.types";
 
-export function calculateAllocation(
-  row: DispenseRow,
-  quantity: number,
-  externalQty: number
-): AllocationResult {
-  const totalQty = quantity + externalQty;
-  const totalPrice = quantity * row.unitPrice;
+// ── Build rows from preview — unitPrice now comes from the API ────────────────
 
-  const result: AllocationResult = {
-    rowId: row.id,
-    quantity,
-    externalQty,
-    isValid: true,
-    totalPrice,
-    insuranceCovered: 0,
-    patientPayable: totalPrice,
-  };
-
-  if (totalQty > row.remaining) {
-    result.isValid = false;
-    result.error = `Max ${row.remaining}`;
-  } else if (quantity > row.safeStock) {
-    result.isValid = false;
-    result.error = "Stock Low";
-  }
-
-  return result;
+function buildRows(preview: DispensePreviewDto): DispenseRow[] {
+  return preview.items.map((item) => ({
+    id:            item.prescriptionLineId,
+    productId:     item.productId,
+    medicineName:  item.productName,
+    strength:      "",
+    frequency:     "",
+    refillLabel:   item.activeRefillNumber === 0
+      ? "Original Fill"
+      : `Refill ${item.activeRefillNumber}`,
+    remaining:     item.remainingQty,
+    maxPrescribed: item.remainingQty,
+    safeStock:     item.safeStockAvailable,
+    unitPrice:     item.unitPrice,    // ← real price from Product.BasePricing.UnitPrice
+  }));
 }
 
-function resolvePrescriptionLineId(line: PrescriptionLineDto): string | undefined {
-  return line.prescriptionLineId ?? line.id;
-}
-
-function buildRefillLabel(activeRefill: number, line?: PrescriptionLineDto): string {
-  if (activeRefill <= 0) {
-    return "Original Fill";
-  }
-
-  const allowed = line?.refillsAllowed ?? line?.refillsRemaining;
-  if (typeof allowed === "number") {
-    return `Refill ${activeRefill} of ${allowed}`;
-  }
-
-  return `Refill ${activeRefill}`;
-}
-
-function buildRowsFromPreview(
-  preview: Awaited<ReturnType<typeof getDispensePreview>>,
-  prescription: PrescriptionDetailsDto
-): DispenseRow[] {
-  const lines = prescription.medicines ?? [];
-  const lineMap = new Map<string, PrescriptionLineDto>();
-  lines.forEach((line) => {
-    const id = resolvePrescriptionLineId(line);
-    if (id) {
-      lineMap.set(id, line);
-    }
-  });
-
-  return preview.items.map((item) => {
-    const line = lineMap.get(item.prescriptionLineId);
-    const maxPrescribed =
-      line?.quantityApprovedPerFill ?? line?.quantityPrescribed ?? item.remainingQty;
-    const instructions = line?.instructions ?? line?.frequency ?? "";
-
-    return {
-      id: item.prescriptionLineId,
-      prescriptionLineId: item.prescriptionLineId,
-      productId: item.productId,
-      medicineName: item.productName ?? line?.productName ?? "Unknown",
-      strength: line?.strength ?? "",
-      frequency: instructions,
-      refillLabel: buildRefillLabel(item.activeRefillNumber, line),
-      remaining: item.remainingQty,
-      maxPrescribed,
-      safeStock: item.safeStockAvailable,
-      unitPrice: 0,
-      status: "ready" as const,
-    };
-  });
-}
-
-export interface DispenseCheckoutState {
-  dispenseId: string;
-  patientId: string;
-  prescriptionId: string;
-  status: string;
-  etag: string;
-  billingSummary: DispenseBillingSummaryDto | null;
-}
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useDispense() {
-  const [selectedItem, setSelectedItem] = useState<DispenseQueueItem | null>(null);
-  const [activeRows, setActiveRows] = useState<DispenseRow[]>([]);
-  const [dispenseQuantities, setDispenseQuantities] = useState<Record<string, number>>({});
-  const [externalQuantities, setExternalQuantities] = useState<Record<string, number>>({});
-  const [allocations, setAllocations] = useState<Record<string, AllocationResult>>({});
-  const [checkoutState, setCheckoutState] = useState<DispenseCheckoutState | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [detailsError, setDetailsError] = useState<string | null>(null);
+  const [workspace, setWorkspace]             = useState<DispenseWorkspace | null>(null);
+  const [step, setStep]                       = useState<WorkflowStep>(1);
+  const [isLoadingPreview, setLoadingPreview] = useState(false);
+  const [previewError, setPreviewError]       = useState<string | null>(null);
 
-  const applyDispenseDetails = useCallback(
-    (dispense: DispenseDetailsDto) => {
-      const itemMap = new Map(dispense.items.map((item) => [item.prescriptionLineId, item]));
-      const nextRows = activeRows.map((row) => {
-        const item = itemMap.get(row.prescriptionLineId);
-        if (!item) return row;
-        const unitPrice = item.pricing?.unitPrice ?? row.unitPrice;
-        return { ...row, unitPrice };
-      });
+  const [dispenseQty, setDispenseQty]   = useState<Record<string, number>>({});
+  const [externalQty, setExternalQty]   = useState<Record<string, number>>({});
+  const [qtyErrors, setQtyErrors]       = useState<Record<string, string>>({});
+  const [extQtyErrors, setExtQtyErrors] = useState<Record<string, string>>({});
 
-      const nextQuantities: Record<string, number> = {};
-      const nextAllocations: Record<string, AllocationResult> = {};
-
-      nextRows.forEach((row) => {
-        const item = itemMap.get(row.prescriptionLineId);
-        const quantity = item?.quantityDispensed ?? dispenseQuantities[row.id] ?? 0;
-        const externalQty = externalQuantities[row.id] ?? 0;
-        const totalPrice = item?.pricing?.total ?? quantity * row.unitPrice;
-        const insuranceCovered = item?.pricing?.insurancePaid ?? 0;
-        const patientPayable = item?.pricing?.patientPayable ?? totalPrice;
-        const allocation = calculateAllocation(row, quantity, externalQty);
-        allocation.totalPrice = totalPrice;
-        allocation.insuranceCovered = insuranceCovered;
-        allocation.patientPayable = patientPayable;
-        nextQuantities[row.id] = quantity;
-        nextAllocations[row.id] = allocation;
-      });
-
-      setActiveRows(nextRows);
-      setDispenseQuantities(nextQuantities);
-      setAllocations(nextAllocations);
-      setCheckoutState((prev) =>
-        prev
-          ? { ...prev, billingSummary: dispense.billingSummary ?? null, status: dispense.status }
-          : prev
-      );
-    },
-    [activeRows, dispenseQuantities, externalQuantities]
-  );
+  // ── Load preview from API ──────────────────────────────────────────────────
 
   const loadItem = useCallback(async (item: DispenseQueueItem) => {
-    setSelectedItem(item);
-    setIsLoadingDetails(true);
-    setDetailsError(null);
-
+    setLoadingPreview(true);
+    setPreviewError(null);
     try {
-      const [preview, prescription] = await Promise.all([
-        getDispensePreview(item.id, item.patientId),
-        getPrescriptionById(item.id, item.patientId),
-      ]);
+      const preview = await getDispensePreview(item.prescriptionId, item.patientId);
+      const rows    = buildRows(preview);
 
-      const rows = buildRowsFromPreview(preview, prescription.data);
-      const initialAllocations: Record<string, AllocationResult> = {};
-      rows.forEach((r) => {
-        initialAllocations[r.id] = calculateAllocation(r, 0, 0);
+      setWorkspace({
+        prescriptionId:    item.prescriptionId,
+        patientId:         item.patientId,
+        patientName:       preview.patientName,
+        doctorName:        item.doctorName,
+        insuranceProvider: preview.insurance?.provider,
+        insuranceId:       preview.insurance?.policyId,
+        allergies:         item.allergies,
+        rows,
       });
 
-      setActiveRows(rows);
-      setDispenseQuantities({});
-      setExternalQuantities({});
-      setAllocations(initialAllocations);
-      setCheckoutState(null);
-    } catch (error) {
-      setDetailsError("Failed to load dispense preview.");
-      throw error;
+      // Pre-fill dispense qty = remaining for each non-external row
+      const initialQty: Record<string, number> = {};
+      rows.forEach((r) => { initialQty[r.id] = r.remaining; });
+      setDispenseQty(initialQty);
+      setExternalQty({});
+      setQtyErrors({});
+      setExtQtyErrors({});
+      setStep(1);
+    } catch (err) {
+      setPreviewError("Failed to load prescription details. Please try again.");
+      console.error("useDispense.loadItem:", err);
     } finally {
-      setIsLoadingDetails(false);
+      setLoadingPreview(false);
     }
   }, []);
 
   const clearSelection = useCallback(() => {
-    setSelectedItem(null);
-    setActiveRows([]);
-    setDispenseQuantities({});
-    setExternalQuantities({});
-    setAllocations({});
-    setCheckoutState(null);
-    setDetailsError(null);
+    setWorkspace(null);
+    setStep(1);
+    setDispenseQty({});
+    setExternalQty({});
+    setQtyErrors({});
+    setExtQtyErrors({});
+    setPreviewError(null);
   }, []);
 
-  // Accepts a number directly — clamped to 0+ by QtyInput before calling
+  // ── Qty change handlers ────────────────────────────────────────────────────
+
   const handleQtyChange = useCallback(
-    (row: DispenseRow, value: string) => {
-      const qty = Math.max(0, parseInt(value, 10) || 0);
-      const externalQty = externalQuantities[row.id] ?? 0;
-      setDispenseQuantities((prev) => ({ ...prev, [row.id]: qty }));
-      setAllocations((prev) => ({
-        ...prev,
-        [row.id]: calculateAllocation(row, qty, externalQty),
-      }));
+    (rowId: string, val: string) => {
+      if (!workspace) return;
+      const qty = Math.max(0, parseInt(val) || 0);
+      setDispenseQty((prev) => ({ ...prev, [rowId]: qty }));
+
+      const row = workspace.rows.find((r) => r.id === rowId);
+      if (!row || row.isExternal) return;
+      const ext      = externalQty[rowId] || 0;
+      const combined = qty + ext;
+
+      setQtyErrors((prev) => {
+        const e = { ...prev };
+        if (qty > row.safeStock)
+          e[rowId] = `Only ${row.safeStock} in stock`;
+        else if (qty > row.remaining)
+          e[rowId] = `Max allowed: ${row.remaining}`;
+        else if (combined > row.remaining)
+          e[rowId] = `Combined max: ${row.remaining}`;
+        else
+          delete e[rowId];
+        return e;
+      });
+
+      setExtQtyErrors((prev) => {
+        const e = { ...prev };
+        if (combined > row.remaining)
+          e[rowId] = `Combined max: ${row.remaining}`;
+        else
+          delete e[rowId];
+        return e;
+      });
     },
-    [externalQuantities]
+    [workspace, externalQty]
   );
 
   const handleExternalQtyChange = useCallback(
-    (row: DispenseRow, value: string) => {
-      const extQty = Math.max(0, parseInt(value, 10) || 0);
-      const qty = dispenseQuantities[row.id] ?? 0;
-      setExternalQuantities((prev) => ({ ...prev, [row.id]: extQty }));
-      setAllocations((prev) => ({
-        ...prev,
-        [row.id]: calculateAllocation(row, qty, extQty),
-      }));
+    (rowId: string, val: string) => {
+      if (!workspace) return;
+      const qty = Math.max(0, parseInt(val) || 0);
+      setExternalQty((prev) => ({ ...prev, [rowId]: qty }));
+
+      const row = workspace.rows.find((r) => r.id === rowId);
+      if (!row) return;
+
+      if (row.isExternal) {
+        setExtQtyErrors((prev) => {
+          const e = { ...prev };
+          if (qty > row.remaining) e[rowId] = `Max: ${row.remaining}`;
+          else delete e[rowId];
+          return e;
+        });
+      } else {
+        const dQty     = dispenseQty[rowId] || 0;
+        const combined = dQty + qty;
+        setExtQtyErrors((prev) => {
+          const e = { ...prev };
+          if (combined > row.remaining) e[rowId] = `Combined max: ${row.remaining}`;
+          else delete e[rowId];
+          return e;
+        });
+        setQtyErrors((prev) => {
+          const e = { ...prev };
+          if (combined > row.remaining)
+            e[rowId] = `Combined max: ${row.remaining}`;
+          else if (e[rowId]?.startsWith("Combined"))
+            delete e[rowId];
+          return e;
+        });
+      }
     },
-    [dispenseQuantities]
+    [workspace, dispenseQty]
   );
 
-  const hasErrors = activeRows.some((r) => allocations[r.id] && !allocations[r.id].isValid);
-  const hasQuantities = activeRows.some((r) => (dispenseQuantities[r.id] ?? 0) > 0);
+  // ── Validation ─────────────────────────────────────────────────────────────
 
-  const computeTotals = () => {
-    if (checkoutState?.billingSummary) {
-      return {
-        insurance: checkoutState.billingSummary.totalInsurancePaid,
-        patient: checkoutState.billingSummary.totalPatientPayable,
-        grand: checkoutState.billingSummary.grandTotal,
-      };
-    }
+  const validateAndProceed = useCallback((): boolean => {
+    if (!workspace) return false;
+    const errors:    Record<string, string> = {};
+    const extErrors: Record<string, string> = {};
 
-    return Object.values(allocations).reduce(
-      (acc, curr) => {
-        if (curr.isValid) {
-          acc.insurance += curr.insuranceCovered;
-          acc.patient += curr.patientPayable;
-          acc.grand += curr.totalPrice;
-        }
-        return acc;
-      },
-      { insurance: 0, patient: 0, grand: 0 }
-    );
-  };
+    workspace.rows.forEach((row) => {
+      if (row.isExternal) {
+        const ext = externalQty[row.id] || 0;
+        if (ext > row.remaining) extErrors[row.id] = `Max: ${row.remaining}`;
+        return;
+      }
+      const qty      = dispenseQty[row.id] || 0;
+      const ext      = externalQty[row.id] || 0;
+      const combined = qty + ext;
 
-  const checkoutDispense = useCallback(async (): Promise<DispenseCheckoutState | null> => {
-    if (!selectedItem) return null;
-    if (checkoutState) return checkoutState;
-
-    const items = activeRows
-      .map((row) => ({
-        prescriptionLineId: row.prescriptionLineId,
-        productId: row.productId,
-        quantityToDispense: dispenseQuantities[row.id] ?? 0,
-        isManualAdjustment: false,
-      }))
-      .filter((item) => item.quantityToDispense > 0);
-
-    if (items.length === 0) {
-      throw new Error("Select at least one quantity to dispense.");
-    }
-    if (hasErrors) {
-      throw new Error("Fix quantity errors before checkout.");
-    }
-
-    const response = await createDispense(selectedItem.patientId, {
-      prescriptionId: selectedItem.id,
-      items,
+      if (qty > row.safeStock)
+        errors[row.id] = `Only ${row.safeStock} in stock`;
+      else if (qty > row.remaining)
+        errors[row.id] = `Max allowed: ${row.remaining}`;
+      else if (combined > row.remaining) {
+        errors[row.id]    = `Combined max: ${row.remaining}`;
+        extErrors[row.id] = `Combined max: ${row.remaining}`;
+      }
     });
 
-    const nextState: DispenseCheckoutState = {
-      dispenseId: response.dispense.id,
-      patientId: response.dispense.patientId,
-      prescriptionId: response.dispense.prescriptionId,
-      status: response.dispense.status,
-      etag: response.etag ?? "",
-      billingSummary: response.dispense.billingSummary ?? null,
-    };
+    setQtyErrors(errors);
+    setExtQtyErrors(extErrors);
+    return Object.keys(errors).length === 0 && Object.keys(extErrors).length === 0;
+  }, [workspace, dispenseQty, externalQty]);
 
-    setCheckoutState(nextState);
-    applyDispenseDetails(response.dispense);
-    return nextState;
-  }, [activeRows, applyDispenseDetails, checkoutState, dispenseQuantities, hasErrors, selectedItem]);
+  // ── Subtotal — now correctly uses real unitPrice from preview ──────────────
 
-  const refreshDispense = useCallback(
-    async (dispenseId: string, patientId: string) => {
-      const result = await getDispenseById(dispenseId, patientId);
-      const nextState: DispenseCheckoutState = {
-        dispenseId: result.dispense.id,
-        patientId: result.dispense.patientId,
-        prescriptionId: result.dispense.prescriptionId,
-        status: result.dispense.status,
-        etag: result.etag ?? "",
-        billingSummary: result.dispense.billingSummary ?? null,
-      };
-      setCheckoutState(nextState);
-      applyDispenseDetails(result.dispense);
-      return nextState;
-    },
-    [applyDispenseDetails]
-  );
+  const computeSubtotal = useCallback((): number => {
+    if (!workspace) return 0;
+    return workspace.rows.reduce((sum, row) => {
+      if (row.isExternal) return sum;
+      const qty = dispenseQty[row.id] || 0;
+      return sum + qty * row.unitPrice; // unitPrice is now real, not 0
+    }, 0);
+  }, [workspace, dispenseQty]);
+
+  // ── After checkout — store dispenseId + etag ───────────────────────────────
+
+  const setCheckoutResult = useCallback((
+    dispenseId: string,
+    etag:        string,
+    grandTotal:  number
+  ) => {
+    setWorkspace((prev) =>
+      prev ? { ...prev, dispenseId, dispenseEtag: etag, grandTotal } : prev
+    );
+  }, []);
+
+  // Store real patient payable + insurance paid from backend after claim
+  const setBackendBilling = useCallback((
+    etag:               string,
+    patientPayable:     number,
+    insurancePaid:      number
+  ) => {
+    setWorkspace((prev) =>
+      prev
+        ? { ...prev, dispenseEtag: etag, backendPatientPayable: patientPayable, backendInsurancePaid: insurancePaid }
+        : prev
+    );
+  }, []);
 
   return {
-    selectedItem,
-    activeRows,
-    dispenseQuantities,
-    externalQuantities,
-    allocations,
-    hasErrors,
-    hasQuantities,
-    computeTotals,
-    checkoutState,
-    isLoadingDetails,
-    detailsError,
+    workspace,
+    step,
+    setStep,
+    isLoadingPreview,
+    previewError,
+    dispenseQty,
+    externalQty,
+    qtyErrors,
+    extQtyErrors,
     loadItem,
     clearSelection,
     handleQtyChange,
     handleExternalQtyChange,
-    checkoutDispense,
-    refreshDispense,
+    validateAndProceed,
+    computeSubtotal,
+    setCheckoutResult,
+    setBackendBilling,
   };
 }

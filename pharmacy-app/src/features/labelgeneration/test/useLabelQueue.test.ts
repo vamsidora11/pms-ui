@@ -15,12 +15,18 @@ describe("useLabelQueue", () => {
     vi.clearAllMocks();
   });
 
-  it("should initialize with default state", () => {
+  it("should initialize with default state", async () => {
+    mockedGetLabelQueue.mockResolvedValueOnce({ items: [] });
+
     const { result } = renderHook(() => useLabelQueue());
 
     expect(result.current.prescriptions).toEqual([]);
     expect(result.current.loading).toBe(true); // auto refresh runs
     expect(result.current.error).toBeNull();
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
   });
 
   it("should load prescriptions successfully", async () => {
@@ -42,6 +48,7 @@ describe("useLabelQueue", () => {
     expect(result.current.prescriptions).toEqual(mockData.items);
     expect(result.current.error).toBeNull();
     expect(mockedGetLabelQueue).toHaveBeenCalledTimes(1);
+    expect(mockedGetLabelQueue).toHaveBeenCalledWith(10, 1);
   });
 
   it("should handle API failure", async () => {
@@ -86,6 +93,8 @@ describe("useLabelQueue", () => {
     ]);
 
     expect(mockedGetLabelQueue).toHaveBeenCalledTimes(2);
+    expect(mockedGetLabelQueue).toHaveBeenNthCalledWith(1, 10, 1);
+    expect(mockedGetLabelQueue).toHaveBeenNthCalledWith(2, 10, 1);
   });
 
   it("should not update state after unmount", async () => {
@@ -100,5 +109,6 @@ describe("useLabelQueue", () => {
     await Promise.resolve();
 
     expect(mockedGetLabelQueue).toHaveBeenCalledTimes(1);
+    expect(mockedGetLabelQueue).toHaveBeenCalledWith(10, 1);
   });
 });

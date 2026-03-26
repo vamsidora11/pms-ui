@@ -18,7 +18,7 @@ vi.mock("../axiosInstance", () => {
 vi.mock("../endpoints", () => {
   return {
     ENDPOINTS: {
-      labelQueue: "/api/dispenses",
+      dispenses: "/api/dispenses",
       dispenseLabel: (id: string) => `/api/dispenses/${id}/label`,
     },
   };
@@ -78,12 +78,23 @@ describe("labels API", () => {
   });
 
   describe("getLabelQueue", () => {
-    it("calls labelQueue endpoint with default pageSize (20) and default pageNumber/status", async () => {
+    it("calls dispenses endpoint with default pageSize (10) and default pageNumber/status", async () => {
       const mockResponse = {
         data: {
-          items: [] as LabelQueuePrescription[],
-          pageSize: 20,
-          totalCount: 0,
+          items: [
+            {
+              id: "disp-1",
+              prescriptionId: "rx-1",
+              patientId: "patient-1",
+              patientName: "John Doe",
+              dispenseDate: "2026-02-10T09:00:00.000Z",
+              status: "PaymentProcessed",
+              itemCount: 2,
+              grandTotal: 10,
+            },
+          ] as LabelQueuePrescription[],
+          pageSize: 10,
+          totalCount: 1,
         },
       };
       apiGet.mockResolvedValueOnce(mockResponse);
@@ -91,9 +102,9 @@ describe("labels API", () => {
       const result = await getLabelQueue(); // uses defaults
 
       expect(apiGet).toHaveBeenCalledTimes(1);
-      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.labelQueue, {
+      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.dispenses, {
         params: {
-          pageSize: 20,
+          pageSize: 10,
           pageNumber: 1,
           status: "PaymentProcessed",
         },
@@ -124,7 +135,7 @@ describe("labels API", () => {
 
       const res = await getLabelQueue(50, 3);
 
-      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.labelQueue, {
+      expect(apiGet).toHaveBeenCalledWith(ENDPOINTS.dispenses, {
         params: { pageSize: 50, pageNumber: 3, status: "PaymentProcessed" },
       });
       expect(res).toEqual(mockResponse.data);

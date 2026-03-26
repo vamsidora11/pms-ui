@@ -4,6 +4,9 @@ import { extractApiError } from "@utils/httpError";
 import type { LabelQueuePrescription } from "@labels/types/label.types";
 import { getLabelQueue } from "@api/label";
 
+const LABEL_QUEUE_PAGE_SIZE = 10;
+const LABEL_QUEUE_PAGE_NUMBER = 1;
+
 type UseLabelQueueResult = {
   prescriptions: LabelQueuePrescription[];
   loading: boolean;
@@ -30,7 +33,10 @@ export function useLabelQueue(): UseLabelQueueResult {
     setError(null);
 
     try {
-      const res = await getLabelQueue();
+      const res = await getLabelQueue(
+        LABEL_QUEUE_PAGE_SIZE,
+        LABEL_QUEUE_PAGE_NUMBER
+      );
       if (!mountedRef.current) return;
       setPrescriptions(res.items ?? []);
     } catch (error) {
