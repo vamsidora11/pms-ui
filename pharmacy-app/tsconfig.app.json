@@ -40,16 +40,10 @@
       "@history/*": ["features/history/*"],
       "@assets/*": ["assets/*"],
       "@constants/*": ["constants/*"],
-<<<<<<< HEAD
       "@dashboard/*": ["features/dashboard/*"],
       "@audit/*": ["features/audit/*"],
       "@payment/*": ["features/payment/*"],
-=======
-      "@inventory/*": ["features/inventory/*"],
       "@pages/*": ["pages/*"],
-     
-      
->>>>>>> 0680b7fc6445ad5e468924be54ce8e58ceaa8e9e
         "@dispense/*": ["features/dispense/*"],
         "@inventory/*": ["features/inventory/*"], 
       "@usermanagement/*": ["features/usermanagement/*"],

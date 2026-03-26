@@ -21,16 +21,12 @@ export default defineConfig({
       "@dispense": path.resolve(__dirname, "src/features/dispense"),
       "@history": path.resolve(__dirname, "src/features/refillmanagement"),
       "@assets": path.resolve(__dirname, "src/assets"),
-<<<<<<< HEAD
       "@dashboard": path.resolve(__dirname, "src/features/dashboard"),
       "@audit": path.resolve(__dirname, "src/features/audit"),
       "@payment": path.resolve(__dirname, "src/features/payment"),
       "@inventory": path.resolve(__dirname, "src/features/inventory"),
       "@usermanagement": path.resolve(__dirname, "src/features/usermanagement"),
-=======
         "@pages": path.resolve(__dirname, "src/pages"),
-         "@inventory": path.resolve(__dirname, "src/features/inventory"),
->>>>>>> 0680b7fc6445ad5e468924be54ce8e58ceaa8e9e
       "@constants":  path.resolve(__dirname, "src/constants"),
         "@routes":  path.resolve(__dirname, "src/routes"),
         "@styles":  path.resolve(__dirname, "src/styles"),

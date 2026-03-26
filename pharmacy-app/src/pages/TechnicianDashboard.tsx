@@ -4,13 +4,8 @@ import { useNavigate } from "react-router-dom";
 import DataTable, { type Column } from "@components/common/Table/Table";
 import Button from "@components/common/Button/Button";
 import Badge from "@components/common/Badge/Badge";
-<<<<<<<< HEAD:pharmacy-app/src/features/dashboard/components/TechnicianDashboard.tsx
-import PackingListModal from "../../technician/components/PackingListModal";
-import { useDispenseQueue } from "../../technician/hooks/useDispenseQueue";
-========
 import PackingListModal from "@dispense/components/PackingListModal";
 import { useDispenseQueue } from "@dispense/hooks/useTechnicianDispenseQueue";
->>>>>>>> 0680b7fc6445ad5e468924be54ce8e58ceaa8e9e:pharmacy-app/src/pages/TechnicianDashboard.tsx
 import { ROUTES } from "@constants/routes";
 import type { DispenseSummaryDto } from "@api/dispense";
 
