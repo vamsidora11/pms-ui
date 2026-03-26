@@ -40,10 +40,12 @@
       "@history/*": ["features/history/*"],
       "@assets/*": ["assets/*"],
       "@constants/*": ["constants/*"],
-      "@technician/*": ["features/technician/*"],
-      "@audit/*": ["features/manager/audit/*"],
-      "@payment/*": ["features/manager/payment/*"],
+      "@dashboard/*": ["features/dashboard/*"],
+      "@audit/*": ["features/audit/*"],
+      "@payment/*": ["features/payment/*"],
         "@dispense/*": ["features/dispense/*"],
+        "@inventory/*": ["features/inventory/*"], 
+      "@usermanagement/*": ["features/usermanagement/*"],
         "@routes/*": ["routes/*"],
         "@styles/*": ["styles/*"]
 

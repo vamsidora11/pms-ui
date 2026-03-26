@@ -13,8 +13,8 @@ import { useNavigate } from "react-router-dom";
 import DataTable, { type Column } from "@components/common/Table/Table";
 import Button from "@components/common/Button/Button";
 import Badge from "@components/common/Badge/Badge";
-import PackingListModal from "./components/PackingListModal";
-import { useDispenseQueue } from "./hooks/useDispenseQueue";
+import PackingListModal from "../../technician/components/PackingListModal";
+import { useDispenseQueue } from "../../technician/hooks/useDispenseQueue";
 import { ROUTES } from "@constants/routes";
 import type { DispenseSummaryDto } from "@api/dispense";
 

@@ -17,7 +17,7 @@ import type { AppDispatch } from "store";
 import type { PrescriptionSummary } from "@prescription/domain/model";
 
 import { fetchAllPrescriptions } from "@store/prescription/prescriptionSlice";
-import { useDashboardData } from "@auth/hooks/useDashboardData";
+import { useDashboardData } from "features/dashboard/hooks/useDashboardData";
 import  { isSameDay } from "@auth/utils/Pharmacistdashboardutils"; 
 
 /* ---------------------------------- */

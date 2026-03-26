@@ -1,6 +1,6 @@
 import Badge from "@components/common/Badge/Badge";
 import DataTable from "@components/common/Table/Table";
-import { getAuditBadgeVariant } from "@audit/utils/auditBadge";
+import { getAuditBadgeVariant } from "../utils/auditBadge";
 import { useAuditLogs } from "../hooks/useAuditLogs";
 
 import {

@@ -5,10 +5,10 @@ import { ROUTES } from "../constants/routes";
 import { lazy, Suspense } from "react";
 
 const LoginPage = lazy(() => import("@auth/components/LoginPage"));
-const PharmacistDashboard = lazy(() => import("@auth/components/PharmacistDashboard"));
-const ManagerDashboard = lazy(() => import("@auth/components/ManagerDashboard"));
-const ManagerUserManagement = lazy(() => import("@auth/components/ManagerUserManagement"));
-const ManagerInventoryManagement = lazy(() => import("@auth/components/ManagerInventoryManagement"));
+const PharmacistDashboard = lazy(() => import("@dashboard/components/PharmacistDashboard"));
+const ManagerDashboard = lazy(() => import("@dashboard/components/ManagerDashboard"));
+const ManagerUserManagement = lazy(() => import("@usermanagement/ManagerUserManagement"));
+const ManagerInventoryManagement = lazy(() => import("@inventory/components/ManagerInventoryManagement"));
 
 const PrescriptionValidationQueue = lazy(() => import("@validation/PrescriptionValidationQueue"));
 const PrescriptionValidationPage  = lazy(() => import("@validation/PrescriptionValidationPage"));
@@ -17,8 +17,8 @@ const ManualPrescriptionView = lazy(() => import("@prescription/PrescriptionEntr
 const PrescriptionDispense = lazy(() => import("@dispense/components/PrescriptionDispense"));
 
 // ── Technician — moved from @auth/components into their own feature folder
-const TechnicianDashboard = lazy(() => import("@technician/TechnicianDashboard"));
-const InventoryManagement = lazy(() => import("@technician/inventory/InventoryManagement")); 
+const TechnicianDashboard = lazy(() => import("@dashboard/components/TechnicianDashboard"));
+const InventoryManagement = lazy(() => import("@inventory/components/InventoryManagement")); 
 
 const LabelGeneration     = lazy(() => import("@labels/components/LabelGeneration"));
 

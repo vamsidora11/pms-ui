@@ -17,7 +17,7 @@ vi.mock("react-redux", async () => {
 });
 
 import { useSelector } from "react-redux";
-import { useDashboardData } from "../hooks/useDashboardData";
+import { useDashboardData } from "../../dashboard/hooks/useDashboardData";
 
 describe("useDashboardData", () => {
   const mockedUseSelector = useSelector as unknown as {

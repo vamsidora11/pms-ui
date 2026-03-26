@@ -4,7 +4,7 @@ import type { Mock } from "vitest";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import type { PrescriptionSummaryDto } from "@prescription/types/prescription.types";
-import PharmacistDashboard from "../components/PharmacistDashboard";
+import PharmacistDashboard from "../../dashboard/components/PharmacistDashboard";
 
 /* ============================================
    MOCKS
@@ -76,7 +76,7 @@ describe("PharmacistDashboard - Maximum Coverage", () => {
   });
 
   it("dispatches fetchAllPrescriptions on mount", async () => {
-    const { useDashboardData } = await import("../hooks/useDashboardData");
+    const { useDashboardData } = await import("../../dashboard/hooks/useDashboardData");
 
     (useDashboardData as unknown as Mock).mockReturnValue({
       prescriptions: [],
@@ -94,7 +94,7 @@ describe("PharmacistDashboard - Maximum Coverage", () => {
   });
 
   it("shows loading state", async () => {
-    const { useDashboardData } = await import("../hooks/useDashboardData");
+    const { useDashboardData } = await import("../../dashboard/hooks/useDashboardData");
 
     (useDashboardData as unknown as Mock).mockReturnValue({
       prescriptions: [],
@@ -107,7 +107,7 @@ describe("PharmacistDashboard - Maximum Coverage", () => {
   });
 
   it("shows empty state when no prescriptions today", async () => {
-    const { useDashboardData } = await import("../hooks/useDashboardData");
+    const { useDashboardData } = await import("../../dashboard/hooks/useDashboardData");
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -127,7 +127,7 @@ describe("PharmacistDashboard - Maximum Coverage", () => {
   });
 
   it("renders real table and executes column render functions", async () => {
-    const { useDashboardData } = await import("../hooks/useDashboardData");
+    const { useDashboardData } = await import("../../dashboard/hooks/useDashboardData");
 
     const prescription = createMockPrescription({
       status: "Active",
@@ -155,7 +155,7 @@ describe("PharmacistDashboard - Maximum Coverage", () => {
   });
 
   it("calculates KPI stats correctly", async () => {
-    const { useDashboardData } = await import("../hooks/useDashboardData");
+    const { useDashboardData } = await import("../../dashboard/hooks/useDashboardData");
 
     const prescriptions = [
       createMockPrescription({ status: "Created" }),  // pending
@@ -185,7 +185,7 @@ describe("PharmacistDashboard - Maximum Coverage", () => {
   });
 
   it("shows correct header total count", async () => {
-    const { useDashboardData } = await import("../hooks/useDashboardData");
+    const { useDashboardData } = await import("../../dashboard/hooks/useDashboardData");
 
     const prescriptions = [
       createMockPrescription(),
