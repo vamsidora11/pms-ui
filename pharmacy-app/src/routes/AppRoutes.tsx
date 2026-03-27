@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
+import PublicRoute from "./PublicRoute";
 import AppLayout from "@components/layouts/Applayout/Applayout";
 import { ROUTES } from "../constants/routes";
 import { lazy, Suspense } from "react";
@@ -31,7 +32,14 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>
-        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route
+  path={ROUTES.LOGIN}
+  element={
+    <PublicRoute>
+      <LoginPage />
+    </PublicRoute>
+  }
+/>
 
         {/* ── Manager ── */}
         <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>

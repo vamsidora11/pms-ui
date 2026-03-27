@@ -1,5 +1,5 @@
 // src/api/endpoints.ts
-export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5287";
+export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export const ENDPOINTS = {
   // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -39,11 +39,6 @@ export const ENDPOINTS = {
   dispensePreview: (prescriptionId: string) =>
     `/api/prescriptions/${prescriptionId}/dispense-preview`,
 
-  // ── Payments ─────────────────────────────────────────────────────────────────
-  payments:              "/api/payments",
-  paymentById:           (id: string) => `/api/payments/${id}`,
-  paymentsByDispense:    (dispenseId: string) => `/api/payments/dispense/${dispenseId}`,
-
   // ── Inventory ────────────────────────────────────────────────────────────────
   inventoryLotsByProduct: (productId: string) =>
     `/api/inventory/products/${productId}/lots`,
@@ -56,6 +51,9 @@ export const ENDPOINTS = {
   
 // ── Payments ────────────────────────────────────────────────────────────────
   // Controller: Pms.Api.Controllers.Payments.PaymentController
+  payments:              "/api/payments",
+  paymentById:           (id: string) => `/api/payments/${id}`,
+  paymentsByDispense:    (dispenseId: string) => `/api/payments/dispense/${dispenseId}`,
   paymentRecord:           "/api/payments",                            // POST
   paymentsSummary:         "/api/payments/summary",                    // GET ?period=
   paymentsTrend:           "/api/payments/trend",                      // GET ?period=
