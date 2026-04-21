@@ -48,6 +48,11 @@ export function useDispense() {
     setPreviewError(null);
     try {
       const preview = await getDispensePreview(item.prescriptionId, item.patientId);
+      if (preview.items.length === 0) {
+        setPreviewError("No medications eligible for dispense at this time.");
+        setWorkspace(null);
+        return;
+      }
       const rows    = buildRows(preview);
 
       setWorkspace({
@@ -55,8 +60,8 @@ export function useDispense() {
         patientId:         item.patientId,
         patientName:       preview.patientName,
         doctorName:        item.doctorName,
-        insuranceProvider: preview.insurance?.provider,
-        insuranceId:       preview.insurance?.policyId,
+        insuranceProvider: preview.insurance?.provider ?? null,
+        insuranceId:       preview.insurance?.policyId ?? null,
         allergies:         item.allergies,
         rows,
       });

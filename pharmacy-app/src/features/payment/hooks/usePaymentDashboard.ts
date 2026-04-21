@@ -6,7 +6,7 @@ import {
   getPaymentTransactions,
   type Period,
   type PaymentTransactionsResponseDto,
-} from "@api/payments";
+} from "@api/payments.api";
 
 const toISODate = (value: string) => {
   const t = value.indexOf("T");

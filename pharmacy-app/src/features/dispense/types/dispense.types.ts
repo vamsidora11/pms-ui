@@ -29,6 +29,7 @@ export interface BillTotals {
 
 /** Queue item built from PrescriptionSummaryDto */
 export interface DispenseQueueItem {
+  dispenseId?:       string;
   prescriptionId:    string;
   patientId:         string;
   patientName:       string;
@@ -47,8 +48,8 @@ export interface DispenseWorkspace {
   patientId:        string;
   patientName:      string;
   doctorName:       string;
-  insuranceProvider?: string;
-  insuranceId?:     string;
+  insuranceProvider?: string | null;
+  insuranceId?:     string | null;
   allergies?:       string[];
   rows:             DispenseRow[];
   // Set after checkout succeeds

@@ -153,13 +153,14 @@ export async function submitInsuranceClaim(
   dispenseId: string,
   patientId:  string,
   etag:       string
-): Promise<void> {
+): Promise<{ data: DispenseDetailsDto; headers: any; etag: string }> {
   try {
-    await api.post(
+    const res = await api.post<DispenseDetailsDto>(
       ENDPOINTS.dispenseInsuranceClaim(dispenseId),
       null,
       { params: { patientId }, headers: { "If-Match": etag } }
     );
+    return { data: res.data, headers: res.headers, etag: extractEtag(res.headers) ?? "" };
   } catch (error) {
     logger.error("submitInsuranceClaim failed", { dispenseId, patientId, error });
     throw error;
@@ -175,7 +176,7 @@ export async function getDispenseQueue(
 ): Promise<PagedResult<DispenseSummaryDto>> {
   try {
     const res = await api.get<PagedResult<DispenseSummaryDto>>(ENDPOINTS.dispenses, {
-      params: { status: "PaymentProcessed", pageSize, pageNumber },
+      params: { status: "ReadyForDispense", pageSize, pageNumber },
     });
     return res.data;
   } catch (error) {
@@ -220,6 +221,117 @@ export async function executeDispense(
     throw error;
   }
 }
+// Return ETag variant
+export async function executeDispenseWithEtag(
+  dispenseId: string,
+  patientId: string,
+  etag: string
+): Promise<{ etag: string }> {
+  try {
+    const res = await api.put(ENDPOINTS.dispenseExecute(dispenseId), null, {
+      params: { patientId },
+      headers: { "If-Match": etag },
+    });
+    return { etag: extractEtag(res.headers) ?? "" };
+  } catch (error) {
+    logger.error("executeDispenseWithEtag failed", { dispenseId, patientId, error });
+    throw error;
+  }
+}
+
+/**
+ * PUT /api/dispenses/{dispenseId}/ready
+ * Mark dispense as Ready (before final execute)
+ */
+export async function markDispenseReady(
+  dispenseId: string,
+  patientId: string,
+  etag: string
+): Promise<void> {
+  try {
+    await api.put(`/api/dispenses/${dispenseId}/ready`, null, {
+      params: { patientId },
+      headers: { "If-Match": etag },
+    });
+  } catch (error) {
+    logger.error("markDispenseReady failed", { dispenseId, patientId, error });
+    throw error;
+  }
+}
+
+// Return ETag variant
+export async function markDispenseReadyWithEtag(
+  dispenseId: string,
+  patientId: string,
+  etag: string
+): Promise<{ etag: string }> {
+  try {
+    const res = await api.put(`/api/dispenses/${dispenseId}/ready`, null, {
+      params: { patientId },
+      headers: { "If-Match": etag },
+    });
+    return { etag: extractEtag(res.headers) ?? "" };
+  } catch (error) {
+    logger.error("markDispenseReadyWithEtag failed", { dispenseId, patientId, error });
+    throw error;
+  }
+}
+
+/**
+ * POST /api/dispenses/{dispenseId}/payment
+ * Mark dispense as paid (calls dispense.MarkPaid on server)
+ */
+export async function markDispensePaid(
+  dispenseId: string,
+  patientId: string,
+  etag: string,
+  amount: number
+): Promise<void> {
+  try {
+    await api.post(
+      `/api/dispenses/${dispenseId}/payment`,
+      { amount },
+      {
+        params: { patientId },
+        headers: { "If-Match": etag },
+      }
+    );
+  } catch (error) {
+    logger.error("markDispensePaid failed", { dispenseId, patientId, amount, error });
+    throw error;
+  }
+}
+
+// Return ETag variant
+export async function markDispensePaidWithEtag(
+  dispenseId: string,
+  patientId: string,
+  etag: string,
+  amount: number
+): Promise<{ etag: string }> {
+  try {
+    const res = await api.post(
+      `/api/dispenses/${dispenseId}/payment`,
+      { amount },
+      {
+        params: { patientId },
+        headers: { "If-Match": etag },
+      }
+    );
+    return { etag: extractEtag(res.headers) ?? "" };
+  } catch (error) {
+    logger.error("markDispensePaidWithEtag failed", { dispenseId, patientId, amount, error });
+    throw error;
+  }
+}
+
+// NOTE: ready-for-dispense endpoint was replaced by the unified execute endpoint.
+// Use `executeDispense` (defined above) which calls the correct `/execute` endpoint.
+
+/**
+ * PUT /api/dispenses/{dispenseId}/payment?patientId={patientId}
+ */
+/* markPayment removed — use /api/payments via payments.api.ts */
 
 /**
  * PUT /api/dispenses/{dispenseId}/cancel?patientId={patientId}

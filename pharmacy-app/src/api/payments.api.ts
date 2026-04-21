@@ -1,5 +1,7 @@
+// payments.api.ts — unified payments API (merged from payments.ts)
 import api from "./axiosInstance";
 import { ENDPOINTS } from "./endpoints";
+import { extractEtag } from "./prescription";
 import { logger } from "@utils/logger/logger";
 
 /* ======================================================
@@ -163,7 +165,7 @@ export interface PaymentSummaryDto {
  * Record a payment (requires If-Match header for dispense concurrency when it may close the dispense).
  * Returns created paymentId.
  */
-export async function recordPayment(payload: CreatePaymentPayload, etag: string): Promise<string> {
+export async function recordPayment(payload: CreatePaymentPayload, etag: string): Promise<{ paymentId: string; etag: string }> {
   try {
     const res = await api.post<{ paymentId: string }>(
       ENDPOINTS.paymentRecord,
@@ -174,10 +176,9 @@ export async function recordPayment(payload: CreatePaymentPayload, etag: string)
     );
     const id = res.data?.paymentId ?? "";
     if (!id) {
-      // server should return Created with { paymentId }; defensive fallback
       throw new Error("Payment recorded but response did not include paymentId");
     }
-    return id;
+    return { paymentId: id, etag: extractEtag(res.headers) ?? "" };
   } catch (error) {
     logger.error("recordPayment failed", { payload, error });
     throw error;
@@ -355,4 +356,3 @@ export async function getPaymentTransactions(
     throw error;
   }
 }
-``

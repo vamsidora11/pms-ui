@@ -11,13 +11,13 @@ import Button from "@components/common/Button/Button";
 import Input  from "@components/common/Input/Input";
 import Badge  from "@components/common/Badge/Badge";
 import { useToast } from "@components/common/Toast/useToast";
-import { getAllPrescriptions } from "@api/prescription";
-import { executeDispense } from "@api/dispense";
+import { cancelDispense, executeDispenseWithEtag, markDispenseReadyWithEtag } from "@api/dispense";
+import type { PrescriptionSummaryDto } from "@api/prescription";
 
-import { useDispenseQueue }   from "../hooks/useDispenseQueue";
 import { useDispense }        from "../hooks/useDispense";
 import { useBilling }         from "../hooks/useBilling";
-import { getDispenseById }    from "@api/dispense";
+import { usePrescriptionSearch } from "../hooks/usePrescriptionSearch";
+import { useRecentPrescriptions } from "../hooks/useRecentPrescriptions";
 
 import type { DispenseQueueItem, WorkflowStep } from "../types/dispense.types";
 
@@ -27,6 +27,18 @@ const STEPS: { num: WorkflowStep; label: string; icon: React.ElementType }[] = [
   { num: 1, label: "Verify Dispense",  icon: Pill       },
   { num: 2, label: "Process Payment",  icon: CreditCard },
 ];
+
+function toQueueCardItem(item: PrescriptionSummaryDto): DispenseQueueItem {
+  return {
+    prescriptionId: item.id,
+    patientId: item.patientId,
+    patientName: item.patientName,
+    doctorName: item.prescriberName,
+    medicineCount: item.medicineCount,
+    status: item.status,
+    createdAt: item.createdAt,
+  };
+}
 
 function StepBar({ currentStep, paymentDone }: { currentStep: WorkflowStep; paymentDone: boolean }) {
   return (
@@ -79,12 +91,14 @@ function StepBar({ currentStep, paymentDone }: { currentStep: WorkflowStep; paym
 
 export default function PrescriptionDispense() {
   const toast    = useToast();
-  const queue    = useDispenseQueue();
   const dispense = useDispense();
   const billing  = useBilling();
+  const { recent, isLoading: isLoadingRecent } = useRecentPrescriptions();
+  const { results, search, isLoading: isSearching, error: searchError } = usePrescriptionSearch();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const ws           = dispense.workspace;
-  const hasInsurance = !!(ws?.insuranceProvider);
+  const hasInsurance = ws?.insuranceProvider != null;
   const subtotal     = dispense.computeSubtotal();
   const totals       = billing.computeTotals(subtotal);
 
@@ -103,7 +117,7 @@ export default function PrescriptionDispense() {
 
   // Reset billing when workspace changes
   useEffect(() => {
-    if (ws) billing.reset();
+    billing.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ws?.prescriptionId]);
 
@@ -146,24 +160,15 @@ export default function PrescriptionDispense() {
 
   const handleSubmitClaim = async () => {
     if (!ws?.dispenseId || !ws.dispenseEtag) return;
-    const ok = await billing.submitClaim(ws.dispenseId, ws.patientId, ws.dispenseEtag);
-    if (ok) {
+    const result = await billing.submitClaim(ws.dispenseId, ws.patientId, ws.dispenseEtag);
+    if (result?.success && result.etag && result.data) {
       toast.success("Claim Approved", `Covered by ${ws.insuranceProvider}`);
-      // Fetch fresh dispense to get real ETag + actual billing amounts from backend
-      try {
-        const { dispense: fresh, etag: freshEtag } = await getDispenseById(
-          ws.dispenseId,
-          ws.patientId
-        );
-        // Store real patient payable and insurance paid from backend
-        dispense.setBackendBilling(
-          freshEtag,
-          fresh.billingSummary.totalPatientPayable,
-          fresh.billingSummary.totalInsurancePaid
-        );
-      } catch {
-        // If refresh fails, fall back to frontend estimate
-      }
+      // Update workspace ETag and billing amounts from backend response
+      dispense.setBackendBilling(
+        result.etag,
+        result.data.billingSummary.totalPatientPayable,
+        result.data.billingSummary.totalInsurancePaid
+      );
     } else {
       toast.error("Claim Failed", "Insurance claim could not be processed. You can skip and collect full payment.");
     }
@@ -173,16 +178,19 @@ export default function PrescriptionDispense() {
 
   const handlePatientPayment = async () => {
     if (!ws?.dispenseId || !ws.dispenseEtag) return;
-    // Validation (txnId inline error) is handled inside doRecordPayment via validateTxnId
     const amountDue = ws.backendPatientPayable ?? effectiveTotals.patientDue;
-    const ok = await billing.doRecordPayment(
+    const result = await billing.doRecordPayment(
       ws.patientId,
       ws.dispenseId,
       ws.dispenseEtag,
       amountDue
     );
-    if (ok) toast.success(`$${amountDue.toFixed(2)} payment recorded.`);
-    else if (billing.paymentStatus !== "idle") {
+
+    if (result?.etag) {
+      // Update local checkout result with new etag returned after payment
+      dispense.setCheckoutResult(ws.dispenseId!, result.etag, ws.grandTotal ?? effectiveTotals.subtotal);
+      toast.success(`$${amountDue.toFixed(2)} payment recorded.`);
+    } else if (billing.paymentStatus !== "idle") {
       toast.error("Payment failed", "Could not record payment. Please try again.");
     }
   };
@@ -190,11 +198,50 @@ export default function PrescriptionDispense() {
   // ── Release to Technician ──────────────────────────────────────────────────
 
   const handleRelease = async () => {
+    if (!ws?.dispenseId || !ws.dispenseEtag) return;
     billing.setIsReleasing(true);
-    await new Promise((r) => setTimeout(r, 600));
-    toast.success("Sent to dispensing queue", "Technician will complete handover.");
-    dispense.clearSelection();
-    queue.refetch(); // refresh queue
+    try {
+      // STEP 1: mark ready and update etag
+      const { etag: readyEtag } = await markDispenseReadyWithEtag(ws.dispenseId, ws.patientId, ws.dispenseEtag);
+
+      // STEP 2: then execute using latest etag
+      const { etag: finalEtag } = await executeDispenseWithEtag(ws.dispenseId, ws.patientId, readyEtag || ws.dispenseEtag);
+
+      // Update workspace to latest etag
+      dispense.setCheckoutResult(ws.dispenseId!, finalEtag, ws.grandTotal ?? effectiveTotals.subtotal);
+      toast.success("Sent to dispensing queue", "Technician will complete handover.");
+      dispense.clearSelection();
+    } catch (err) {
+      console.error("release flow failed", err);
+      toast.error("Release failed", "Could not move this dispense forward.");
+    } finally {
+      billing.setIsReleasing(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!ws?.dispenseId || !ws.dispenseEtag) {
+      dispense.clearSelection();
+      return;
+    }
+
+    try {
+      await cancelDispense(ws.dispenseId, ws.patientId, ws.dispenseEtag);
+      toast.success("Dispense cancelled", "The dispense has been cancelled.");
+      dispense.clearSelection();
+    } catch {
+      toast.error("Cancel failed", "Could not cancel this dispense.");
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+
+    await search({
+      prescriptionId: searchTerm,
+      patientName: searchTerm,
+      patientId: searchTerm,
+    });
   };
 
   // ── Print Receipt ──────────────────────────────────────────────────────────
@@ -267,35 +314,10 @@ ${insuranceLine}
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-gray-900 font-bold text-xl mb-0.5">Dispense & Billing Queue</h1>
-            <p className="text-gray-500 text-sm">
-              {queue.isLoading
-                ? "Loading..."
-                : `${queue.items.length} prescription${queue.items.length !== 1 ? "s" : ""} awaiting processing`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl border border-blue-100">
-              <Package className="w-4 h-4" />
-              <span className="font-semibold text-sm">{queue.items.length} Ready</span>
-            </div>
-            <button
-              onClick={queue.refetch}
-              disabled={queue.isLoading}
-              className="p-2 text-gray-400 hover:text-gray-700 transition-colors"
-              title="Refresh queue"
-            >
-              <RefreshCw className={`w-4 h-4 ${queue.isLoading ? "animate-spin" : ""}`} />
-            </button>
+            <h1 className="text-gray-900 font-bold text-xl mb-0.5">Dispense & Billing</h1>
+            <p className="text-gray-500 text-sm">Search prescriptions to begin</p>
           </div>
         </div>
-
-        {/* Error */}
-        {queue.error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-            {queue.error}
-          </div>
-        )}
 
         {/* Preview error */}
         {dispense.previewError && (
@@ -305,30 +327,90 @@ ${insuranceLine}
         )}
 
         {/* List */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {queue.isLoading ? (
-            <div className="p-16 flex flex-col items-center gap-3 text-gray-400">
-              <Loader2 className="w-7 h-7 animate-spin" />
-              <span className="text-sm">Loading prescriptions…</span>
+        {searchError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+            {searchError}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          <div className="bg-white p-4 rounded-xl border">
+            <div className="flex gap-2">
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSearch();
+                }}
+                placeholder="Search by Rx ID / Patient ID / Name"
+                className="flex-1 border px-3 py-2 rounded-lg text-sm"
+              />
+              <button
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-blue-300"
+              >
+                {isSearching ? "Searching..." : "Search"}
+              </button>
             </div>
-          ) : queue.items.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-7 h-7 text-gray-400" />
+          </div>
+
+          {isSearching && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            </div>
+          )}
+
+          <div>
+            <h2 className="text-sm font-semibold text-gray-600 mb-2">
+              Recent Prescriptions
+            </h2>
+
+            <div className="bg-white rounded-xl border overflow-hidden">
+              {isLoadingRecent ? (
+                <div className="p-10 flex flex-col items-center gap-3 text-gray-400">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="text-sm">Loading prescriptions...</span>
+                </div>
+              ) : recent.length === 0 ? (
+                <div className="p-10 text-center text-sm text-gray-500">
+                  Search prescriptions to begin
+                </div>
+              ) : (
+                recent.map((item) => (
+                  <QueueCard
+                    key={item.id}
+                    item={toQueueCardItem(item)}
+                    isLoading={dispense.isLoadingPreview}
+                    onSelect={() => dispense.loadItem(toQueueCardItem(item))}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {results.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-gray-600 mb-2">
+                Search Results
+              </h2>
+
+              <div className="bg-white rounded-xl border overflow-hidden">
+                {results.map((item) => (
+                  <QueueCard
+                    key={item.id}
+                    item={toQueueCardItem(item)}
+                    isLoading={dispense.isLoadingPreview}
+                    onSelect={() => dispense.loadItem(toQueueCardItem(item))}
+                  />
+                ))}
               </div>
-              <div className="text-gray-900 font-medium mb-1">Queue Clear</div>
-              <div className="text-gray-500 text-sm">No validated prescriptions awaiting dispense.</div>
             </div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {queue.items.map((item) => (
-                <QueueCard
-                  key={item.prescriptionId}
-                  item={item}
-                  isLoading={dispense.isLoadingPreview}
-                  onSelect={() => dispense.loadItem(item)}
-                />
-              ))}
+          )}
+
+          {!isSearching && results.length === 0 && searchTerm && (
+            <div className="text-center text-gray-400 py-6 text-sm">
+              No prescriptions found
             </div>
           )}
         </div>
@@ -349,7 +431,7 @@ ${insuranceLine}
           onClick={dispense.clearSelection}
           className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors text-sm"
         >
-          <ArrowLeft className="w-4 h-4" /> Queue
+          <ArrowLeft className="w-4 h-4" /> Search
         </button>
         <div className="w-px h-4 bg-gray-200" />
         <div className="flex items-center gap-2">
@@ -565,7 +647,7 @@ ${insuranceLine}
                     <ChevronRight className="w-4 h-4 text-gray-300" />
                     <div className="text-center">
                       <div className="text-xs text-gray-400 mb-0.5">
-                        Insurance {billing.claimStatus === "approved" ? `(${(billing.insuranceRate * 100).toFixed(0)}%)` : "(pending)"}
+                        Insurance {billing.claimStatus === "approved" ? "(approved)" : "(pending)"}
                       </div>
                       <div className={`font-bold ${billing.claimStatus === "approved" ? "text-green-600" : "text-gray-400"}`}>
                         {billing.claimStatus === "approved" ? `-$${effectiveTotals.insuranceCovered.toFixed(2)}` : "—"}
@@ -639,7 +721,6 @@ ${insuranceLine}
                   <div className="space-y-2.5 bg-green-50 rounded-xl p-4 border border-green-100">
                     <div className="flex justify-between text-sm"><span className="text-gray-600">Provider</span><span className="font-semibold text-gray-900">{ws.insuranceProvider}</span></div>
                     {ws.insuranceId && <div className="flex justify-between text-sm"><span className="text-gray-600">Policy ID</span><span className="font-mono text-gray-700 text-xs">{ws.insuranceId}</span></div>}
-                    <div className="flex justify-between text-sm"><span className="text-gray-600">Coverage Rate</span><span className="font-bold text-gray-900">{(billing.insuranceRate * 100).toFixed(0)}%</span></div>
                     <div className="flex justify-between text-sm"><span className="text-gray-600">Covered Amount</span><span className="font-bold text-green-700">${effectiveTotals.insuranceCovered.toFixed(2)}</span></div>
                     <div className="flex justify-between text-sm border-t border-green-200 pt-2"><span className="text-gray-600">Patient Responsibility</span><span className="font-bold text-blue-700">${effectiveTotals.patientDue.toFixed(2)}</span></div>
                   </div>
@@ -652,12 +733,8 @@ ${insuranceLine}
                         </div>
                       )}
                       <div className="flex justify-between text-sm text-blue-800"><span>Claim Amount</span><span className="font-bold">${effectiveTotals.subtotal.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-sm text-blue-800">
-                        <span>Est. Coverage ({(billing.insuranceRate * 100).toFixed(0)}%)</span>
-                        <span className="font-bold text-green-700">−${(effectiveTotals.subtotal * billing.insuranceRate).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm text-blue-800 border-t border-blue-200 pt-2">
-                        <span>Est. Patient Pays</span><span className="font-bold">${(effectiveTotals.subtotal * (1 - billing.insuranceRate)).toFixed(2)}</span>
+                      <div className="text-xs text-blue-700 border-t border-blue-200 pt-2">
+                        Backend values will be loaded after claim approval.
                       </div>
                     </div>
                     <Button
@@ -718,7 +795,7 @@ ${insuranceLine}
                     <div className="text-xs text-gray-500 mb-0.5">Amount Due</div>
                     <div className="text-3xl font-bold text-gray-900">${effectiveTotals.patientDue.toFixed(2)}</div>
                     {hasInsurance && !billing.insuranceSkipped && billing.claimStatus === "approved" && (
-                      <div className="text-xs text-green-600 mt-1">After {(billing.insuranceRate * 100).toFixed(0)}% insurance coverage</div>
+                      <div className="text-xs text-green-600 mt-1">Amount from approved backend billing summary</div>
                     )}
                   </div>
 
@@ -767,7 +844,10 @@ ${insuranceLine}
 
                   <Button
                     onClick={handlePatientPayment}
-                    disabled={billing.paymentStatus === "processing"}
+                    disabled={
+                      billing.paymentStatus === "processing" ||
+                      (hasInsurance && billing.claimStatus !== "approved" && !billing.insuranceSkipped)
+                    }
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
                   >
                     {billing.paymentStatus === "processing"
@@ -811,7 +891,7 @@ ${insuranceLine}
                     <ArrowLeft className="w-4 h-4" /> Edit Dispense
                   </button>
                   <div className="w-px h-4 bg-gray-200" />
-                  <button onClick={dispense.clearSelection} className="text-sm text-red-400 hover:text-red-600">Cancel</button>
+                  <button onClick={handleCancel} className="text-sm text-red-400 hover:text-red-600">Cancel</button>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={handlePrintReceipt} className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
@@ -834,7 +914,7 @@ ${insuranceLine}
                   <ArrowLeft className="w-4 h-4" /> Edit Dispense
                 </button>
                 <div className="w-px h-4 bg-gray-200" />
-                <button onClick={dispense.clearSelection} className="text-sm text-red-400 hover:text-red-600">Cancel</button>
+                <button onClick={handleCancel} className="text-sm text-red-400 hover:text-red-600">Cancel</button>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 {hasInsurance && !billing.insuranceSkipped && (

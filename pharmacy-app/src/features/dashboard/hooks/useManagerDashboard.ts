@@ -195,7 +195,7 @@ import {
   getPaymentTrend,
   getPaymentTransactions,
   type Period,
-} from "@api/payments";
+} from "@api/payments.api";
 
 export function useManagerDashboard() {
   const [period, setPeriod] = useState<Period>("week");

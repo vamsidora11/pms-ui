@@ -1,11 +1,9 @@
 // src/features/dispense/hooks/useBilling.ts
 import { useState, useCallback } from "react";
-import { createDispense, submitInsuranceClaim, getDispenseById } from "@api/dispense";
-import { recordPayment, toPaymentMode, resolveTransactionId } from "@api/payment";
+import { createDispense, submitInsuranceClaim, markDispensePaidWithEtag, type DispenseDetailsDto } from "@api/dispense";
+import { recordPayment } from "@api/payments.api";
 import type { CreateDispenseItemRequest } from "@api/dispense";
 import type { ClaimStatus, PaymentStatus, PaymentMethod, BillTotals, DispenseRow } from "../types/dispense.types";
-
-const INSURANCE_RATE = 0.65;
 
 export function useBilling() {
   const [claimStatus,       setClaimStatus]       = useState<ClaimStatus>("idle");
@@ -19,9 +17,9 @@ export function useBilling() {
   const [checkoutError,     setCheckoutError]     = useState<string | null>(null);
 
   const reset = useCallback((itemStatus?: string) => {
-    setClaimStatus(itemStatus === "Payment Processed" ? "approved" : "idle");
+    setClaimStatus(itemStatus === "PaymentProcessed" ? "approved" : "idle");
     setInsuranceSkipped(false);
-    setPaymentStatus(itemStatus === "Payment Processed" ? "done" : "idle");
+    setPaymentStatus(itemStatus === "PaymentProcessed" ? "done" : "idle");
     setPaymentMethod("cash");
     setTxnId("");
     setTxnIdError(null);
@@ -83,46 +81,26 @@ export function useBilling() {
   // ── Submit Insurance Claim ────────────────────────────────────────────────
 
   const submitClaim = useCallback(async (
-    dispenseId:   string,
-    patientId:    string,
+    dispenseId: string,
+    patientId: string,
     dispenseEtag: string
-  ): Promise<boolean> => {
-    if (claimStatus !== "idle") return false;
+  ): Promise<{ success: boolean; etag?: string; data?: DispenseDetailsDto } > => {
     setClaimStatus("submitting");
+
     try {
-      const fresh = await getDispenseById(dispenseId, patientId);
+      console.log("CALLING CLAIM API", { dispenseId, patientId, dispenseEtag });
 
-      if (fresh.dispense.status === "InsuranceApproved") {
-        setClaimStatus("approved");
-        return true;
-      }
+      // Force call to insurance-claim endpoint and get response (data + etag)
+      const res = await submitInsuranceClaim(dispenseId, patientId, dispenseEtag);
 
-      if (fresh.dispense.status !== "Created") {
-        setClaimStatus("idle");
-        return false;
-      }
-
-      await submitInsuranceClaim(dispenseId, patientId, fresh.etag);
       setClaimStatus("approved");
-      return true;
-    } catch (err: unknown) {
-      try {
-        const recheck = await getDispenseById(dispenseId, patientId);
-        if (
-          recheck.dispense.status === "InsuranceApproved" ||
-          recheck.dispense.status === "Created"
-        ) {
-          setClaimStatus("approved");
-          return true;
-        }
-      } catch {
-        // recheck failed — fall through to error
-      }
+      return { success: true, etag: res.etag, data: res.data };
+    } catch (err) {
+      console.error("CLAIM FAILED", err);
       setClaimStatus("idle");
-      console.error("submitClaim failed:", err);
-      return false;
+      return { success: false };
     }
-  }, [claimStatus]);
+  }, []);
 
   const skipInsurance     = useCallback(() => setInsuranceSkipped(true),  []);
   const undoSkipInsurance = useCallback(() => setInsuranceSkipped(false), []);
@@ -130,7 +108,7 @@ export function useBilling() {
   // ── Validate transaction ID — returns true if valid ───────────────────────
 
   const validateTxnId = useCallback((): boolean => {
-    if (paymentMethod !== "cash" && !txnId.trim()) {
+    if (paymentMethod !== "cash" && !txnId?.trim()) {
       setTxnIdError("Transaction / Reference ID is required");
       return false;
     }
@@ -141,52 +119,84 @@ export function useBilling() {
   // ── Record Patient Payment ────────────────────────────────────────────────
 
   const doRecordPayment = useCallback(async (
-    patientId:    string,
-    dispenseId:   string,
+    patientId: string,
+    dispenseId: string,
     dispenseEtag: string,
-    amount:       number
-  ): Promise<boolean> => {
-    if (!validateTxnId()) return false;
+    amount: number
+  ): Promise<{ success: boolean; etag?: string }> => {
+    if (!validateTxnId()) return { success: false };
 
     setPaymentStatus("processing");
+
     try {
-      await recordPayment(
+      console.log("PAYMENT REQUEST", {
+        patientId,
+        dispenseId,
+        amount,
+        method: paymentMethod,
+        txnId,
+        etag: dispenseEtag,
+      });
+
+      const { paymentId, etag: paymentEtag } = await recordPayment(
         {
           patientId,
           dispenseId,
-          paymentMode:   toPaymentMode(paymentMethod),
-          transactionId: resolveTransactionId(paymentMethod, txnId),
           amount,
-          payerType:     "Patient",
+          payerType: "Patient",
+          paymentMode:
+            paymentMethod === "cash"
+              ? "Cash"
+              : paymentMethod === "card"
+              ? "Card"
+              : "UPI",
+          transactionId:
+            paymentMethod === "cash"
+              ? undefined
+              : txnId?.trim() || undefined,
         },
         dispenseEtag
       );
+
+      // Ensure backend Dispense state is updated to Paid so Ready/Execute transitions succeed.
+      let paidEtag: string;
+      try {
+        const res = await markDispensePaidWithEtag(dispenseId, patientId, paymentEtag || dispenseEtag, amount);
+        paidEtag = res.etag;
+      } catch (err) {
+        console.error("markDispensePaid failed", err);
+        // If marking paid fails, treat as payment failure so UI can retry.
+        setPaymentStatus("idle");
+        return { success: false };
+      }
+
       setPaymentStatus("done");
-      return true;
+      return { success: true, etag: paidEtag };
     } catch (err) {
+      console.error("PAYMENT FAILED", err);
       setPaymentStatus("idle");
-      console.error("doRecordPayment failed:", err);
-      return false;
+      return { success: false };
     }
-  }, [paymentMethod, txnId, validateTxnId]);
+  }, [paymentMethod, txnId]);
 
   // ── Totals ────────────────────────────────────────────────────────────────
 
   const computeTotals = useCallback(
     (subtotal: number): BillTotals => {
-      const insuranceCovered =
-        claimStatus === "approved" && !insuranceSkipped
-          ? subtotal * INSURANCE_RATE
-          : 0;
-      return { subtotal, insuranceCovered, patientDue: subtotal - insuranceCovered };
+      return {
+        subtotal,
+        insuranceCovered: 0,
+        patientDue: subtotal,
+      };
     },
-    [claimStatus, insuranceSkipped]
+    []
   );
 
   const canRelease = useCallback(
     (hasInsurance: boolean): boolean => {
-      if (hasInsurance && !insuranceSkipped)
-        return claimStatus === "approved" && paymentStatus === "done";
+      // Block release if insurance present and claim not approved (unless skipped)
+      if (hasInsurance && claimStatus !== "approved" && !insuranceSkipped) return false;
+      if (hasInsurance && !insuranceSkipped) return claimStatus === "approved" && paymentStatus === "done";
       return paymentStatus === "done";
     },
     [claimStatus, insuranceSkipped, paymentStatus]
@@ -202,7 +212,6 @@ export function useBilling() {
     isReleasing,
     checkoutLoading,
     checkoutError,
-    insuranceRate: INSURANCE_RATE,
     // setters
     setPaymentMethod,
     setTxnId: (val: string) => { setTxnId(val); if (val.trim()) setTxnIdError(null); },
