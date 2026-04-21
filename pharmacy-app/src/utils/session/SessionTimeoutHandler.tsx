@@ -6,7 +6,7 @@ import { refreshAccess, logout, serverLogout } from "@store/auth/authSlice";
 import type { RootState, AppDispatch } from "@store/index";
 
 // ✅ CONFIG
-const INACTIVITY_X_MS = 20 * 1000; // X seconds before modal
+const INACTIVITY_X_MS = 60 * 1000; // X seconds before modal
 const WARNING_Y_SEC = 10;          // Y seconds countdown
 
 export default function SessionTimeoutHandler() {

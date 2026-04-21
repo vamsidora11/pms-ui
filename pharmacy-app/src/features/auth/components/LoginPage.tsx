@@ -104,7 +104,7 @@ export default function LoginPage() {
                     setPassword(e.target.value);
                     if (errorMessage) clearError();
                   }}
-                  className={inputClass("pr-12")}
+                  className={inputClass("pr-14")}
                   placeholder="Enter your password"
                   required
                   disabled={isLoading}
@@ -116,7 +116,8 @@ export default function LoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />
+                  }
                 </button>
               </div>
             </div>
