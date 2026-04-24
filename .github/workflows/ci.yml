@@ -2,7 +2,7 @@ name: CI-CD Frontend
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "ui-improvements" ]
   pull_request:
     branches: [ "main" ]
 
