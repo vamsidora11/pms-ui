@@ -1,0 +1,45 @@
+name: CI-CD Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-path: pharmacy-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: pharmacy-app
+        run: npm ci
+
+      - name: Build
+        working-directory: pharmacy-app
+        run: npm run build
+
+      - name: Login to ACR
+        run: |
+          echo ${{ secrets.ACR_PASSWORD }} | docker login pmsacr.azurecr.io -u ${{ secrets.ACR_USERNAME }} --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=${{ secrets.VITE_API_URL }} \
+            -t pmsacr.azurecr.io/pms-ui:latest \
+            pharmacy-app
+
+      - name: Push Docker Image
+        run: |
+          docker push pmsacr.azurecr.io/pms-ui:latest
