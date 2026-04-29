@@ -15,20 +15,8 @@ import {
   Activity,
 } from "lucide-react";
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-
-import DataTable from "@components/common/Table/Table";
+import DataTable, { type Column } from "@components/common/Table/Table";
+import type { PaymentStatus, PaymentTransactionItemDto } from "@api/payments.api";
 
 import { usePaymentDashboard } from "../hooks/usePaymentDashboard";
 
@@ -41,8 +29,11 @@ const MODE_META = {
   Insurance: { badge: "bg-cyan-100 text-cyan-700", chart: "#06B6D4", icon: <Shield className="w-3.5 h-3.5" /> },
 };
 
-function ModeBadge({ mode }) {
-  const m = MODE_META[mode] ?? MODE_META.Cash;
+type PaymentModeLabel = keyof typeof MODE_META;
+
+function ModeBadge({ mode }: { mode: string }) {
+  const key = mode in MODE_META ? (mode as PaymentModeLabel) : "Cash";
+  const m = MODE_META[key];
   return (
     <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${m.badge}`}>
       {m.icon} {mode}
@@ -50,7 +41,7 @@ function ModeBadge({ mode }) {
   );
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status }: { status: PaymentStatus }) {
   if (status === "Cleared")
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
@@ -79,13 +70,6 @@ export default function PaymentDashboard() {
     summary,
     summaryLoading,
 
-    trendData,
-    trendLoading,
-
-    modeData,
-    modeLoading,
-    patientTotal,
-
     tableRows,
     tableTotal,
     tableLoading,
@@ -96,13 +80,13 @@ export default function PaymentDashboard() {
 
   // KPI cards UI computations (same logic)
   const kpiCards = React.useMemo(() => {
-    const fmt = (n) =>
+    const fmt = (n: number) =>
       `$${Number(n).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`;
 
-    const pct = (n) => (n === undefined ? undefined : `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`);
+    const pct = (n?: number) => (n === undefined ? undefined : `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`);
 
     const totalCollected = summary?.totalCollected ?? 0;
     const patientCollected = summary?.patientCollected ?? 0;
@@ -151,7 +135,7 @@ export default function PaymentDashboard() {
   }, [summary]);
 
   // Table columns (unchanged)
-  const columns = React.useMemo(
+  const columns = React.useMemo<Column<PaymentTransactionItemDto>[]>(
     () => [
       {
         key: "id",
@@ -184,7 +168,7 @@ export default function PaymentDashboard() {
               >
                 {row.patientName
                   .split(" ")
-                  .map((n) => n[0])
+                  .map((n: string) => n[0])
                   .join("")
                   .slice(0, 2)}
               </div>
@@ -200,7 +184,7 @@ export default function PaymentDashboard() {
         header: "RX ID",
         sortable: true,
         filterable: true,
-        render: (v) => <span className="font-mono text-xs">{v}</span>,
+        render: (v) => <span className="font-mono text-xs">{String(v ?? "")}</span>,
       },
 
       {

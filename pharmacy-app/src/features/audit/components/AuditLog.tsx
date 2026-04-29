@@ -1,5 +1,6 @@
 import Badge from "@components/common/Badge/Badge";
-import DataTable from "@components/common/Table/Table";
+import DataTable, { type Column } from "@components/common/Table/Table";
+import type { AuditListItemDto } from "@api/audit";
 import { getAuditBadgeVariant } from "../utils/auditBadge";
 import { useAuditLogs } from "../hooks/useAuditLogs";
 
@@ -21,7 +22,7 @@ export default function AuditLog() {
   } = useAuditLogs();
 
   // Table columns
-  const columns = [
+  const columns: Column<AuditListItemDto>[] = [
     {
       key: "timestamp",
       header: "Timestamp",
@@ -54,7 +55,7 @@ export default function AuditLog() {
       header: "Action",
       sortable: true,
       filterable: true,
-      render: (_, row) => (
+      render: (_value, row) => (
         <Badge
           label={row.action}
           variant={getAuditBadgeVariant(row.action)}

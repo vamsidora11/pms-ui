@@ -5,7 +5,7 @@ import type {
   PrescriptionDetailsDto,
   PrescriptionListResponseDto,
   PrescriptionSummaryDto,
-} from "./prescription.dto";
+} from "./prescription.ts";
 import type {
   CreatePatientRequest,
   PatientDetailsDto,

@@ -3,6 +3,7 @@ import type {
   CreatePatientRequest,
   InsuranceDto,
   PatientDetailsDto,
+  PatientGender,
   UpdatePatientRequest,
 } from "@patient/types/patienttype";
 
@@ -44,11 +45,19 @@ const buildBasePayload = (values: PatientFormValues) => ({
   insurance: buildInsuranceDto(values),
 });
 
+const toPatientGender = (value: string): PatientGender => {
+  if (value === "Female" || value === "Other") {
+    return value;
+  }
+
+  return "Male";
+};
+
 export const toCreatePatientRequest = (
   values: PatientFormValues,
 ): CreatePatientRequest => ({
   ...buildBasePayload(values),
-  gender: values.gender,
+  gender: toPatientGender(values.gender),
 });
 
 export const toUpdatePatientRequest = (

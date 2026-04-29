@@ -5,7 +5,6 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
-  LayoutDashboard,
   Package,
   Plus,
   RotateCcw,
@@ -35,6 +34,7 @@ import { logger } from "@utils/logger/logger";
 import AllergySelector from "@patient/components/AllergySelector";
 
 type Tab = "stock" | "add-medicine" | "restock-requests" | "expiry";
+type ExpiryRisk = "expired" | "critical" | "warning" | "ok";
 
 const PRODUCT_FORMS = ["Tablet", "Capsule", "Syrup", "Injection", "Cream", "Drops", "Inhaler"];
 
@@ -746,14 +746,14 @@ function ExpiryManagement({
   onSuccess: (title: string, message: string) => void;
 }) {
   const [filter, setFilter] = useState<"all" | "expired" | "critical" | "warning">("all");
-  const [confirmAction, setConfirmAction] = useState<{ type: "return" | "dispose"; lot: ManagerInventoryLotDto & { productName: string; strength: string; form: string; days: number; risk: "expired" | "critical" | "warning" | "ok" } } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: "return" | "dispose"; lot: ManagerInventoryLotDto & { productName: string; strength: string; form: string; days: number; risk: ExpiryRisk } } | null>(null);
   const [markedReturnedLotIds, setMarkedReturnedLotIds] = useState<Set<string>>(new Set());
   const [markedDisposedLotIds, setMarkedDisposedLotIds] = useState<Set<string>>(new Set());
 
   const enrichedLots = useMemo(() => products
     .flatMap((product) => product.inventoryLots.map((lot) => {
       const days = lot.expiry ? getDaysUntilExpiry(lot.expiry) : Number.POSITIVE_INFINITY;
-      const risk = !lot.expiry ? "ok" : days <= 0 ? "expired" : days <= 14 ? "critical" : days <= 60 ? "warning" : "ok";
+      const risk: ExpiryRisk = !lot.expiry ? "ok" : days <= 0 ? "expired" : days <= 14 ? "critical" : days <= 60 ? "warning" : "ok";
       return { ...lot, productName: product.name, strength: product.strength, form: product.form, days, risk };
     }))
     .filter((lot) => !markedReturnedLotIds.has(lot.id) && !markedDisposedLotIds.has(lot.id))

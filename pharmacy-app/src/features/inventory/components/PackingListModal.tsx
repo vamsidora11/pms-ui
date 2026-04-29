@@ -37,6 +37,7 @@ export default function PackingListModal({
       id:             dispense.id,
       prescriptionId: dispense.prescriptionId,
       patientId:      dispense.patientId,
+      patientName:    dispense.patientName,
       dispenseDate:   dispense.dispenseDate,
       status:         dispense.status,
       itemCount:      dispense.items.length,
@@ -191,13 +192,13 @@ export default function PackingListModal({
                           <div className="space-y-2">
                             {item.lotsUsed.map((lot) => (
                               <div
-                                key={lot.lotNumber}
+                                key={lot.lotId}
                                 className="grid grid-cols-3 gap-2"
                               >
                                 {[
                                   {
                                     label: "LOT NUMBER",
-                                    value: lot.lotNumber,
+                                    value: lot.lotId,
                                     cls: "font-bold text-gray-900 font-mono",
                                   },
                                   {

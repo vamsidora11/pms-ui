@@ -138,7 +138,7 @@ export function useBilling() {
         etag: dispenseEtag,
       });
 
-      const { paymentId, etag: paymentEtag } = await recordPayment(
+      const { etag: paymentEtag } = await recordPayment(
         {
           patientId,
           dispenseId,

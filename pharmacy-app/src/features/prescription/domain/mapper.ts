@@ -4,7 +4,7 @@ import type {
   PrescriptionLineDto,
   PrescriptionSummaryDto,
   ReviewPrescriptionRequestDto,
-} from "@api/prescription.dto";
+} from "@api/prescription.ts";
 import type { PrescriptionDraft } from "@prescription/types/models";
 import type {
   PrescriptionDetails,

@@ -5,15 +5,18 @@ import {
   getPaymentModeBreakdown,
   getPaymentTransactions,
   type Period,
+  type PaymentTransactionItemDto,
+  type PaymentTransactionsQuery,
   type PaymentTransactionsResponseDto,
 } from "@api/payments.api";
+import type { ServerTableQuery } from "@components/common/Table/Table";
 
 const toISODate = (value: string) => {
   const t = value.indexOf("T");
   return t > 0 ? value.slice(0, t) : value;
 };
 
-const SORT_MAP: Record<string, any> = {
+const SORT_MAP: Record<string, NonNullable<PaymentTransactionsQuery["sortKey"]>> = {
   id: "id",
   patientName: "patientname",
   rxId: "rxid",
@@ -39,7 +42,7 @@ export function usePaymentDashboard() {
   const [modeLoading, setModeLoading] = useState(false);
 
   // Transactions table
-  const [tableRows, setTableRows] = useState<any[]>([]);
+  const [tableRows, setTableRows] = useState<PaymentTransactionItemDto[]>([]);
   const [tableTotal, setTableTotal] = useState(0);
   const [tableLoading, setTableLoading] = useState(false);
 
@@ -50,7 +53,7 @@ export function usePaymentDashboard() {
     sortBy: "timestamp",
     sortDirection: "desc",
     columnFilters: {},
-  };
+  } as const;
 
   // Fetch KPI summary
   useEffect(() => {
@@ -131,15 +134,15 @@ export function usePaymentDashboard() {
   }, [selectedPeriod]);
 
   // Handle table server-side query
-  const handleServerQueryChange = useCallback(async (q: any) => {
+  const handleServerQueryChange = useCallback(async (q: ServerTableQuery) => {
     try {
       setTableLoading(true);
 
       const sortKey = SORT_MAP[String(q.sortBy)] ?? "timestamp";
       const sortDir = q.sortDirection ?? "desc";
 
-      const status = q.columnFilters["status"] || "all";
-      const mode = q.columnFilters["mode"] || "all";
+      const status = (q.columnFilters["status"] || "all") as PaymentTransactionsQuery["status"];
+      const mode = (q.columnFilters["mode"] || "all") as PaymentTransactionsQuery["mode"];
 
       const filterDate = q.columnFilters["timestamp"]
         ? toISODate(q.columnFilters["timestamp"])

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import AppLayout from './Applayout';
-import React from 'react';
+
 
 // ---------- MOCK react-redux ----------
 vi.mock('react-redux', () => ({

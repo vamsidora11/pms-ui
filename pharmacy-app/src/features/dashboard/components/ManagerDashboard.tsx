@@ -413,6 +413,18 @@ import {
 import { ROUTES } from "@constants/routes";
 import { useManagerDashboard } from "../hooks/useManagerDashboard";
 
+type ChartTooltipPayload = {
+  value?: number;
+  name?: string;
+  color?: string;
+};
+
+type ChartTooltipProps = {
+  active?: boolean;
+  payload?: ChartTooltipPayload[];
+  label?: string;
+};
+
 function ModeIcon({ mode }: { mode: string }) {
   const icons: Record<string, ElementType> = {
     Cash: Banknote,
@@ -425,7 +437,7 @@ function ModeIcon({ mode }: { mode: string }) {
   return <Icon className="h-4 w-4 text-gray-400" />;
 }
 
-function ChartTooltip({ active, payload, label }) {
+function ChartTooltip({ active, payload, label }: ChartTooltipProps = {}) {
   if (!active || !payload?.length) return null;
 
   const total = payload.reduce((sum, e) => sum + (e.value ?? 0), 0);
