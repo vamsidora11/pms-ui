@@ -1,0 +1,24 @@
+/* --- react-phone-number-input focus/outline fixes --- */
+.phone-input .PhoneInputInput {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent;
+  width: 100%;
+  font-size: 0.95rem;
+} 
+
+.phone-input .PhoneInputInput:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Flag button alignment + remove focus ring */
+.phone-input .PhoneInputCountrySelect {
+  outline: none !important;
+}
+.phone-input .PhoneInputCountrySelect:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
